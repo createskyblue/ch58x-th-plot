@@ -17,10 +17,18 @@ h2{font-size:18px;margin:0 0 14px}
 .photo-card .section-head{margin-bottom:14px}
 .photo-card .photo-strip{display:grid;grid-template-columns:repeat(4,1fr);gap:12px}
 .photo-card figure{margin:0;border:1px solid var(--line);border-radius:12px;overflow:hidden;background:#f7faf7}
+.photo-card a{display:block;line-height:0}
 .photo-card img{display:block;width:100%;height:auto;aspect-ratio:4/3;object-fit:cover}
 @keyframes photo-cycle{0%,24.9%{opacity:1}25%,100%{opacity:0}}
-@media(max-width:650px){.photo-card .photo-strip{display:block;position:relative;aspect-ratio:4/3;border-radius:12px;overflow:hidden}.photo-card figure{position:absolute;inset:0;border:0;border-radius:0;opacity:0;animation:photo-cycle 12s infinite}.photo-card figure:nth-child(1){animation-delay:0s}.photo-card figure:nth-child(2){animation-delay:3s}.photo-card figure:nth-child(3){animation-delay:6s}.photo-card figure:nth-child(4){animation-delay:9s}.photo-card img{width:100%;height:100%;object-fit:cover}}
-@media(max-width:650px) and (prefers-reduced-motion:reduce){.photo-card .photo-strip{display:grid;gap:10px;aspect-ratio:auto}.photo-card figure{position:static;opacity:1;animation:none}}
+.photo-card .photo-strip.is-carousel{display:block;position:relative;aspect-ratio:4/3;border-radius:12px;overflow:hidden;touch-action:pan-y pinch-zoom}
+.photo-card .photo-strip.is-carousel figure{position:absolute;inset:0;border:0;border-radius:0;opacity:0;animation:photo-cycle 12s infinite}
+.photo-card .photo-strip.is-carousel figure:nth-child(1){animation-delay:0s}
+.photo-card .photo-strip.is-carousel figure:nth-child(2){animation-delay:3s}
+.photo-card .photo-strip.is-carousel figure:nth-child(3){animation-delay:6s}
+.photo-card .photo-strip.is-carousel figure:nth-child(4){animation-delay:9s}
+.photo-card .photo-strip.is-carousel img{width:100%;height:100%;object-fit:cover}
+.photo-card .photo-strip.is-carousel.is-static figure{animation:none;opacity:0}
+.photo-card .photo-strip.is-carousel.is-static figure:first-child{opacity:1}
 button{border:1px solid #cbd9d1;background:#fff;border-radius:8px;padding:10px 15px;color:#254b3e;font:inherit;font-size:13px;cursor:pointer}
 button:hover:not(:disabled){background:#e8f0eb}
 button.primary{background:var(--green);color:#fff;border-color:var(--green)}
@@ -136,10 +144,10 @@ dialog p{margin:0 0 18px}
 <section class="card photo-card" id="photo-card">
   <div class="section-head"><h2>设备实拍</h2><span class="badge">自定义壁纸 · 温湿度曲线 · 万年历</span></div>
   <div class="photo-strip">
-    <figure><img src="assets/photos/device-1.jpg" alt="墨水屏显示自定义壁纸图案" width="1706" height="1279"></figure>
-    <figure><img src="assets/photos/device-2.jpg" alt="墨水屏显示三天温湿度曲线" width="1920" height="1440" loading="lazy"></figure>
-    <figure><img src="assets/photos/device-3.jpg" alt="墨水屏显示月历与农历" width="1920" height="1440" loading="lazy"></figure>
-    <figure><img src="assets/photos/device-4.jpg" alt="墨水屏显示大字号日期" width="1706" height="1279" loading="lazy"></figure>
+    <figure><a href="assets/photos/device-1.jpg" target="_blank" rel="noopener noreferrer" title="点击查看原图"><img src="assets/photos/device-1.jpg" alt="墨水屏显示自定义壁纸图案" width="1706" height="1279"></a></figure>
+    <figure><a href="assets/photos/device-2.jpg" target="_blank" rel="noopener noreferrer" title="点击查看原图"><img src="assets/photos/device-2.jpg" alt="墨水屏显示三天温湿度曲线" width="1920" height="1440" loading="lazy"></a></figure>
+    <figure><a href="assets/photos/device-3.jpg" target="_blank" rel="noopener noreferrer" title="点击查看原图"><img src="assets/photos/device-3.jpg" alt="墨水屏显示月历与农历" width="1920" height="1440" loading="lazy"></a></figure>
+    <figure><a href="assets/photos/device-4.jpg" target="_blank" rel="noopener noreferrer" title="点击查看原图"><img src="assets/photos/device-4.jpg" alt="墨水屏显示大字号日期" width="1706" height="1279" loading="lazy"></a></figure>
   </div>
 </section>
 <div class="grid" data-page-node-id="pwebwfMUeuLgdiMqJHQt5k">
@@ -1563,6 +1571,31 @@ loadFirmwareInfo();
     }
     renderModel();
   </script>
+<script>
+(() => {
+  const card = document.querySelector('.photo-card');
+  const strip = card && card.querySelector('.photo-strip');
+  if (!strip) return;
+  const reduced = window.matchMedia('(prefers-reduced-motion: reduce)');
+  const apply = () => {
+    const width = strip.clientWidth;
+    const single = width > 0 && width < 560;
+    strip.classList.toggle('is-carousel', single);
+    strip.classList.toggle('is-static', single && reduced.matches);
+  };
+  let lastWidth = -1;
+  const sync = () => {
+    const width = strip.clientWidth;
+    if (width === lastWidth) return;
+    lastWidth = width;
+    apply();
+  };
+  sync();
+  if (window.ResizeObserver) new ResizeObserver(sync).observe(strip);
+  else window.addEventListener('resize', sync);
+  if (reduced.addEventListener) reduced.addEventListener('change', apply);
+})();
+</script>
 <script type="module" src="./image-app.js?v=wallpaper-term"></script>
 </body>
 </html>
