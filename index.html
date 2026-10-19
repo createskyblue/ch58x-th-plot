@@ -15,6 +15,12 @@ h2{font-size:18px;margin:0 0 14px}
 .muted{color:var(--muted);font-size:13px;line-height:1.8}
 .badge{font-size:12px;border:1px solid var(--line);background:#fff;border-radius:24px;padding:8px 14px;white-space:nowrap}
 .toolbar{display:flex;gap:12px;align-items:center;margin-bottom:22px;flex-wrap:wrap}
+.photo-card .photo-strip{display:grid;grid-template-columns:repeat(4,1fr);gap:12px}
+.photo-card figure{margin:0;border:1px solid var(--line);border-radius:12px;overflow:hidden;background:#f7faf7}
+.photo-card img{display:block;width:100%;height:auto;aspect-ratio:4/3;object-fit:cover}
+@keyframes photo-cycle{0%,24.9%{opacity:1}25%,100%{opacity:0}}
+@media(max-width:650px){.photo-card .photo-strip{display:block;position:relative;aspect-ratio:4/3;border-radius:12px;overflow:hidden}.photo-card figure{position:absolute;inset:0;border:0;border-radius:0;opacity:0;animation:photo-cycle 12s infinite}.photo-card figure:nth-child(1){animation-delay:0s}.photo-card figure:nth-child(2){animation-delay:3s}.photo-card figure:nth-child(3){animation-delay:6s}.photo-card figure:nth-child(4){animation-delay:9s}.photo-card img{width:100%;height:100%;object-fit:cover}}
+@media(max-width:650px) and (prefers-reduced-motion:reduce){.photo-card .photo-strip{display:grid;gap:10px;aspect-ratio:auto}.photo-card figure{position:static;opacity:1;animation:none}}
 button{border:1px solid #cbd9d1;background:#fff;border-radius:8px;padding:10px 15px;color:#254b3e;font:inherit;font-size:13px;cursor:pointer}
 button:hover:not(:disabled){background:#e8f0eb}
 button.primary{background:var(--green);color:#fff;border-color:var(--green)}
@@ -221,6 +227,15 @@ dialog p{margin:0 0 18px}
   </div>
 </section>
 <details class="card" id="activation-card" data-page-node-id="P1xLvfjp7t00HyieYlMoFa"><summary data-page-node-id="geynaqHzdAzJ1ZVyWxwZtI"><span data-page-node-id="0MpPh9zM0LWULs17SsHzEV">激活码</span><span class="badge" id="activation-state" data-page-node-id="AP86sdfNBA1RZbxO48fQwH">未设置</span></summary><dl><dt>唯一 ID</dt><dd id="uid">—</dd></dl><label for="activation-input" data-page-node-id="ecBvELdQBKfSVTSBg25XZv">激活码 · 64 位十六进制字符</label><input id="activation-input" type="text" spellcheck="false" autocomplete="off" placeholder="粘贴 64 位十六进制激活码" data-page-node-id="yOEbHCMj0sN9G8SWU3QOfG"><div class="actions" style="margin-top:12px" data-page-node-id="QGu4Y96uKF8yuFsCZIR8E4"><button id="activation" class="primary" disabled data-page-node-id="XXcFuaTIEWs7rKfy1ZG5l8">写入设备</button></div><p class="hint" data-page-node-id="9QH7eiW0sz19GHAQirg7K9">激活码存在这台设备里，不在浏览器里。先连接设备，再填码写入；以后用手机或别的电脑打开本页面，连上这台设备会自动取回。</p></details>
+<section class="card photo-card" id="photo-card">
+  <div class="section-head"><h2>设备实拍</h2><span class="badge">自定义画布 · 温湿度曲线 · 万年历</span></div>
+  <div class="photo-strip">
+    <figure><img src="assets/photos/device-1.jpg" alt="墨水屏显示自定义画布图案" width="1706" height="1279"></figure>
+    <figure><img src="assets/photos/device-2.jpg" alt="墨水屏显示三天温湿度曲线" width="1920" height="1440" loading="lazy"></figure>
+    <figure><img src="assets/photos/device-3.jpg" alt="墨水屏显示月历与农历" width="1920" height="1440" loading="lazy"></figure>
+    <figure><img src="assets/photos/device-4.jpg" alt="墨水屏显示大字号日期" width="1706" height="1279" loading="lazy"></figure>
+  </div>
+</section>
 <section class="card about-card" id="about-card">
   <div class="section-head"><h2>关于 TH-Plot</h2><span class="badge" id="firmware-version">最新固件 —</span></div>
   <p>作者邮箱：<a href="mailto:createskyblue@outlook.com">createskyblue@outlook.com</a></p>
