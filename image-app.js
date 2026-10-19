@@ -142,7 +142,7 @@ async function readImageEnabled() {
     const data = await request(TYPES.imageSettingsRead);
     imageEnabled = data.length >= 1 && data[0] === 1;
     element('image-image-enabled').checked = imageEnabled;
-    element('image-image-state').textContent = imageEnabled ? '第 4 页已开启' : '第 4 页未开启';
+    element('image-image-state').textContent = imageEnabled ? '壁纸页已开启' : '壁纸页未开启';
   } catch (error) {
     element('image-image-state').textContent = error.message;
   }
@@ -360,7 +360,7 @@ async function uploadImage() {
     if (token !== uploadToken) return;
     imageEnabled = true;
     element('image-image-enabled').checked = true;
-    element('image-image-state').textContent = '第 4 页已开启';
+    element('image-image-state').textContent = '壁纸页已开启';
     setProgress(100);
     uploadState('上传成功：' + stored.length + ' 字节；传输 ' + (result.transferMs / 1000).toFixed(2) + ' 秒，' + (stored.length / Math.max(1, result.transferMs) * 1000 / 1024).toFixed(2) + ' KiB/s；含擦除和校验共 ' + (result.totalMs / 1000).toFixed(2) + ' 秒。设备已切到图片页。');
   } catch (error) {
@@ -388,7 +388,7 @@ async function toggleImage() {
   try {
     await request(TYPES.imageSettingsWrite, Uint8Array.of(enabled ? 1 : 0));
     imageEnabled = enabled;
-    element('image-image-state').textContent = enabled ? '第 4 页已开启' : '第 4 页已关闭';
+    element('image-image-state').textContent = enabled ? '壁纸页已开启' : '壁纸页已关闭';
   } catch (error) {
     element('image-image-enabled').checked = !enabled;
     element('image-image-state').textContent = error.message;
@@ -550,7 +550,7 @@ async function loadDemo() {
   context.textAlign = 'center';
   context.fillText('TH-Plot', 400, 300);
   context.font = '28px "Microsoft YaHei", sans-serif';
-  context.fillText('400 × 300 自定义图片预览', 400, 360);
+  context.fillText('400 × 300 自定义壁纸预览', 400, 360);
   editor.addImage(canvas);
   const rotate = Number(new URLSearchParams(location.search).get('rotate'));
   if (Number.isFinite(rotate)) editor.updateSelected({angle:rotate});

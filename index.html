@@ -15,6 +15,7 @@ h2{font-size:18px;margin:0 0 14px}
 .muted{color:var(--muted);font-size:13px;line-height:1.8}
 .badge{font-size:12px;border:1px solid var(--line);background:#fff;border-radius:24px;padding:8px 14px;white-space:nowrap}
 .toolbar{display:flex;gap:12px;align-items:center;margin-bottom:22px;flex-wrap:wrap}
+.photo-card .section-head{margin-bottom:14px}
 .photo-card .photo-strip{display:grid;grid-template-columns:repeat(4,1fr);gap:12px}
 .photo-card figure{margin:0;border:1px solid var(--line);border-radius:12px;overflow:hidden;background:#f7faf7}
 .photo-card img{display:block;width:100%;height:auto;aspect-ratio:4/3;object-fit:cover}
@@ -132,9 +133,18 @@ dialog p{margin:0 0 18px}
 </head>
 <body data-page-node-id="xwT3VOY1wx5Hg3pNhUcr38">
 <main data-page-node-id="99V0RT2hYXgW0EIy5hvMMF">
-<header data-page-node-id="KqG3SUBNxYi5M4U0cUhJKZ"><div data-page-node-id="BRBqEoSXoz0GrKc3A8hwpE"><p class="eyebrow" data-page-node-id="X9EfPh8mY1AiHCAliVDjCq">TH-PLOT / 墨水屏设备</p><h1 data-page-node-id="kw8avTkgBCGArbmR0K7deI">4.2 寸墨水屏设备：温湿度、万年历与自定义画布</h1></div><span id="connection" class="badge" data-page-node-id="PZFMyi2CGOqSYmWKVNyKfA">未连接</span></header>
+<header data-page-node-id="KqG3SUBNxYi5M4U0cUhJKZ"><div data-page-node-id="BRBqEoSXoz0GrKc3A8hwpE"><p class="eyebrow" data-page-node-id="X9EfPh8mY1AiHCAliVDjCq">TH-PLOT / 墨水屏设备</p><h1 data-page-node-id="kw8avTkgBCGArbmR0K7deI">4.2 寸墨水屏设备：温湿度、万年历与自定义壁纸</h1></div><span id="connection" class="badge" data-page-node-id="PZFMyi2CGOqSYmWKVNyKfA">未连接</span></header>
 <section class="toolbar" data-page-node-id="lpCHPe4q4o2VjIFoVakMIT"><button id="connect" class="primary" data-page-node-id="0SR2OXeb29hDqLgDkBcAZA">连接设备</button><span id="status" role="status" aria-live="polite" data-page-node-id="ag91RlHWkzF46g5yeKKQw7">请长按设备按键开启蓝牙窗口，再连接。</span><span class="muted" style="font-size:12px;white-space:nowrap">固件编译时间 <b id="build-stamp">—</b></span><button id="reboot" disabled title="让设备软件复位，用于固件更新后重启或从卡死状态恢复">重启设备</button></section>
 <p id="firmware-update" class="notice update-notice" role="status" hidden></p>
+<section class="card photo-card" id="photo-card">
+  <div class="section-head"><h2>设备实拍</h2><span class="badge">自定义壁纸 · 温湿度曲线 · 万年历</span></div>
+  <div class="photo-strip">
+    <figure><img src="assets/photos/device-1.jpg" alt="墨水屏显示自定义壁纸图案" width="1706" height="1279"></figure>
+    <figure><img src="assets/photos/device-2.jpg" alt="墨水屏显示三天温湿度曲线" width="1920" height="1440" loading="lazy"></figure>
+    <figure><img src="assets/photos/device-3.jpg" alt="墨水屏显示月历与农历" width="1920" height="1440" loading="lazy"></figure>
+    <figure><img src="assets/photos/device-4.jpg" alt="墨水屏显示大字号日期" width="1706" height="1279" loading="lazy"></figure>
+  </div>
+</section>
 <div class="grid" data-page-node-id="pwebwfMUeuLgdiMqJHQt5k">
 <section class="card model-card" data-page-node-id="model-card"><div class="model-preview" id="model-preview" aria-label="温湿度计 3D 模型"></div></section>
 <section class="card current" data-page-node-id="bFOFtRnFmrWywCl9xmz2O3"><div class="section-head" data-page-node-id="SCYzMORpGVYgcddxGh9KjU"><h2 data-page-node-id="f21ZVsQYiACoXlx35BJGI4">当前环境</h2><button id="latest" disabled data-page-node-id="l22nRgfzOldD8xFVAsEIAF">立即读取</button></div><div><div class="readings" data-page-node-id="8MO9qSjJXqbeLhQRd2rJwK"><div data-page-node-id="Fp8QfyCS79veW0Z4BYNd5M"><span class="muted" data-page-node-id="g3r9YlN4kGLdyYKLIlGI0I">温度</span><strong id="temperature" data-page-node-id="s9ZdOElBoaarJzPL7YzzS5">—<small data-page-node-id="GItaadXpv6bbjvuyJ5JxaF"> °C</small></strong></div><div data-page-node-id="2KffZw0vBTrop6yhhyBT74"><span class="muted" data-page-node-id="VvkTtAsomsGDQqRgp6iarC">湿度</span><strong id="humidity" data-page-node-id="mCEXh6wWf3p2IGVXLWnDAi">—<small data-page-node-id="zG4bJ5cnkYSpiEr81sukaM"> %</small></strong></div></div><p id="measured" class="muted" data-page-node-id="iNKTbeypCKGMeSfOn9p9b1">尚未读取。</p></div></section>
@@ -161,31 +171,31 @@ dialog p{margin:0 0 18px}
 <section class="custom-image" id="custom-image">
   <div class="custom-card">
     <div class="custom-row custom-between">
-      <div><h2>画布编辑器</h2><p class="custom-muted">自由组合图片和文字，输出 400 × 300 单色画面。</p></div>
+      <div><h2>壁纸编辑器</h2><p class="custom-muted">自由组合图片和文字，输出 400 × 300 单色画面。</p></div>
       <span id="image-connection" class="badge">未连接</span>
       <button id="image-connect" hidden>连接设备</button><button id="image-disconnect" hidden disabled>断开</button>
     </div>
     <p id="image-status" class="custom-status" role="status" aria-live="polite"></p>
     <div class="custom-row"><span id="image-activation-badge" class="badge">激活状态 —</span>
-      <label class="custom-row" style="gap:6px"><input type="checkbox" id="image-image-enabled" disabled> 在设备上显示自定义图片页</label>
+      <label class="custom-row" style="gap:6px"><input type="checkbox" id="image-image-enabled" disabled> 在设备上显示自定义壁纸页</label>
       <span id="image-image-state" class="custom-muted">尚未读取</span>
     </div>
     <div class="custom-grid">
       <div>
-        <div class="custom-row" style="margin-bottom:12px"><button id="image-add-text">＋ 文本框</button><button id="image-clear">清空画布</button><button id="image-project-export">导出工程</button><label class="button-like">导入工程<input id="image-project-import" type="file" accept="application/json" hidden></label></div>
-        <div class="custom-canvas-wrap"><canvas id="image-editor" width="400" height="300" aria-label="画布编辑区，可选择、移动和缩放图层"></canvas></div>
+        <div class="custom-row" style="margin-bottom:12px"><button id="image-add-text">＋ 文本框</button><button id="image-clear">清空壁纸</button><button id="image-project-export">导出工程</button><label class="button-like">导入工程<input id="image-project-import" type="file" accept="application/json" hidden></label></div>
+        <div class="custom-canvas-wrap"><canvas id="image-editor" width="400" height="300" aria-label="壁纸编辑区，可选择、移动和缩放图层"></canvas></div>
         <p class="custom-hint">点击选择，拖动移动，控制点缩放 / 旋转，双击文字编辑。滚轮或双指缩放，Shift+滚轮或双指旋转。可多次粘贴、拖入图片。</p>
         <div class="custom-output-row"><span class="custom-hint">设备输出预览 · 400 × 300</span>
           <div class="custom-canvas-wrap"><canvas id="image-preview" width="400" height="300" aria-label="单色输出预览，拖动可调整选中图层"></canvas></div>
         </div>
         <p id="image-compression-state" class="custom-hint"></p>
-        <p class="custom-hint">文字使用浏览器字体合成图片；自动换行，画布外的内容会被裁切。</p>
+        <p class="custom-hint">文字使用浏览器字体合成图片；自动换行，壁纸外的内容会被裁切。</p>
       </div>
       <div class="custom-controls">
         <label class="custom-field">添加图片（可多选）<input type="file" id="image-file" accept="image/*" multiple></label>
         <div class="editor-panel">
           <h3>图层 · 列表上方显示在上层</h3>
-          <label class="custom-field">选择图层<select id="image-layers" size="4" aria-label="画布图层"></select></label>
+          <label class="custom-field">选择图层<select id="image-layers" size="4" aria-label="壁纸图层"></select></label>
           <div class="custom-row" style="margin-top:10px"><button id="image-layer-up">上移一层</button><button id="image-layer-down">下移一层</button><button id="image-layer-duplicate">复制</button><button id="image-layer-delete">删除</button></div>
         </div>
         <div id="image-text-panel" class="editor-panel" hidden>
@@ -215,7 +225,7 @@ dialog p{margin:0 0 18px}
           <div class="custom-row" style="margin-top:12px"><button id="image-flip-x">水平翻转</button><button id="image-flip-y">垂直翻转</button></div>
           <div class="custom-row" style="margin-top:10px"><button id="image-zoom-out" aria-label="缩小选中图层">−</button><button id="image-zoom-in" aria-label="放大选中图层">＋</button><button id="image-rotate-left" aria-label="向左旋转">↺</button><button id="image-rotate-right" aria-label="向右旋转">↻</button><button id="image-zoom-reset">重置尺寸</button></div>
         </div>
-        <div class="custom-row"><button id="image-upload" class="primary" disabled>上传画布到设备</button><button id="image-cancel" disabled>取消上传</button></div>
+        <div class="custom-row"><button id="image-upload" class="primary" disabled>上传壁纸到设备</button><button id="image-cancel" disabled>取消上传</button></div>
         <div class="custom-progress" aria-label="图片传输进度"><span id="image-progress-bar"></span></div>
         <p id="image-upload-state" class="custom-status" role="status" aria-live="polite"></p>
       </div>
@@ -223,19 +233,10 @@ dialog p{margin:0 0 18px}
 <label class="custom-field">抖动模式<select id="image-dither-mode"><option value="color">误差扩散（Floyd–Steinberg）</option><option value="classic">有序抖动（Bayer 8×8）</option><option value="binary">固定阈值二值化</option></select></label><label class="custom-field">阈值 <output id="image-threshold-value">50</output><input type="range" id="image-threshold" min="0" max="100" value="50"></label><label class="custom-field">对比度 <output id="image-contrast-value">100</output>%<input type="range" id="image-contrast" min="0" max="300" value="100"></label><label class="custom-field">亮度 <output id="image-brightness-value">0</output><input type="range" id="image-brightness" min="-100" max="100" value="0"></label><label class="custom-field">伽马 <output id="image-gamma-value">100</output>%<input type="range" id="image-gamma" min="10" max="300" value="100"></label><label class="custom-field">锐度 <output id="image-sharpness-value">0</output>%<input type="range" id="image-sharpness" min="0" max="100" value="0"></label><label class="custom-field">预设<select id="image-preset"><option value="custom">自定义</option><option value="photo">照片</option><option value="portrait">人像</option><option value="line">文字 / 线稿</option><option value="high">高对比度</option></select></label>
           <button id="image-invert">黑白反转</button>
         </div></details>
-    <div class="custom-notice">上传成功后设备自动切到图片页；关闭开关后会跳过。上传结果显示传输速度与总耗时。</div>
+    <div class="custom-notice">上传成功后设备自动切到壁纸页；关闭开关后会跳过。上传结果显示传输速度与总耗时。</div>
   </div>
 </section>
 <details class="card" id="activation-card" data-page-node-id="P1xLvfjp7t00HyieYlMoFa"><summary data-page-node-id="geynaqHzdAzJ1ZVyWxwZtI"><span data-page-node-id="0MpPh9zM0LWULs17SsHzEV">激活码</span><span class="badge" id="activation-state" data-page-node-id="AP86sdfNBA1RZbxO48fQwH">未设置</span></summary><dl><dt>唯一 ID</dt><dd id="uid">—</dd></dl><label for="activation-input" data-page-node-id="ecBvELdQBKfSVTSBg25XZv">激活码 · 64 位十六进制字符</label><input id="activation-input" type="text" spellcheck="false" autocomplete="off" placeholder="粘贴 64 位十六进制激活码" data-page-node-id="yOEbHCMj0sN9G8SWU3QOfG"><div class="actions" style="margin-top:12px" data-page-node-id="QGu4Y96uKF8yuFsCZIR8E4"><button id="activation" class="primary" disabled data-page-node-id="XXcFuaTIEWs7rKfy1ZG5l8">写入设备</button></div><p class="hint" data-page-node-id="9QH7eiW0sz19GHAQirg7K9">激活码存在这台设备里，不在浏览器里。先连接设备，再填码写入；以后用手机或别的电脑打开本页面，连上这台设备会自动取回。</p></details>
-<section class="card photo-card" id="photo-card">
-  <div class="section-head"><h2>设备实拍</h2><span class="badge">自定义画布 · 温湿度曲线 · 万年历</span></div>
-  <div class="photo-strip">
-    <figure><img src="assets/photos/device-1.jpg" alt="墨水屏显示自定义画布图案" width="1706" height="1279"></figure>
-    <figure><img src="assets/photos/device-2.jpg" alt="墨水屏显示三天温湿度曲线" width="1920" height="1440" loading="lazy"></figure>
-    <figure><img src="assets/photos/device-3.jpg" alt="墨水屏显示月历与农历" width="1920" height="1440" loading="lazy"></figure>
-    <figure><img src="assets/photos/device-4.jpg" alt="墨水屏显示大字号日期" width="1706" height="1279" loading="lazy"></figure>
-  </div>
-</section>
 <section class="card about-card" id="about-card">
   <div class="section-head"><h2>关于 TH-Plot</h2><span class="badge" id="firmware-version">最新固件 —</span></div>
   <p>作者邮箱：<a href="mailto:createskyblue@outlook.com">createskyblue@outlook.com</a></p>
@@ -1564,6 +1565,6 @@ loadFirmwareInfo();
     }
     renderModel();
   </script>
-<script type="module" src="./image-app.js?v=transparent-alpha-preset-fix"></script>
+<script type="module" src="./image-app.js?v=wallpaper-term"></script>
 </body>
 </html>
