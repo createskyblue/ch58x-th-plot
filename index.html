@@ -184,14 +184,14 @@ dialog p{margin:0 0 18px}
           <h3>文本框</h3>
           <label class="custom-field">内容<textarea id="image-text" rows="4" placeholder="输入文字，回车换行"></textarea></label>
           <div class="editor-fields" style="margin-top:12px">
-            <label class="custom-field">字号（像素）<input id="image-font-size" type="number" min="8" max="200" step="1" value="24"></label>
+            <label class="custom-field">字号（像素）<input id="image-font-size" type="number" min="8" max="200" step="1" value="16"></label>
 
-            <label class="custom-field">浏览器字体<select id="image-browser-font"><option value="sans-serif">系统无衬线</option><option value="serif">系统衬线</option><option value="monospace">等宽字体</option><option value="Arial">Arial</option><option value="Georgia">Georgia</option><option value="Times New Roman">Times New Roman</option><option value="Courier New">Courier New</option></select></label>
+            <label class="custom-field">浏览器字体<select id="image-browser-font"><option value="sans-serif">系统无衬线</option><option value="serif" selected>系统衬线</option><option value="monospace">等宽字体</option><option value="Arial">Arial</option><option value="Georgia">Georgia</option><option value="Times New Roman">Times New Roman</option><option value="Courier New">Courier New</option></select></label>
             <label class="custom-field">本机字体搜索<input id="image-local-font-search" type="search" placeholder="输入字体名称过滤"></label>
             <label class="custom-field">本机字体<select id="image-local-font" size="5"><option value="">尚未读取本机字体</option></select><button type="button" id="image-load-fonts" style="margin-top:6px">读取本机字体</button></label>
-            <label class="custom-field">自定义字体名称<input id="image-font-family" value="sans-serif" placeholder="例如 Microsoft YaHei"></label>
+            <label class="custom-field">自定义字体名称<input id="image-font-family" value="serif" placeholder="例如 Microsoft YaHei"></label>
             <label class="custom-field">对齐<select id="image-text-align"><option value="left">左对齐</option><option value="center">居中</option><option value="right">右对齐</option></select></label>
-            <label class="custom-field">文字颜色<input id="image-text-color" type="color" value="#000000"></label><label class="custom-field">背景颜色<input id="image-text-background" type="color" value="#ffffff"></label><button type="button" id="image-swap-text-colors">交换颜色</button><label class="custom-row"><input id="image-text-bg-transparent" type="checkbox" checked>背景透明</label>
+            <label class="custom-field">文字颜色<input id="image-text-color" type="color" value="#000000"></label><label class="custom-field">背景颜色<input id="image-text-background" type="color" value="#ffffff"></label><button type="button" id="image-swap-text-colors">交换颜色</button><label class="custom-row"><input id="image-text-bg-transparent" type="checkbox">背景透明</label>
             <label class="custom-row"><input id="image-text-bold" type="checkbox">粗体</label>
           </div>
         </div>

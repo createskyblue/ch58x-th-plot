@@ -65,10 +65,12 @@ export class CanvasEditor {
   addText(text = '双击编辑文字\n支持中文和换行') {
     if (this.locked) return null;
     const object = new Textbox(text, {
-      left:40, top:40, width:250, fontSize:24, fontFamily:'sans-serif',
+      left:40, top:40, width:250, fontSize:16, fontFamily:'serif',
       fill:'#000000', lineHeight:1.2, splitByGrapheme:true,
-      originX:'left', originY:'top', padding:4, backgroundColor:'rgba(255,255,255,0)', textBackground:'rgba(255,255,255,0)',
+      originX:'left', originY:'top', padding:4, backgroundColor:'#ffffff', textBackground:'#ffffff',
     });
+    // 文本框默认走固定阈值二值化，避免抖动把文字边缘啃出麻点。
+    object.monoParams={mode:'binary',threshold:50,contrast:100,brightness:0,gamma:100,sharpness:0,invert:false};
     this.canvas.add(object);this.select(object);this.changed();
     return object;
   }
