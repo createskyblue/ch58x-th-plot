@@ -163,6 +163,10 @@ dialog p{margin:0 0 18px}
       <div><label for="refresh-on-change">温湿度变化立即刷新</label><p class="hint" id="refresh-on-change-hint">默认关闭，开启后会增加耗电。</p></div>
       <input id="refresh-on-change" class="setting-switch" type="checkbox" role="switch" aria-describedby="refresh-on-change-hint" disabled>
     </div>
+    <div class="setting-field">
+      <div><label for="image-image-enabled">在设备上显示壁纸页</label><p class="hint" id="wallpaper-state-hint">切换立即生效；需已连接并激活。当前：<span id="image-image-state">尚未读取</span></p></div>
+      <input id="image-image-enabled" class="setting-switch" type="checkbox" role="switch" aria-describedby="wallpaper-state-hint" disabled>
+    </div>
   </div>
   <div class="settings-footer"><p class="hint">连接设备后可修改设置。</p><button id="save-settings" class="primary" disabled>保存设置</button></div>
 </section>
@@ -174,10 +178,7 @@ dialog p{margin:0 0 18px}
       <button id="image-connect" hidden>连接设备</button><button id="image-disconnect" hidden disabled>断开</button>
     </div>
     <p id="image-status" class="custom-status" role="status" aria-live="polite"></p>
-    <div class="custom-row"><span id="image-activation-badge" class="badge">激活状态 —</span>
-      <label class="custom-row" style="gap:6px"><input type="checkbox" id="image-image-enabled" disabled> 在设备上显示自定义壁纸页</label>
-      <span id="image-image-state" class="custom-muted">尚未读取</span>
-    </div>
+    <div class="custom-row"><span id="image-activation-badge" class="badge">激活状态 —</span></div>
     <div class="custom-grid">
       <div>
         <div class="custom-row" style="margin-bottom:12px"><button id="image-add-text">＋ 文本框</button><button id="image-clear">清空壁纸</button><button id="image-project-export">导出工程</button><label class="button-like">导入工程<input id="image-project-import" type="file" accept="application/json" hidden></label></div>
