@@ -97,6 +97,8 @@ dialog::backdrop{background:#163b2659}
 .about-card #firmware-download{display:inline-block;margin-top:6px;text-decoration:none}
 .about-links{margin-top:22px;padding-top:18px;border-top:1px solid var(--line)}
 .about-links h3{margin:0 0 12px;font-size:15px}
+.repo-button{grid-column:1/-1;display:flex;align-items:center;justify-content:center;gap:8px;padding:12px 16px;border:1px solid var(--green);border-radius:12px;background:var(--green);color:#fff;font-size:14px;font-weight:600;text-decoration:none}
+.repo-button:hover{background:#10533f;border-color:#10533f;color:#fff}
 .link-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px}
 .about-link{display:flex;flex-direction:column;gap:4px;padding:12px 14px;border:1px solid var(--line);border-radius:12px;background:#f7faf7;text-decoration:none}
 .about-link b{font-size:14px}
@@ -240,7 +242,8 @@ dialog p{margin:0 0 18px}
   <div class="about-links">
     <h3>相关链接</h3>
     <div class="link-grid">
-      <a class="about-link" href="docs/ble-protocol.md" target="_blank" rel="noopener noreferrer"><b>蓝牙协议文档</b><span>GATT 通道、帧格式与全部命令载荷</span></a>
+      <a class="repo-button" href="https://github.com/createskyblue/ch58x-th-plot/" target="_blank" rel="noopener noreferrer">上位机源码仓库 · GitHub</a>
+      <a class="about-link" href="https://github.com/createskyblue/ch58x-th-plot/blob/main/docs/ble-protocol.md" target="_blank" rel="noopener noreferrer"><b>蓝牙协议文档</b><span>GATT 通道、帧格式与全部命令载荷</span></a>
       <a class="about-link" href="https://cacherivulet.cn/posts/CH584F_EPD_tempHumPlot" target="_blank" rel="noopener noreferrer"><b>博客</b><span>最新动态和发布</span></a>
       <a class="about-link" href="https://oshwhub.com/createskyblue/project_itmmifuv" target="_blank" rel="noopener noreferrer"><b>嘉立创硬件开源平台</b><span>最新 PCB 在这里查看</span></a>
       <a class="about-link" href="https://makerworld.com.cn/zh/models/3096359-4-2cun-mo-shui-ping-wen-du-ji-yi-nian-xu-hang-30ti#profileId-3645676" target="_blank" rel="noopener noreferrer"><b>拓竹 3D 打印开源社区</b><span>最新结构在这里查看</span></a>
