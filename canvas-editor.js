@@ -81,7 +81,7 @@ export class CanvasEditor {
       originX:'left', originY:'top', padding:4, backgroundColor:'#ffffff', textBackground:'#ffffff',
     });
     // 文本框默认走固定阈值二值化，避免抖动把文字边缘啃出麻点。
-    object.monoParams={mode:'binary',threshold:50,contrast:100,brightness:0,gamma:100,sharpness:100,invert:false};
+    object.monoParams={mode:'binary',threshold:100,contrast:100,brightness:0,gamma:100,sharpness:100,invert:false};
     this.canvas.add(object);this.select(object);this.changed();
     return object;
   }
