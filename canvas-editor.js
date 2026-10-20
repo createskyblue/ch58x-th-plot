@@ -13,6 +13,17 @@ export class CanvasEditor {
       this.canvas.on(event, () => this.changed());
     for (const event of ['selection:created','selection:updated','selection:cleared'])
       this.canvas.on(event, () => this.onSelection(this.selected));
+    /* 编辑画布本体也要支持滚轮缩放：滚轮缩放选中对象，Shift+滚轮旋转。 */
+    const surface = this.canvas.upperCanvasEl;
+    surface.addEventListener('wheel', event => {
+      if (this.locked || !this.selected) return;
+      event.preventDefault();
+      const rect = surface.getBoundingClientRect();
+      const anchor = {x:(event.clientX - rect.left) * 400 / rect.width,
+        y:(event.clientY - rect.top) * 300 / rect.height};
+      this.transformSelected(event.shiftKey ? 1 : Math.exp(-event.deltaY * 0.0015),
+        event.shiftKey ? event.deltaY * 0.1 : 0, anchor);
+    }, {passive:false});
   }
 
   get objects() { return this.canvas.getObjects(); }
@@ -70,7 +81,7 @@ export class CanvasEditor {
       originX:'left', originY:'top', padding:4, backgroundColor:'#ffffff', textBackground:'#ffffff',
     });
     // 文本框默认走固定阈值二值化，避免抖动把文字边缘啃出麻点。
-    object.monoParams={mode:'binary',threshold:50,contrast:100,brightness:0,gamma:100,sharpness:0,invert:false};
+    object.monoParams={mode:'binary',threshold:50,contrast:100,brightness:0,gamma:100,sharpness:100,invert:false};
     this.canvas.add(object);this.select(object);this.changed();
     return object;
   }
@@ -88,7 +99,7 @@ export class CanvasEditor {
       left:(400-image.width*scale)/2, top:(300-image.height*scale)/2,
       scaleX:scale, scaleY:scale, originX:'left', originY:'top',
     });
-    object.monoParams={mode:'color',threshold:50,contrast:100,brightness:0,gamma:100,sharpness:0,invert:false};
+    object.monoParams={mode:'color',threshold:50,contrast:100,brightness:0,gamma:100,sharpness:100,invert:false};
     this.canvas.add(object);this.select(object);this.changed();
     return object;
   }

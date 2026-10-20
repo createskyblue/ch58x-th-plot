@@ -2,7 +2,7 @@ import {TYPES, encodeFrame, FrameParser, writeRxFrame, setRxWriteSize} from './p
 import {IMAGE_WIDTH, IMAGE_HEIGHT, IMAGE_BYTES, ditherPixels, monoToRgba, prepareMonochromeRgba} from './image-dither.js?v=transparent-alpha-preset-fix';
 import {lz4CompressBlock} from './lz4.js';
 import {uploadImageBytes} from './image-transfer.js';
-import {CanvasEditor} from './canvas-editor.js?v=transparent-alpha-preset-fix';
+import {CanvasEditor} from './canvas-editor.js?v=sharp-wheel-delete';
 
 const element = id => document.getElementById(id);
 const status = text => { element('image-status').textContent = text; };
@@ -211,7 +211,7 @@ function renderPreview() {
   for(const object of editor.objects){
     const layer=editor.layerCanvas ? editor.layerCanvas(object) : editor.exportCanvas();
     const pixels=layer.getContext ? layer.getContext('2d').getImageData(0,0,IMAGE_WIDTH,IMAGE_HEIGHT).data : new Uint8ClampedArray(IMAGE_WIDTH*IMAGE_HEIGHT*4).fill(255);
-    const params=object.monoParams||{mode:'color',threshold:50,contrast:100,brightness:0,gamma:100,sharpness:0,invert:false};
+    const params=object.monoParams||{mode:'color',threshold:50,contrast:100,brightness:0,gamma:100,sharpness:100,invert:false};
     const adjusted=prepareMonochromeRgba(pixels,IMAGE_WIDTH,IMAGE_HEIGHT,params);
     if(params.sharpness>0){
       const copy=new Uint8ClampedArray(adjusted),amount=params.sharpness/100;
@@ -280,7 +280,7 @@ function syncEditorControls() {
   for (const id of ['image-text','image-font-size','image-browser-font','image-local-font-search','image-local-font','image-font-family','image-text-color','image-text-align','image-text-bold'])
     element(id).disabled=uploading || !text;
   if (!object) return;
-  const mono=object.monoParams||{mode:'color',threshold:50,contrast:100,brightness:0,gamma:100,sharpness:0,invert:false};
+  const mono=object.monoParams||{mode:'color',threshold:50,contrast:100,brightness:0,gamma:100,sharpness:100,invert:false};
   setValue('image-dither-mode',mono.mode);setValue('image-threshold',mono.threshold);setValue('image-contrast',mono.contrast);setValue('image-brightness',mono.brightness);setValue('image-gamma',mono.gamma);setValue('image-sharpness',mono.sharpness);syncParameterLabels();
   for (const [id,value] of Object.entries({x:object.left,y:object.top,width:object.getScaledWidth(),height:object.getScaledHeight(),angle:object.angle}))
     setValue('image-object-'+id,Math.round(value*10)/10);
@@ -402,6 +402,15 @@ function bind() {
     onChange:()=>{++loadSequence;schedulePreview();if(typeof saveProject==='function')saveProject();},onSelection:()=>syncEditorControls(),
   });
   editor.bindGestures(element('image-preview'),true);
+  document.addEventListener('keydown', event => {
+    if (event.key !== 'Delete' && event.key !== 'Backspace') return;
+    const target = event.target;
+    const tag = target?.tagName;
+    if (target?.isContentEditable || tag === 'INPUT' || tag === 'TEXTAREA' || tag === 'SELECT') return;
+    if (uploading || !editor?.selected || editor.locked) return;
+    event.preventDefault();
+    editor.removeSelected();
+  });
   element('image-add-text').addEventListener('click',()=>editor.addText());
   element('image-connect').addEventListener('click', () => connect().catch(error => {
     status(error.message);

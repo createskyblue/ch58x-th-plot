@@ -231,7 +231,7 @@ dialog p{margin:0 0 18px}
         <p id="image-upload-state" class="custom-status" role="status" aria-live="polite"></p>
       </div>
     <details id="image-mono-panel" open><summary>单色输出调整</summary><div class="custom-controls" style="margin-top:16px">
-<label class="custom-field">抖动模式<select id="image-dither-mode"><option value="color">误差扩散（Floyd–Steinberg）</option><option value="classic">有序抖动（Bayer 8×8）</option><option value="binary">固定阈值二值化</option></select></label><label class="custom-field">阈值 <output id="image-threshold-value">50</output><input type="range" id="image-threshold" min="0" max="100" value="50"></label><label class="custom-field">对比度 <output id="image-contrast-value">100</output>%<input type="range" id="image-contrast" min="0" max="300" value="100"></label><label class="custom-field">亮度 <output id="image-brightness-value">0</output><input type="range" id="image-brightness" min="-100" max="100" value="0"></label><label class="custom-field">伽马 <output id="image-gamma-value">100</output>%<input type="range" id="image-gamma" min="10" max="300" value="100"></label><label class="custom-field">锐度 <output id="image-sharpness-value">0</output>%<input type="range" id="image-sharpness" min="0" max="100" value="0"></label><label class="custom-field">预设<select id="image-preset"><option value="custom">自定义</option><option value="photo">照片</option><option value="portrait">人像</option><option value="line">文字 / 线稿</option><option value="high">高对比度</option></select></label>
+<label class="custom-field">抖动模式<select id="image-dither-mode"><option value="color">误差扩散（Floyd–Steinberg）</option><option value="classic">有序抖动（Bayer 8×8）</option><option value="binary">固定阈值二值化</option></select></label><label class="custom-field">阈值 <output id="image-threshold-value">50</output><input type="range" id="image-threshold" min="0" max="100" value="50"></label><label class="custom-field">对比度 <output id="image-contrast-value">100</output>%<input type="range" id="image-contrast" min="0" max="300" value="100"></label><label class="custom-field">亮度 <output id="image-brightness-value">0</output><input type="range" id="image-brightness" min="-100" max="100" value="0"></label><label class="custom-field">伽马 <output id="image-gamma-value">100</output>%<input type="range" id="image-gamma" min="10" max="300" value="100"></label><label class="custom-field">锐度 <output id="image-sharpness-value">100</output>%<input type="range" id="image-sharpness" min="0" max="100" value="100"></label><label class="custom-field">预设<select id="image-preset"><option value="custom">自定义</option><option value="photo">照片</option><option value="portrait">人像</option><option value="line">文字 / 线稿</option><option value="high">高对比度</option></select></label>
           <button id="image-invert">黑白反转</button>
         </div></details>
     <div class="custom-notice">上传成功后设备自动切到壁纸页；关闭开关后会跳过。上传结果显示传输速度与总耗时。</div>
@@ -1599,6 +1599,6 @@ loadFirmwareInfo();
   document.addEventListener('visibilitychange', () => { if (document.hidden) stop(); else start(); });
 })();
 </script>
-<script type="module" src="./image-app.js?v=wallpaper-term"></script>
+<script type="module" src="./image-app.js?v=sharp-wheel-delete"></script>
 </body>
 </html>
