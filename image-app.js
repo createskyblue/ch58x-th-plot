@@ -2,7 +2,7 @@ import {TYPES, encodeFrame, FrameParser, writeRxFrame, setRxWriteSize} from './p
 import {IMAGE_WIDTH, IMAGE_HEIGHT, IMAGE_BYTES, ditherPixels, monoToRgba, prepareMonochromeRgba} from './image-dither.js?v=transparent-alpha-preset-fix';
 import {lz4CompressBlock} from './lz4.js';
 import {uploadImageBytes} from './image-transfer.js';
-import {CanvasEditor} from './canvas-editor.js?v=sharp-wheel-delete';
+import {CanvasEditor} from './canvas-editor.js?v=sharp-wheel-delete2';
 
 const element = id => document.getElementById(id);
 const status = text => { element('image-status').textContent = text; };
@@ -406,7 +406,9 @@ function bind() {
     if (event.key !== 'Delete' && event.key !== 'Backspace') return;
     const target = event.target;
     const tag = target?.tagName;
-    if (target?.isContentEditable || tag === 'INPUT' || tag === 'TEXTAREA' || tag === 'SELECT') return;
+    /* 输入框里按删除键是编辑文字，不能抢；图层下拉框里按删除才允许删图层。 */
+    if (target?.isContentEditable || tag === 'INPUT' || tag === 'TEXTAREA' ||
+        (tag === 'SELECT' && target.id !== 'image-layers')) return;
     if (uploading || !editor?.selected || editor.locked) return;
     event.preventDefault();
     editor.removeSelected();
