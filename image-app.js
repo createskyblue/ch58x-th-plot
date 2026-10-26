@@ -2,7 +2,7 @@ import {TYPES, encodeFrame, FrameParser, writeRxFrame, setRxWriteSize} from './p
 import {IMAGE_WIDTH, IMAGE_HEIGHT, IMAGE_BYTES, ditherPixels, monoToRgba, prepareMonochromeRgba} from './image-dither.js?v=transparent-alpha-preset-fix';
 import {lz4CompressBlock} from './lz4.js';
 import {uploadImageBytes} from './image-transfer.js';
-import {CanvasEditor} from './canvas-editor.js?v=text-threshold100';
+import {CanvasEditor} from './canvas-editor.js?v=qr-battery1';
 
 const element = id => document.getElementById(id);
 const status = text => { element('image-status').textContent = text; };
@@ -116,16 +116,17 @@ function setConnected(value) {
 }
 
 function controls() {
-  const canImage = connected && activated && !uploading;
-  element('image-image-enabled').disabled = !connected || !activated || uploading;
+  const canImage = connected && !uploading;
+  element('image-image-enabled').disabled = !connected || uploading;
   element('image-upload').disabled = !canImage || !bits || importsPending > 0;
   element('image-cancel').disabled = !uploading || uploadCancelled || committing;
   if (editor && editor.locked !== uploading) editor.setLocked(uploading);
-  for (const id of ['image-file','image-add-text','image-clear','image-invert','image-preset'])
+  for (const id of ['image-file','image-add-text','image-add-qr','image-clear','image-invert','image-preset'])
     element(id).disabled = uploading;
   syncEditorControls();
   for (const id of ['image-dither-mode', 'image-threshold', 'image-contrast', 'image-brightness', 'image-gamma', 'image-sharpness'])
     element(id).disabled = uploading;
+  /* 壁纸上传/开关不再要求激活；徽章只作展示。 */
   element('image-activation-badge').textContent = connected ? (activated ? '已激活' : '未激活') : '激活状态 —';
   element('image-activation-badge').style.color = connected && !activated ? '#a33' : '';
 }
@@ -137,7 +138,6 @@ async function readActivation() {
 }
 
 async function readImageEnabled() {
-  if (!activated) return;
   try {
     const data = await request(TYPES.imageSettingsRead);
     imageEnabled = data.length >= 1 && data[0] === 1;
@@ -166,14 +166,8 @@ async function connect() {
   });
   await tx.startNotifications();
   setConnected(true);
-  status('已连接，正在校验激活状态…');
-  await readActivation();
-  if (!activated) {
-    status('设备未激活：请先在温湿度页完成激活，再回来上传图片。');
-    element('image-activation-badge').style.color = '#a33';
-    return;
-  }
-  status('已连接，已激活');
+  status('已连接');
+  readActivation().catch(() => {});
   await readImageEnabled();
 }
 
@@ -257,12 +251,13 @@ function setValue(id, value) {
 
 function syncEditorControls() {
   if (!editor) return;
-  const object=editor.selected, text=object?.type==='textbox';
+  const object=editor.selected, text=object?.type==='textbox', qr=object?.isQr===true;
   const layers=element('image-layers');
   const options=editor.objects.map((item,index)=>{
     const option=document.createElement('option');
     option.value=String(index);
-    option.textContent=(index+1)+' · '+(item.type==='textbox' ? item.text.replace(/\n/g,' ').slice(0,24) || '空文本框' : '图片');
+    option.textContent=(index+1)+' · '+(item.type==='textbox' ? item.text.replace(/\n/g,' ').slice(0,24) || '空文本框'
+      : item.isQr ? '二维码 · '+(item.qrText||'').slice(0,24) : '图片');
     option.selected=item===object;
     return option;
   }).reverse();
@@ -271,6 +266,7 @@ function syncEditorControls() {
   layers.disabled=uploading;
   element('image-object-panel').hidden=!object;
   element('image-text-panel').hidden=!text;
+  element('image-qr-panel').hidden=!qr;
   for (const id of ['image-layer-delete','image-layer-duplicate','image-layer-up','image-layer-down',
     'image-flip-x','image-flip-y','image-zoom-in','image-zoom-out','image-zoom-reset','image-rotate-left','image-rotate-right',
     'image-object-x','image-object-y','image-object-width','image-object-height','image-object-angle'])
@@ -290,6 +286,7 @@ function syncEditorControls() {
     setValue('image-font-family',object.fontFamily);setValue('image-browser-font',commonBrowserFonts.includes(object.fontFamily)?object.fontFamily:'');setValue('image-text-color',object.fill);const textBg=object.backgroundColor||object.textBackground||'rgba(255,255,255,0)';setValue('image-text-background',typeof textBg==='string'&&textBg.startsWith('#')?textBg:'#ffffff');element('image-text-bg-transparent').checked=textBg==='rgba(255,255,255,0)'||!textBg;
     setValue('image-text-align',object.textAlign);element('image-text-bold').checked=object.fontWeight==='bold';
   }
+  if(qr) setValue('image-qr-content',object.qrText||'');
 }
 
 function loadFiles(files, {defaultImage=false}={}) {
@@ -322,7 +319,7 @@ function loadFiles(files, {defaultImage=false}={}) {
 }
 
 async function uploadImage() {
-  if (!connected || !activated || !bits || uploading || importsPending) return;
+  if (!connected || !bits || uploading || importsPending) return;
   const token = ++uploadToken;
   const link = rx;
   uploadCancelled = committing = false;
@@ -382,7 +379,7 @@ async function cancelUpload() {
 }
 
 async function toggleImage() {
-  if (!connected || !activated || uploading) return;
+  if (!connected || uploading) return;
   const enabled = element('image-image-enabled').checked;
   element('image-image-enabled').disabled = true;
   try {
@@ -393,7 +390,7 @@ async function toggleImage() {
     element('image-image-enabled').checked = !enabled;
     element('image-image-state').textContent = error.message;
   } finally {
-    element('image-image-enabled').disabled = !connected || !activated || uploading;
+    element('image-image-enabled').disabled = !connected || uploading;
   }
 }
 
@@ -414,6 +411,38 @@ function bind() {
     editor.removeSelected();
   });
   element('image-add-text').addEventListener('click',()=>editor.addText());
+  /* 二维码：弹出内容输入框，确认后按内容生成黑底白块图并作为图层插入。 */
+  const qrDialog=element('image-qr-dialog');
+  const openQrDialog=()=>{
+    element('image-qr-text').value='';
+    if (typeof qrDialog.showModal==='function') qrDialog.showModal();
+    else qrDialog.setAttribute('open','');
+  };
+  const closeQrDialog=()=>{
+    if (!qrDialog.open) return;
+    if (typeof qrDialog.close==='function') qrDialog.close();
+    else qrDialog.removeAttribute('open');
+  };
+  const insertQr=()=>{
+    const content=element('image-qr-text').value.trim();
+    if (!content) { status('请输入二维码内容。'); return; }
+    closeQrDialog();
+    try {
+      const object=editor.addQr(content);
+      if (object) status('二维码已插入；拖动或用控制点缩放调整位置。');
+    } catch (error) { status('二维码生成失败：'+error.message); }
+  };
+  element('image-add-qr').addEventListener('click',()=>{ if (!uploading) openQrDialog(); });
+  element('image-qr-cancel').addEventListener('click',closeQrDialog);
+  element('image-qr-confirm').addEventListener('click',insertQr);
+  element('image-qr-update').addEventListener('click',()=>{
+    const object=editor.selected;
+    if (!object || object.isQr!==true) return;
+    const content=element('image-qr-content').value.trim();
+    if (!content) { status('请输入二维码内容。'); return; }
+    try { editor.updateQr(object,content); status('二维码已更新。'); }
+    catch (error) { status('二维码生成失败：'+error.message); }
+  });
   element('image-connect').addEventListener('click', () => connect().catch(error => {
     status(error.message);
     setConnected(false);

@@ -1,0 +1,1810 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="color-scheme" content="light">
+<title>TH-Plot · 磁吸墨水屏温湿度计</title>
+<style>
+:root{
+  --bg:#f6f8fa; --panel:#eef2f6; --panel2:#e7ecf2;
+  --line:#dce2e9; --ink:#101822; --sub:#5a6472;
+  --acc:#0d7a5c; --acc-bg:#e6f3ed;
+  --blue:#1a5fb4; --blue-bg:#e7f0fb;
+  --warm:#c2410c; --warm-bg:#fdeee4;
+  --purple:#6b3fa0; --purple-bg:#f1ecfa;
+  --mono:Consolas,"Cascadia Mono",Menlo,"Courier New",monospace;
+  --sans:"Segoe UI","Microsoft YaHei","PingFang SC","Hiragino Sans GB",system-ui,sans-serif;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+html,body{height:100%}
+body{background:#e9edf1;color:var(--ink);overflow:hidden;font:26px/1.55 var(--sans);
+  display:flex;align-items:center;justify-content:center;-webkit-font-smoothing:antialiased}
+
+/* ===== 固定 1600x900 画布，等比缩放 ===== */
+#stage{width:1600px;height:900px;position:relative;flex:0 0 auto;
+  transform-origin:center center;background:var(--bg);counter-reset:sec;
+  box-shadow:0 24px 70px rgba(16,24,34,.18)}
+.slide{position:absolute;inset:0;display:none;flex-direction:column;
+  padding:72px 96px 66px;background:var(--bg)}
+.slide.active{display:flex;animation:inR .28s ease}
+.slide.active.back{animation:inL .28s ease}
+@keyframes inR{from{opacity:0;transform:translateX(26px)}to{opacity:1;transform:none}}
+@keyframes inL{from{opacity:0;transform:translateX(-26px)}to{opacity:1;transform:none}}
+@media (prefers-reduced-motion:reduce){.slide.active,.slide.active.back{animation:none}}
+
+/* 页码 */
+.deck{counter-reset:sec;flex:1;display:flex;min-height:0}
+#stage>.slide{counter-increment:sec}
+.slide>.pageno{position:absolute;right:52px;bottom:26px;font-size:19px;color:#9aa4b0;
+  font-variant-numeric:tabular-nums;letter-spacing:1px}
+
+/* ===== 标题区 ===== */
+.head{flex:0 0 auto;margin-bottom:32px}
+.kicker{display:flex;align-items:center;gap:16px;font-size:27px;font-weight:800;
+  letter-spacing:3px;color:var(--acc);text-transform:uppercase}
+.kicker::before{content:"";width:54px;height:4px;background:var(--acc);border-radius:2px}
+h1{font-size:72px;line-height:1.12;font-weight:800;letter-spacing:-1.5px}
+h2{font-size:44px;line-height:1.25;font-weight:800;letter-spacing:-.8px;margin-top:14px}
+.lead{font-size:30px;line-height:1.5;color:var(--sub);margin-top:20px;text-wrap:pretty}
+.lead b{color:var(--ink);font-weight:700}
+
+/* ===== 内容区 ===== */
+.body{flex:1;min-height:0;display:flex;flex-direction:column;justify-content:center}
+.body.g2{display:grid;grid-template-columns:1fr 1fr;gap:52px;align-items:center}
+.body.g2.wide{grid-template-columns:1.15fr .95fr}
+.foot{flex:0 0 auto;margin-top:24px;padding-top:14px;border-top:1px solid var(--line);
+  font-size:21px;line-height:1.5;color:var(--sub)}
+.foot b{color:var(--ink);font-weight:700}
+
+/* ===== 卡片 ===== */
+.cards{display:grid;gap:26px}
+.cards.c3{grid-template-columns:repeat(3,1fr)}
+.cards.c2{grid-template-columns:repeat(2,1fr)}
+.card{background:var(--panel);border-radius:22px;padding:32px 34px}
+.card h3{font-size:31px;font-weight:800;letter-spacing:-.3px;margin-bottom:10px}
+.card p{font-size:23px;line-height:1.55;color:var(--sub);text-wrap:pretty}
+.card p b{color:var(--ink)}
+.card.acc{background:var(--acc-bg)}
+.card.acc h3{color:var(--acc)}
+.card.acc p{color:#3d4a56}
+.num-badge{display:inline-block;font-size:19px;font-weight:800;color:#fff;background:var(--acc);
+  width:34px;height:34px;line-height:34px;text-align:center;border-radius:10px;margin-right:12px;
+  vertical-align:2px}
+
+/* ===== 数字 ===== */
+.statrow{display:flex;gap:56px;margin-top:38px}
+.statrow>div{display:flex;flex-direction:column;gap:4px}
+.statrow b{font-size:52px;font-weight:800;letter-spacing:-1.5px;line-height:1;
+  font-variant-numeric:tabular-nums;color:var(--acc)}
+.statrow span{font-size:22px;color:var(--sub)}
+.hero{font-size:120px;font-weight:800;line-height:1;letter-spacing:-4px;
+  font-variant-numeric:tabular-nums}
+.hero small{font-size:38px;font-weight:700;letter-spacing:0;margin-left:6px}
+
+/* ===== 列表 ===== */
+ul.big{list-style:none;display:flex;flex-direction:column;gap:22px}
+ul.big li{position:relative;padding-left:34px;font-size:28px;line-height:1.5}
+ul.big li::before{content:"";position:absolute;left:0;top:14px;width:14px;height:14px;
+  border-radius:4px;background:var(--acc)}
+ul.big li b{font-weight:800}
+ul.big.sm li{font-size:25px}
+
+/* ===== 图片 ===== */
+figure{display:flex;flex-direction:column;align-items:center;min-width:0}
+figure img{display:block;border-radius:20px;border:1px solid var(--line);
+  box-shadow:0 10px 30px rgba(16,24,34,.10);max-width:100%;object-fit:contain}
+figcaption{font-size:20px;color:var(--sub);margin-top:14px;text-align:center;line-height:1.4}
+.shot{height:430px;width:auto}
+.shot-sm{height:360px;width:auto}
+
+/* 四页缩略 */
+.quad{display:grid;grid-template-columns:1fr 1fr;gap:26px 30px}
+.quad figure{background:var(--panel);border-radius:20px;padding:20px 24px;
+  flex-direction:row;align-items:center;gap:24px}
+.quad img{height:198px;width:242px;object-fit:contain;border-radius:12px;
+  border:1px solid var(--line);background:#fff}
+.quad .cap{text-align:left}
+.quad .cap b{display:block;font-size:27px;font-weight:800;margin-bottom:6px}
+.quad .cap span{font-size:22px;color:var(--sub);line-height:1.45}
+
+/* ===== 封面 ===== */
+.slide.cover{grid-template-columns:1fr 660px;gap:60px;align-items:center;padding:90px 96px}
+.slide.cover.active{display:grid}
+
+/* 波形三连 */
+.shotrow{display:grid;grid-template-columns:repeat(3,1fr);gap:26px;margin-top:30px}
+.shotrow figure{background:#0f1720;border-radius:16px;padding:10px 10px 0;min-width:0}
+.shotrow img{width:100%;height:auto;border-radius:9px;border:0;box-shadow:none}
+.shotrow figcaption{font-size:20px;line-height:1.45;color:#a8b6c4;padding:12px 8px 15px}
+.shotrow figcaption b{display:block;font-size:24px;color:#fff;margin-bottom:3px;letter-spacing:-.2px}
+/* 封面：四屏横幅 */
+.slide.cover2{padding:78px 96px 58px}
+.cover-top{display:flex;align-items:center;justify-content:space-between}
+.bt-badge{display:flex;align-items:center;gap:10px;background:#eaf3ff;border:1px solid #bcd9fa;
+  border-radius:999px;padding:8px 20px 8px 15px;font-size:21px;font-weight:800;
+  color:#0b5cad;letter-spacing:.5px}
+.slide.cover2.active{display:flex}
+.cover-collage{display:grid;grid-template-columns:repeat(4,1fr);gap:18px;margin-top:24px}
+.cover-collage figure{background:#fff;border:1px solid var(--line);border-radius:14px;
+  padding:7px 7px 0;box-shadow:0 8px 22px rgba(16,24,34,.09)}
+.cover-collage img{width:100%;aspect-ratio:6/5;object-fit:cover;display:block;border-radius:9px;
+  border:0;box-shadow:none}
+.cover-collage figcaption{font-size:17px;color:var(--sub);text-align:center;padding:7px 0 8px}
+.cover-foot{display:flex;align-items:center;justify-content:space-between;gap:44px;margin-top:auto}
+.policynote{display:flex;align-items:center;gap:11px;font-size:21px;color:var(--sub);margin-top:26px}
+.policynote::before{content:"";width:10px;height:10px;border-radius:50%;background:var(--acc);flex:0 0 auto}
+
+/* 留言对象 */
+.audience{display:grid;grid-template-columns:repeat(3,1fr);gap:24px;margin-top:26px}
+.audience>div{background:var(--panel);border-radius:14px;padding:16px 22px}
+.audience b{display:block;font-size:20px;font-weight:800;color:var(--acc);letter-spacing:.5px;margin-bottom:5px}
+.audience span{font-size:23px;color:var(--ink)}
+
+/* 墨水屏待办示意卡 */
+.epd-card{width:100%;aspect-ratio:4/3;background:#fff;border:1px solid #cdd6de;border-radius:14px;
+  box-shadow:0 10px 30px rgba(16,24,34,.10);padding:24px 26px;color:#0b0f14;overflow:hidden;
+  font-family:"Songti SC",SimSun,"Source Han Serif SC",serif;
+  display:flex;flex-direction:column;justify-content:center}
+.epd-card.photo{padding:0}
+.epd-card.photo img{width:100%;height:100%;object-fit:cover;display:block;border:0;border-radius:0;
+  box-shadow:none}
+.epd-date{font-size:17px;letter-spacing:1px;color:#3d4854}
+.epd-title{font-size:27px;font-weight:800;letter-spacing:3px;margin:3px 0 12px}
+.epd-list{list-style:none;display:flex;flex-direction:column;gap:11px;font-size:19px}
+.epd-list li{display:flex;align-items:center;gap:12px}
+.epd-list li::before{content:"";width:15px;height:15px;border:2px solid #0b0f14;
+  flex:0 0 auto;border-radius:1px}
+.wp-demos{display:flex;gap:56px;justify-content:center;margin-bottom:26px}
+.wp-demos figure{width:420px}
+.wp-points{display:grid;grid-template-columns:1fr 1fr;gap:12px 52px}
+
+/* 合作能提供什么 */
+.offer{display:flex;align-items:center;gap:34px;margin-top:22px;padding-top:16px;
+  border-top:1px solid var(--line)}
+.offer b{font-size:21px;font-weight:800;color:var(--acc);letter-spacing:1px;flex:0 0 auto}
+.offer span{position:relative;padding-left:17px;font-size:21px;color:var(--ink)}
+.offer span::before{content:"";position:absolute;left:0;top:9px;width:7px;height:7px;
+  border-radius:50%;background:var(--acc)}
+
+/* 类比句 */
+.analogy{margin-top:24px;font-size:22px;line-height:1.5;color:var(--sub)}
+
+/* 场景块 */
+.usecase{margin-top:26px;border-top:1px solid var(--line);padding-top:18px}
+.usecase h3{font-size:22px;font-weight:800;color:var(--acc);letter-spacing:1px;margin-bottom:12px}
+.uc{display:grid;grid-template-columns:150px 1fr;gap:16px;font-size:21px;line-height:1.45;margin-top:9px}
+.uc b{font-weight:800;color:var(--ink);font-size:21px;white-space:nowrap}
+.uc span{color:var(--sub)}
+
+/* 卡点列表 */
+.blockers{display:flex;flex-direction:column;gap:26px}
+.blk{display:flex;gap:18px;align-items:flex-start}
+.bno{font:800 20px/1.5 var(--mono);color:var(--warm);flex:0 0 auto}
+.blk b{display:block;font-size:26px;font-weight:800;letter-spacing:-.2px;margin-bottom:5px}
+.blk p{font-size:22px;line-height:1.5;color:var(--sub)}
+
+/* 续航表 */
+table.life{margin-top:4px}
+table.life td{padding:14px 0;vertical-align:middle}
+table.life td b{font-size:27px;font-weight:800;letter-spacing:-.3px}
+table.life td span{display:block;font-size:19px;color:var(--sub);margin-top:3px}
+table.life .life-col{width:44%;padding-left:40px;text-align:left}
+table.life th.life-col{text-align:left}
+table.life .track{height:14px;background:var(--panel2);border-radius:7px;overflow:hidden;margin-bottom:8px}
+table.life .track i{display:block;height:100%;border-radius:7px}
+table.life .life-col b{font-size:28px;font-variant-numeric:tabular-nums}
+
+/* 验证步骤块 */
+.verify{background:var(--panel);border-radius:18px;padding:18px 24px 20px;margin-top:24px}
+.verify h3{font-size:22px;font-weight:800;color:var(--acc);letter-spacing:1px;margin-bottom:11px}
+.vrow{display:flex;gap:12px;align-items:flex-start;margin-top:8px}
+.vno{font:700 17px/1.6 var(--mono);color:var(--acc);flex:0 0 auto}
+.vrow p{font-size:20px;line-height:1.5;color:#4c5764}
+.vrow p b{color:var(--ink)}
+
+/* 单张波形框 */
+.wave{background:#0f1720;border-radius:16px;padding:10px 10px 0;max-width:504px}
+.wave img{width:100%;height:auto;display:block;border-radius:9px;border:0;box-shadow:none}
+.wave figcaption{font-size:19px;line-height:1.42;color:#a8b6c4;padding:10px 8px 13px}
+.wave figcaption b{display:block;color:#fff;font-weight:800;font-size:21px;margin-bottom:2px}
+
+.divider{justify-content:center;padding-left:120px}
+.divider .ghost{position:absolute;right:-24px;bottom:-70px;font-size:440px;font-weight:900;
+  color:rgba(13,122,92,.07);line-height:.8;letter-spacing:-20px;pointer-events:none}
+.divider h1{font-size:88px;letter-spacing:-2px}
+.divider .lead{max-width:900px}
+.warlist{display:flex;gap:52px;margin-top:50px;flex-wrap:wrap}
+.warlist>div{display:flex;flex-direction:column;gap:4px}
+.warlist b{font:800 38px/1.05 var(--mono);color:var(--acc);letter-spacing:-1px}
+.warlist span{font-size:24px;color:var(--ink);font-weight:700}
+
+/* ===== 边框/条形 ===== */
+.bars{display:flex;flex-direction:column;gap:30px}
+.brow{display:grid;grid-template-columns:250px 1fr 190px;align-items:center;gap:26px}
+.brow .lab{font-size:25px;color:var(--sub);text-align:right}
+.brow .track{height:66px;background:var(--panel);border-radius:12px;overflow:hidden}
+.brow .fill{height:100%;border-radius:12px}
+.brow .val{font-size:34px;font-weight:800;font-variant-numeric:tabular-nums;letter-spacing:-1px}
+
+/* 刷屏序列 */
+.seq{display:flex;gap:12px}
+.seq>div{flex:1;height:70px;border-radius:12px;display:flex;align-items:center;
+  justify-content:center;font-size:23px;font-weight:700;background:var(--acc-bg);
+  color:var(--acc);border:2px solid #bfdfd2}
+.seq>div.full{background:#fff;color:var(--ink);border-color:var(--ink)}
+
+table{border-collapse:collapse;width:100%;font-variant-numeric:tabular-nums}
+th{font-size:21px;font-weight:700;color:var(--sub);text-align:left;padding:0 0 12px;
+  border-bottom:2px solid var(--ink)}
+td{font-size:26px;padding:12px 0;border-bottom:1px solid var(--line)}
+td+th,th+th{text-align:right}
+td.r,th.r{text-align:right}
+
+/* 代码 */
+pre.code{background:#111a24;color:#dfe7f0;border-radius:20px;padding:26px 30px;
+  font:25px/1.9 var(--mono);white-space:pre;overflow:auto}
+.cmt{color:#7fb3a3}
+.kw{color:#8fd0ff}
+code{font-family:var(--mono);font-size:.9em;background:var(--panel2);padding:2px 8px;border-radius:6px}
+
+/* 分层架构 */
+.stack{display:flex;flex-direction:column;gap:10px}
+.layer{display:grid;grid-template-columns:88px 300px 1fr;align-items:center;
+  background:var(--panel);border-radius:14px;padding:16px 28px;height:70px}
+.layer .tag{font:26px/1 var(--mono);font-weight:800;color:var(--acc);letter-spacing:1px}
+.layer .nm{font-size:26px;font-weight:800}
+.layer .ds{font-size:22px;color:#4c5764}
+.layer.l5{background:var(--ink)} .layer.l5 .name,.layer.l5 .nm{color:#fff}
+.layer.l5 .ds{color:#a9b6c4} .layer.l5 .tag{color:#7fd8bb}
+.layer.l4{background:var(--acc-bg)} .layer.l4 .tag{color:var(--acc)}
+.layer.l3{background:var(--warm-bg)} .layer.l3 .tag{color:var(--warm)}
+.layer.l2{background:var(--blue-bg)} .layer.l2 .tag{color:var(--blue)}
+.layer.l1{background:var(--purple-bg)} .layer.l1 .tag{color:var(--purple)}
+
+/* ===== 导航 ===== */
+#bar{position:fixed;left:50%;bottom:20px;transform:translateX(-50%);display:flex;
+  align-items:center;gap:10px;padding:8px 12px;background:rgba(255,255,255,.9);
+  border:1px solid var(--line);border-radius:999px;z-index:20;
+  box-shadow:0 6px 22px rgba(16,24,34,.12);transition:opacity .4s;backdrop-filter:blur(6px)}
+#bar.hide{opacity:0;pointer-events:none}
+#bar button{border:0;background:transparent;width:38px;height:34px;border-radius:50%;
+  font-size:22px;line-height:1;color:var(--ink);cursor:pointer}
+#bar button:hover{background:var(--panel)}
+#cnt{font-size:17px;color:var(--sub);font-variant-numeric:tabular-nums;min-width:64px;text-align:center}
+#prog{position:fixed;top:0;left:0;height:3px;background:var(--acc);z-index:30;
+  transition:width .25s ease;box-shadow:0 0 8px rgba(13,122,92,.4)}
+/* 手机竖屏观看：舞台整体旋转 90°，隐藏外置导航，点击左右侧或滑动翻页，页码在画面内 */
+body.phone-rotated #bar,body.phone-rotated #prog{display:none!important}
+
+/* 翻页提示：左右箭头始终显示，底部文字提示首次翻页或数秒后淡出；随舞台一起旋转 */
+.flip-hint{position:absolute;z-index:40;pointer-events:none;user-select:none;-webkit-user-select:none;
+  color:var(--ink);opacity:0;transition:opacity .6s ease}
+.flip-hint.l{left:22px;top:50%;transform:translateY(-50%);font-size:64px;font-weight:300}
+.flip-hint.r{right:22px;top:50%;transform:translateY(-50%);font-size:64px;font-weight:300}
+.flip-hint.tip{left:50%;bottom:22px;transform:translateX(-50%);font-size:15px;color:var(--sub);
+  background:rgba(255,255,255,.88);border:1px solid var(--line);border-radius:999px;
+  padding:7px 18px;white-space:nowrap;box-shadow:0 4px 16px rgba(16,24,34,.10)}
+.flip-hint.show{opacity:.45}
+.flip-hint.tip.show{opacity:.95}
+
+/* ===== 打印 16:9 PDF ===== */
+@media print{
+  @page{size:1600px 900px;margin:0}
+  html,body{display:block;overflow:visible;height:auto;background:#fff}
+  #stage{transform:none!important;box-shadow:none;width:1600px;height:auto}
+  .slide{display:flex!important;position:relative;inset:auto;width:1600px;height:900px;
+    break-after:page;page-break-after:always;animation:none!important}
+  #bar,#prog,.flip-hint{display:none!important}
+  .slide,.card,.layer,pre.code,.brow .fill,th,td,figure img,.seq>div{
+    -webkit-print-color-adjust:exact;print-color-adjust:exact}
+  figure,table,pre.code,.cards,.stack{break-inside:avoid;page-break-inside:avoid}
+}
+</style>
+</head>
+<body>
+
+<div id="prog"></div>
+
+<div id="stage">
+<div class="flip-hint l" aria-hidden="true">‹</div>
+<div class="flip-hint r" aria-hidden="true">›</div>
+<div class="flip-hint tip" aria-hidden="true">点击左右两侧或滑动翻页</div>
+
+<!-- ================= 01 封面 ================= -->
+<section class="slide cover2">
+  <div class="cover-top">
+    <div class="kicker">TH-Plot · 磁吸墨水屏</div>
+    <div class="bt-badge">
+      <svg viewBox="0 0 24 24" width="26" height="26" aria-hidden="true">
+        <path fill="#0082fc" d="M17.71 7.71 12 2h-1v7.59L6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 11 14.41V22h1l5.71-5.71-4.3-4.29 4.3-4.29zM13 5.83l1.88 1.88L13 9.59V5.83zm1.88 10.46L13 18.17v-3.76l1.88 1.88z"/>
+      </svg>
+      蓝牙 5.4
+    </div>
+  </div>
+  <h1 style="font-size:76px;margin-top:20px">温度计 · 日历 · 壁纸<br>两节干电池，挂墙上用一年</h1>
+  <div class="cover-collage">
+    <figure><img src="../img/新实拍/温湿度图表.png" alt="趋势页"><figcaption>温度计 · 30 天曲线</figcaption></figure>
+    <figure><img src="../img/新实拍/万年历.png" alt="万年历页"><figcaption>万年历 · 农历节气</figcaption></figure>
+    <figure><img src="../img/新实拍/大号日历.png" alt="今天页"><figcaption>今天 · 大字长辈版</figcaption></figure>
+    <figure><img src="../img/新实拍/自定义壁纸.png" alt="壁纸页"><figcaption>壁纸 · 留言板</figcaption></figure>
+  </div>
+  <div class="cover-foot">
+    <div class="statrow" style="margin-top:0">
+      <div><b>7.33 µA</b><span>待机实测</span></div>
+      <div><b>30 天</b><span>曲线画在屏上</span></div>
+      <div><b>≈55 元</b><span>整机成本</span></div>
+    </div>
+    <p class="policynote">现在不激活也能用全部功能，唯一区别是循环里多一页版权页</p>
+  </div>
+  <div class="pageno"></div>
+</section>
+
+<!-- ================= 02 痛点 ================= -->
+<section class="slide">
+  <div class="head">
+    <div class="kicker">问题</div>
+    <h2>现有产品的痛点：没历史、要插电、要装一堆 APP</h2>
+  </div>
+  <div class="body">
+    <div class="cards c2" style="gap:26px 30px">
+      <div class="card"><h3>只能看「现在」</h3><p>想知道昨晚几点开始降温，对不起，没有历史。</p></div>
+      <div class="card"><h3>能画曲线的要插电</h3><p>普通屏断电即黑，所以画曲线的设备都拖着一根电源线。</p></div>
+      <div class="card"><h3>每个牌子一个 APP</h3><p>买一台装一个，换牌子再装一个，安卓和 iOS 还各一套。只想看一眼，先注册个账号。</p></div>
+      <div class="card acc"><h3>TH-Plot：有历史、不插电、不装 APP</h3><p>墨水屏断电留影，两节干电池画一年曲线；浏览器打开就能看历史、导数据，不注册也不上云。</p></div>
+    </div>
+  </div>
+  <div class="foot">先看它能干什么，再看它怎么做到。</div>
+  <div class="pageno"></div>
+</section>
+
+<!-- ================= 03 答案 ================= -->
+<section class="slide">
+  <div class="head">
+    <div class="kicker">答案</div>
+    <h2>30 天曲线画在墨水屏上，只用一个按键</h2>
+  </div>
+  <div class="body g2">
+    <div>
+      <div class="hero" style="color:var(--acc)">1 个按键</div>
+      <ul class="big" style="margin-top:36px">
+        <li><b>单击</b>切四个页面</li>
+        <li><b>双击</b>切 12 档时间窗</li>
+        <li><b>长按 3 秒</b>开蓝牙</li>
+      </ul>
+      <p class="lead" style="font-size:25px;margin-top:32px">
+        CH584F 单芯片 · 4.2″ 墨水屏 · 磁吸上墙 · 0 根线</p>
+    </div>
+    <figure><img class="shot" src="../img/实拍/08_组装完成.jpg" alt="手持整机" style="height:440px"></figure>
+  </div>
+  <div class="foot">先记住一个数字：<b>7.33 µA</b>。后面的每一项设计，都是为了守住它。</div>
+  <div class="pageno"></div>
+</section>
+
+<!-- ================= 05 手势 ================= -->
+<section class="slide">
+  <div class="head">
+    <div class="kicker">01 · 产品体验</div>
+    <h2>一个按键，三个动作</h2>
+  </div>
+  <div class="body">
+    <div class="cards c3">
+      <div class="card">
+        <div style="font-size:56px;font-weight:800;color:var(--acc);letter-spacing:-1px">单击</div>
+        <p style="margin-top:14px;color:var(--ink);font-size:25px"><b>切页面</b></p>
+        <p style="margin-top:8px">趋势 → 万年历 → 今天 → 壁纸，四页循环，切换即整屏刷新。</p>
+      </div>
+      <div class="card">
+        <div style="font-size:56px;font-weight:800;color:var(--blue);letter-spacing:-1px">双击</div>
+        <p style="margin-top:14px;color:var(--ink);font-size:25px"><b>切时间窗</b></p>
+        <p style="margin-top:8px">12 档：1h 到 30d，按真实时间比例重画，不整屏刷新。</p>
+      </div>
+      <div class="card">
+        <div style="font-size:56px;font-weight:800;color:var(--warm);letter-spacing:-1px">长按 3 秒</div>
+        <p style="margin-top:14px;color:var(--ink);font-size:25px"><b>开蓝牙</b></p>
+        <p style="margin-top:8px">只开 60 秒广播窗口，连上就保持，断开自动重开一窗。</p>
+      </div>
+    </div>
+  </div>
+  <div class="foot">不按键的时候，蓝牙<strong>彻底关着</strong>，这就是 7.33 µA 的前提。</div>
+  <div class="pageno"></div>
+</section>
+
+<!-- ================= 06 四个页面 ================= -->
+<section class="slide">
+  <div class="head">
+    <div class="kicker">01 · 产品体验</div>
+    <h2>四个页面，都是实拍</h2>
+  </div>
+  <div class="body">
+    <div class="quad">
+      <figure>
+        <img src="../img/新实拍/温湿度图表.png" alt="">
+        <div class="cap"><b>① 趋势</b><span>一小时到一个月，随便看</span></div>
+      </figure>
+      <figure>
+        <img src="../img/新实拍/万年历.png" alt="">
+        <div class="cap"><b>② 万年历</b><span>不联网也有农历和节气</span></div>
+      </figure>
+      <figure>
+        <img src="../img/新实拍/大号日历.png" alt="">
+        <div class="cap"><b>③ 今天</b><span>字最大的一页，给老人看</span></div>
+      </figure>
+      <figure>
+        <img src="../img/新实拍/自定义壁纸.png" alt="">
+        <div class="cap"><b>④ 壁纸</b><span>照片和自己写的字都能上屏</span></div>
+      </figure>
+    </div>
+  </div>
+  <div class="foot">四个页面共用一个按键，切换时整屏刷一次，上一页不会留印子。</div>
+  <div class="pageno"></div>
+</section>
+
+<!-- ================= 07 曲线页 ================= -->
+<section class="slide">
+  <div class="head">
+    <div class="kicker">01 · 产品体验</div>
+    <h2>30 天温湿度曲线，不用掏手机看</h2>
+  </div>
+  <div class="body g2">
+    <div>
+      <ul class="big sm" style="gap:14px">
+        <li>想看<b>一小时</b>也行，看<b>一整个月</b>也行，峰谷都在</li>
+        <li>最近一天看得细，往前看整体走势</li>
+        <li>要原始数据，<b>蓝牙导出 CSV</b>，Excel 直接打开</li>
+      </ul>
+      <div class="usecase">
+        <h3>这些地方用得上</h3>
+        <div class="uc"><b>空调</b><span>一整晚停了几次，几点开始制冷</span></div>
+        <div class="uc"><b>机房 · 实验室</b><span>恒温恒湿有没有飘，翻记录就有</span></div>
+        <div class="uc"><b>大棚</b><span>昼夜温差多大，什么时候该通风</span></div>
+      </div>
+    </div>
+    <figure>
+      <img class="shot" src="../img/新实拍/温湿度图表.png" alt="温湿度趋势页实拍">
+      <figcaption>3 天窗口：温度实线、湿度虚线</figcaption>
+    </figure>
+  </div>
+  <div class="foot">曲线在屏上直接看，不用开电脑、也不用连手机；要分析的时候，再按一下蓝牙导 CSV。</div>
+  <div class="pageno"></div>
+</section>
+
+<!-- ================= 08 万年历 ================= -->
+<section class="slide">
+  <div class="head">
+    <div class="kicker">01 · 产品体验</div>
+    <h2>离线万年历：农历、节气、长辈版大字</h2>
+  </div>
+  <div class="body g2">
+    <figure>
+      <img class="shot-sm" src="../img/新实拍/万年历.png" alt="万年历页实拍">
+      <figcaption>一屏放下一整月：今天那格一眼就看见，<br>日期下面直接挂着农历和节日</figcaption>
+    </figure>
+    <figure>
+      <img class="shot-sm" src="../img/新实拍/大号日历.png" alt="今天日历长辈版实拍">
+      <figcaption>给老人看的那页：日号放到最大，<br>年月日、农历、节日一个不少，只是不再挤在格子里</figcaption>
+    </figure>
+  </div>
+  <div class="foot"><b>2025–2100</b> 的农历表整张装在设备里，不联网也准；平时不刷屏，<b>换天才刷一次</b>，采样记录照常。</div>
+  <div class="pageno"></div>
+</section>
+
+<!-- ================= 08 壁纸 / 留言板 ================= -->
+<section class="slide">
+  <div class="head">
+    <div class="kicker">01 · 产品体验</div>
+    <h2>壁纸之外，它还是块留言板</h2>
+  </div>
+  <div class="body">
+    <div class="wp-demos">
+      <figure>
+        <div class="epd-card">
+          <div class="epd-date">10 月 26 日 · 周一</div>
+          <div class="epd-title">本周待办</div>
+          <ul class="epd-list">
+            <li>交电费</li>
+            <li>取快递</li>
+            <li>给爸妈打电话</li>
+          </ul>
+        </div>
+        <figcaption><b>写字</b>：想写什么写什么，几行字就是一条留言</figcaption>
+      </figure>
+      <figure>
+        <div class="epd-card photo">
+          <img src="../img/power/wallpaper-photo.png" alt="图片壁纸示意">
+        </div>
+        <figcaption><b>放图</b>：照片拖进来转单色，也能当背景</figcaption>
+      </figure>
+    </div>
+    <div class="audience">
+      <div><b>给长辈</b><span>肉已经腌好，直接炒就行</span></div>
+      <div><b>给巡检</b><span>陈工已检查 · 10/26 14:20</span></div>
+      <div><b>给同事</b><span>正在外出现场，下午回</span></div>
+    </div>
+  </div>
+  <div class="foot">浏览器里排好版，蓝牙传上去几秒换一版；不装 APP、不上云，挂在门口或工位旁，改完当场就看到。</div>
+  <div class="pageno"></div>
+</section>
+
+<!-- ================= 09 一颗芯片 ================= -->
+<section class="slide">
+  <div class="head">
+    <div class="kicker">02 · 硬件</div>
+    <h2>一颗 CH584F 带起全部外设</h2>
+  </div>
+  <div class="body">
+    <figure style="width:100%">
+      <svg viewBox="0 0 1400 400" role="img" aria-label="硬件框图">
+        <defs>
+          <marker id="a1" markerWidth="10" markerHeight="10" refX="9" refY="4" orient="auto">
+            <path d="M0,0 L9,4 L0,8 z" fill="#5a6472"/></marker>
+        </defs>
+        <!-- 主控 -->
+        <rect x="520" y="24" width="360" height="352" rx="18" fill="#e7f0fb" stroke="#1a5fb4" stroke-width="2.5"/>
+        <text x="700" y="66" text-anchor="middle" font-size="36" font-weight="800" fill="#1a5fb4">CH584F</text>
+        <text x="700" y="98" text-anchor="middle" font-size="22" fill="#5a6472">RISC-V 78 MHz · BLE 5.4</text>
+        <text x="700" y="128" text-anchor="middle" font-size="22" fill="#5a6472">448 KB 可用 Flash · 96 KB SRAM</text>
+        <line x1="560" y1="152" x2="840" y2="152" stroke="#b9cbe2" stroke-width="2"/>
+        <text x="700" y="188" text-anchor="middle" font-size="24" fill="#101822">SPI0 · 屏幕</text>
+        <text x="700" y="228" text-anchor="middle" font-size="24" fill="#101822">软 I²C · 传感器</text>
+        <text x="700" y="268" text-anchor="middle" font-size="24" fill="#101822">ADC · 电池电压</text>
+        <text x="700" y="308" text-anchor="middle" font-size="24" fill="#101822">RTC · 定时采样与唤醒</text>
+        <text x="700" y="350" text-anchor="middle" font-size="21" fill="#5a6472">32 MHz 晶振（BLE 必需）· DCDC</text>
+        <!-- 屏 -->
+        <rect x="40" y="44" width="330" height="120" rx="14" fill="#f1ecfa" stroke="#6b3fa0" stroke-width="2"/>
+        <text x="205" y="90" text-anchor="middle" font-size="26" font-weight="800" fill="#6b3fa0">4.2″ 墨水屏</text>
+        <text x="205" y="126" text-anchor="middle" font-size="22" fill="#5a6472">400×300 · SSD1619A</text>
+        <!-- 传感器 -->
+        <rect x="40" y="240" width="330" height="120" rx="14" fill="#e6f3ed" stroke="#0d7a5c" stroke-width="2"/>
+        <text x="205" y="286" text-anchor="middle" font-size="26" font-weight="800" fill="#0d7a5c">SHT40 / AHT30</text>
+        <text x="205" y="322" text-anchor="middle" font-size="22" fill="#5a6472">开机自动探测，二选一</text>
+        <!-- 手机 -->
+        <rect x="1030" y="44" width="330" height="120" rx="14" fill="#fdeee4" stroke="#c2410c" stroke-width="2"/>
+        <text x="1195" y="90" text-anchor="middle" font-size="26" font-weight="800" fill="#c2410c">手机 / 浏览器</text>
+        <text x="1195" y="126" text-anchor="middle" font-size="22" fill="#5a6472">Web Bluetooth，免安装</text>
+        <!-- 按键电池磁铁 -->
+        <rect x="1030" y="240" width="330" height="120" rx="14" fill="#eef2f6" stroke="#64707e" stroke-width="2"/>
+        <text x="1195" y="286" text-anchor="middle" font-size="26" font-weight="800" fill="#101822">按键 · 电池 · 磁铁</text>
+        <text x="1195" y="322" text-anchor="middle" font-size="22" fill="#5a6472">单击 / 双击 / 长按，磁吸上墙</text>
+        <!-- 连线 -->
+        <line x1="374" y1="104" x2="514" y2="104" stroke="#5a6472" stroke-width="2.5" marker-end="url(#a1)"/>
+        <line x1="374" y1="300" x2="514" y2="300" stroke="#5a6472" stroke-width="2.5" marker-end="url(#a1)"/>
+        <line x1="886" y1="104" x2="1024" y2="104" stroke="#5a6472" stroke-width="2.5"
+              stroke-dasharray="8 6" marker-end="url(#a1)"/>
+        <text x="955" y="88" text-anchor="middle" font-size="20" fill="#5a6472">BLE 按需连接</text>
+        <line x1="886" y1="300" x2="1024" y2="300" stroke="#5a6472" stroke-width="2.5" marker-end="url(#a1)"/>
+      </svg>
+    </figure>
+  </div>
+  <div class="foot"><b>选型逻辑</b>：少一颗芯片，就少一份 BOM、一道焊接工序、一份静态功耗。</div>
+  <div class="pageno"></div>
+</section>
+
+<!-- ================= 10 可靠性 ================= -->
+<section class="slide">
+  <div class="head">
+    <div class="kicker">02 · 硬件</div>
+    <h2>四处易错点，都在设计阶段堵住</h2>
+  </div>
+  <div class="body">
+    <div class="cards c2" style="gap:28px 30px">
+      <div class="card">
+        <h3>射频：留 π 型匹配网络</h3>
+        <p>天线照官方参考留足净空。开源版 0 Ω 直连够用，要过认证再上 VNA 调。</p>
+      </div>
+      <div class="card">
+        <h3>SPI：22 Ω 串联 + 包地</h3>
+        <p>源端匹配吸收反射，时钟与数据线包地隔串扰。上电即过，零整改。</p>
+      </div>
+      <div class="card">
+        <h3>供电：双重截止</h3>
+        <p>硬件 2.1 V 下限，软件 2.2 V 停刷，留 0.1 V 余量防低压刷屏异常。</p>
+      </div>
+      <div class="card acc">
+        <h3>热隔离：五道阻断</h3>
+        <p>远端 · 开槽 · 不铺铜 · 隔间 · 通气孔。蓝牙满载 30 分钟，读数不动。</p>
+      </div>
+    </div>
+  </div>
+  <div class="foot"><b>待机实测</b> 7.33 µA（2.5 V）· 刷屏与采样按 3.3 V 实测。两端都取保守电压，续航推算不虚标。</div>
+  <div class="pageno"></div>
+</section>
+
+<!-- ================= 11 热隔离剖面 ================= -->
+<section class="slide">
+  <div class="head">
+    <div class="kicker">02 · 硬件</div>
+    <h2>传感器热隔离：五处结构改动</h2>
+  </div>
+  <div class="body g2">
+    <figure>
+      <img src="../img/热隔离设计.jpg" alt="热隔离剖视标注图" style="height:470px;width:auto">
+      <figcaption>剖面：五处改动叠起来，才是「读数不受自热影响」</figcaption>
+    </figure>
+    <div>
+      <ul class="big sm" style="gap:13px">
+        <li>传感器放在<b>最边边</b>，远离 MCU 与 DCDC 热源</li>
+        <li>PCB <b>开槽</b>，切断沿铜箔传导的热量</li>
+        <li>传感器区<b>禁止铺铜</b>，既隔热也防凝露</li>
+        <li>结构做<b>小隔间</b>，屏蔽机内空气对流</li>
+        <li>只留一个<b>通向室外的小孔</b>，让隔间工况对齐室外</li>
+      </ul>
+      <div class="verify">
+        <h3>怎么验的</h3>
+        <div class="vrow"><span class="vno">01</span><p><b>造最坏工况</b>：蓝牙持续连接 30 分钟，射频与主控同时满载发热</p></div>
+        <div class="vrow"><span class="vno">02</span><p><b>上热成像仪</b>：红外扫整机，看隔间里有没有热点、热流有没有绕进来</p></div>
+        <div class="vrow"><span class="vno">03</span><p><b>定判据</b>：同一时段读屏上温湿度，读数随发热漂移就说明隔离失败</p></div>
+      </div>
+    </div>
+  </div>
+  <div class="foot"><b>结果</b>：热成像图上传感器区无可见热点，屏上读数不随发热漂移。结构、电路、固件在这里交汇。</div>
+  <div class="pageno"></div>
+</section>
+
+<!-- ================= 12 全套配件 ================= -->
+<section class="slide">
+  <div class="head">
+    <div class="kicker">02 · 硬件</div>
+    <h2>全部配件：三件塑料件、一块屏、一块板</h2>
+  </div>
+  <div class="body g2 wide">
+    <figure>
+      <img src="../img/实拍/01_零件全家福.jpg" alt="全套零件平铺" style="height:400px;width:auto">
+      <figcaption>零件就这么点，装起来不用焊、不用胶</figcaption>
+    </figure>
+    <div>
+      <ul class="big sm" style="gap:15px">
+        <li><b>前框 · 托盘 · 后盖</b>：三件塑料件</li>
+        <li><b>4.2″ 墨水屏</b>：直接插在主板上，不用转接板</li>
+        <li><b>PCB 一块</b>：主控、屏驱动、传感器都在上面</li>
+        <li><b>电池 + 卡簧</b>：装进托盘</li>
+        <li><b>磁铁环 + 螺丝</b>：后盖吸墙，墙上不用打孔</li>
+      </ul>
+    </div>
+  </div>
+  <div class="foot">外壳模型 CERN-OHL-P 开源，3D 文件随仓库交付，想改结构直接改。</div>
+  <div class="pageno"></div>
+</section>
+
+<!-- ================= 13 分节 03 五场硬仗 ================= -->
+<section class="slide divider">
+  <div class="ghost">03</div>
+  <div class="kicker">PART 03</div>
+  <h1 style="margin-top:24px">五个取舍</h1>
+  <p class="lead">每一场都同一个结构：<b>问题是什么 → 做了什么 → 结果多少</b>。</p>
+  <div class="warlist">
+    <div><b>01</b><span>电量</span></div>
+    <div><b>02</b><span>卡顿</span></div>
+    <div><b>03</b><span>内存</span></div>
+    <div><b>04</b><span>连接</span></div>
+    <div><b>05</b><span>数据</span></div>
+  </div>
+  <div class="pageno"></div>
+</section>
+
+<!-- ================= 12 硬仗① 对手 ================= -->
+<section class="slide">
+  <div class="head">
+    <div class="kicker">硬仗 1 / 5 · 低功耗</div>
+    <h2>刷屏比采样贵 50 倍，省电全砍在刷新上</h2>
+  </div>
+  <div class="body">
+    <p class="lead" style="font-size:30px;margin-top:0;margin-bottom:32px">
+      一年 525,600 次采样，只花掉电池的 <b>1.2%</b>。同一节电池，刷屏要吃掉 <b>62%</b>。</p>
+    <div class="bars">
+      <div class="brow">
+        <div class="lab">一年采样</div>
+        <div class="track"><div class="fill" style="width:26px;background:var(--acc)"></div></div>
+        <div class="val" style="color:var(--acc)">12 mAh</div>
+      </div>
+      <div class="brow">
+        <div class="lab">一年刷屏（5 min 档）</div>
+        <div class="track"><div class="fill" style="width:100%;background:var(--warm)"></div></div>
+        <div class="val" style="color:var(--warm)">≈620 mAh</div>
+      </div>
+    </div>
+    <div class="shotrow">
+      <figure>
+        <img src="../img/power/standby.png" alt="待机电流实测波形">
+        <figcaption><b>待机 7.33 µA</b>平得像一条线，这正是要守住的地板</figcaption>
+      </figure>
+      <figure>
+        <img src="../img/power/sample.png" alt="单次温湿度采样功耗波形">
+        <figcaption><b>单次采样 23.2 nAh</b>几十毫秒的尖峰，一年才 12 mAh</figcaption>
+      </figure>
+      <figure>
+        <img src="../img/power/partial.png" alt="墨水屏局部刷新功耗波形">
+        <figcaption><b>单次局刷 5.78 µAh</b>峰值 55 mA，一口气烧 0.4 秒</figcaption>
+      </figure>
+    </div>
+  </div>
+  <div class="foot">三张都是同一台 µA 电源仪实测：待机取 2.5 V，采样与刷屏取 3.3 V。刷屏比采样贵 <b>50 倍</b>，力气全花在刷新上。</div>
+  <div class="pageno"></div>
+</section>
+
+<!-- ================= 13 刷新策略 ================= -->
+<section class="slide">
+  <div class="head">
+    <div class="kicker">硬仗 1 / 5 · 低功耗</div>
+    <h2>11 次局刷，配 1 次全刷</h2>
+  </div>
+  <div class="body">
+    <div class="seq">
+      <div>局刷</div><div>局刷</div><div>局刷</div><div>局刷</div><div>局刷</div><div>局刷</div>
+      <div>局刷</div><div>局刷</div><div>局刷</div><div>局刷</div><div>局刷</div><div class="full">全刷</div>
+    </div>
+    <p class="lead" style="font-size:23px;margin-top:14px">
+      5.78 µAh / 次 × 11 + 7.16 µAh × 1 → 平均每刷 <b>5.9 µAh</b>，比次次全刷省近两成。</p>
+    <div class="body" style="display:grid;grid-template-columns:1.1fr 1fr;gap:56px;align-items:start;margin-top:34px;flex:0 0 auto">
+      <table>
+        <tr><th>数据有多老 / 什么窗口</th><th class="r">刷新间隔</th></tr>
+        <tr><td>15 分钟以内</td><td class="r" style="font-weight:700">1 分钟</td></tr>
+        <tr><td>15 分钟 ~ 1 天</td><td class="r" style="font-weight:700">5 分钟</td></tr>
+        <tr><td>1 天以上（1h–3d 档）</td><td class="r" style="font-weight:700">15 分钟</td></tr>
+        <tr><td>满 7 天 / 7d、15d 窗</td><td class="r" style="font-weight:700">1 小时</td></tr>
+        <tr><td>30 天窗（1 px = 2.25 h）</td><td class="r" style="font-weight:700">6 小时</td></tr>
+      </table>
+      <div>
+        <figure class="wave">
+          <img src="../img/power/full.png" alt="墨水屏全局刷新功耗波形">
+          <figcaption><b>那 1 次全刷</b>连续 3.5 秒、峰值 55 mA，电耗只贵 24%。<br>但整屏会闪，只用来消残影</figcaption>
+        </figure>
+        <ul class="big sm" style="gap:14px;margin-top:22px">
+          <li>局刷只提交<b>变化的那块</b>，顶上那行变了就只刷那一行</li>
+        </ul>
+      </div>
+    </div>
+  </div>
+  <div class="foot">手动把 12 档翻一遍约 64 µAh，相当于 30 天档两三天的自动刷新开销。省电靠少刷新。</div>
+  <div class="pageno"></div>
+</section>
+
+<!-- ================= 14 三种活法 ================= -->
+<section class="slide">
+  <div class="head">
+    <div class="kicker">硬仗 1 / 5 · 低功耗</div>
+    <h2>三档刷新：1 年、3 年、10 年</h2>
+  </div>
+  <div class="body">
+    <p class="lead" style="font-size:28px;margin:0 0 26px">
+      同一节电池，间隔拉长一档，刷的次数按倍减，续航就按倍涨。</p>
+    <table class="life">
+      <tr><th>刷新间隔</th><th class="r">每天刷</th><th class="r">一年刷</th><th class="life-col">预计续航</th></tr>
+      <tr>
+        <td><b>5 分钟</b><span>常挂客厅，天天看</span></td>
+        <td class="r">288 次</td><td class="r">105,120 次</td>
+        <td class="life-col"><div class="track"><i style="width:13%;background:var(--warm)"></i></div><b style="color:var(--warm)">1 年 153 天</b></td>
+      </tr>
+      <tr>
+        <td><b>15 分钟</b><span>日常节奏的平衡点</span></td>
+        <td class="r">96 次</td><td class="r">35,040 次</td>
+        <td class="life-col"><div class="track"><i style="width:31.7%;background:var(--blue)"></i></div><b style="color:var(--blue)">3 年 163 天</b></td>
+      </tr>
+      <tr>
+        <td><b>6 小时</b><span>30 天档挂墙，靠日历提醒换电池</span></td>
+        <td class="r">4 次</td><td class="r">1,460 次</td>
+        <td class="life-col"><div class="track"><i style="width:100%;background:var(--acc)"></i></div><b style="color:var(--acc)">10 年 324 天</b></td>
+      </tr>
+    </table>
+    <p class="lead" style="font-size:26px;margin-top:30px">
+      再压 2 µA 待机，一天只省 3%；把间隔拉长一档，续航成倍往上涨。<b>力气要花在刀刃上。</b></p>
+  </div>
+  <div class="foot">按 1000 mAh 电池、8 µA 待机、5.9 µAh 单次刷屏、25 nAh 单次采样推算，未计电池自放电，长档位属理想值；低于 2.2 V 自动停刷。</div>
+  <div class="pageno"></div>
+</section>
+
+<!-- ================= 还能更省 ================= -->
+<section class="slide">
+  <div class="head">
+    <div class="kicker">硬仗 1 / 5 · 电量</div>
+    <h2>还能更省，但这一版没上</h2>
+  </div>
+  <div class="body">
+    <p class="lead" style="font-size:27px;margin:0 0 26px">
+      7.33 微安不是这颗芯片的下限。再往下还压得动，<b>只是省下来的不够抵代价。</b></p>
+    <div class="cards c3" style="gap:26px">
+      <div class="card">
+        <h3>现在这一档</h3>
+        <p>内存保留的睡眠：历史、设置都还在，RTC 走时不停，醒来接着干活。整机待机 7.33 微安。</p>
+      </div>
+      <div class="card">
+        <h3>再往下一档</h3>
+        <p>掉电模式：只留 RTC 计时；到点唤醒相当于复位重来，待机能再压低一截。</p>
+      </div>
+      <div class="card acc">
+        <h3>为什么没换</h3>
+        <p>一年待机总共只花六十多毫安时，刷屏才是大头。为省这几十毫安时把开机、历史恢复全重做一遍，不划算。</p>
+      </div>
+    </div>
+    <div class="card" style="margin-top:24px">
+      <h3>这笔账算给你看</h3>
+      <p>待机一年六十多毫安时，整机一年四百多毫安时：<b>待机只占不到六分之一，剩下全是刷屏。</b>把待机再砍一半，一年省下的电还不到总量的十分之一。</p>
+    </div>
+  </div>
+  <div class="foot">这一档记在这儿：哪天刷屏的功耗再压下去，或者要做更小的电池，它就是下一个该动的地方。</div>
+  <div class="pageno"></div>
+</section>
+
+<!-- ================= 18 主循环 ================= -->
+<section class="slide">
+  <div class="head">
+    <div class="kicker">硬仗 2 / 5 · 卡顿</div>
+    <h2>TMOS 是协作式的：没有抢占，也没有独立任务栈</h2>
+  </div>
+  <div class="body" style="display:grid;grid-template-columns:1.12fr 1fr;gap:48px;align-items:center">
+    <pre class="code">while(1) {
+  Button_Poll();             <span class="cmt">// ① 按键</span>
+  update_sleep_gate();       <span class="cmt">// ② 能不能睡</span>
+  TMOS_SystemProcess();      <span class="cmt">// ③ 采样在这</span>
+  Button_Poll();             <span class="cmt">// ④ 醒来即响应</span>
+  AppDisplay_Poll();         <span class="cmt">// ⑤ 画一步</span>
+  AppCommunication_Poll();   <span class="cmt">// ⑥ 发一步</span>
+}</pre>
+    <div>
+      <p class="lead" style="font-size:25px;margin:0 0 16px">
+        单核 MCU 配内置蓝牙协议栈，只能用 TMOS：<b>协作式、无抢占、每个任务自己让出。</b></p>
+      <div class="cards" style="gap:14px">
+        <div class="card" style="padding:18px 24px">
+          <h3 style="font-size:23px">任务靠事件唤醒</h3>
+          <p style="font-size:19px">到点或收到事件才被叫起来，跑完自己 return。没有独立任务栈，RAM 省下来留给历史缓存。</p>
+        </div>
+        <div class="card" style="padding:18px 24px">
+          <h3 style="font-size:23px">谁都打断不了别人</h3>
+          <p style="font-size:19px">同一时刻只有 1 个任务在跑。它不让出，后面所有任务都得等，包括蓝牙协议栈。</p>
+        </div>
+        <div class="card" style="padding:18px 24px;background:var(--warm-bg)">
+          <h3 style="font-size:23px;color:var(--warm)">硬约束：单次任务有时限</h3>
+          <p style="font-size:19px">必须短于蓝牙连接间隔的一半。间隔 7.5 毫秒时只有 3.75 毫秒，超了就是断连加任务饿死。</p>
+        </div>
+      </div>
+    </div>
+  </div>
+  <div class="foot">所以难点不在任务多，在每个任务都得在半个连接间隔内还回来。下一页讲具体怎么做到。</div>
+  <div class="pageno"></div>
+</section>
+
+<!-- ================= 怎么拆 ================= -->
+<section class="slide">
+  <div class="head">
+    <div class="kicker">硬仗 2 / 5 · 卡顿</div>
+    <h2>怎么拆：耗时操作全做成状态机，一次只推一步</h2>
+  </div>
+  <div class="body">
+    <p class="lead" style="font-size:26px;margin:0 0 24px">
+      把长活切成小段，每段都在几毫秒内还回主循环。<b>3 处最耗时的活儿是这么处理的。</b></p>
+    <table>
+      <tr><th>耗时操作</th><th>怎么拆</th></tr>
+      <tr><td><b>温湿度采样</b></td><td>等传感器转换的那段时间分步推进，不占住主循环</td></tr>
+      <tr><td><b>墨水屏刷新</b></td><td>拆成 5 步：复位、等 BUSY、DMA 分段传输、刷新、休眠</td></tr>
+      <tr><td><b>历史导出</b></td><td>分多帧发送，每帧 192 字节，带进度、可取消、有超时保护</td></tr>
+    </table>
+    <div class="cards c2" style="gap:20px;margin-top:26px">
+      <div class="card" style="padding:20px 26px">
+        <h3 style="font-size:24px">蓝牙关着：不用拆这么细</h3>
+        <p style="font-size:19px">没人跟它抢 CPU，按需醒来就一口气干完，干完立刻睡。拆太碎反而多付唤醒和切频的开销。</p>
+      </div>
+      <div class="card" style="padding:20px 26px;background:var(--warm-bg)">
+        <h3 style="font-size:24px;color:var(--warm)">蓝牙开着：必须切碎</h3>
+        <p style="font-size:19px">协议栈要按连接间隔准时响应，每一步都得短，让它随时插得进来。</p>
+      </div>
+    </div>
+  </div>
+  <div class="foot">同一条约束落到两种写法：平时追效率，联网时追响应。两套节奏不能混用。</div>
+  <div class="pageno"></div>
+</section>
+
+<!-- ================= 主频按需拉 ================= -->
+<section class="slide">
+  <div class="head">
+    <div class="kicker">硬仗 2 / 5 · 卡顿</div>
+    <h2>主频按需拉：算的时候拉满，推屏的时候降下来</h2>
+  </div>
+  <div class="body">
+    <p class="lead" style="font-size:27px;margin:0 0 26px">
+      整机只有 2 档主频，用哪一档，<b>看这一段是算得多，还是在等。</b></p>
+    <div class="cards c3" style="gap:26px">
+      <div class="card">
+        <h3>画的时候：62.4 MHz</h3>
+        <p>重采样、拼页、把像素排进缓冲，全是计算，CPU 一刻不停。这时拉满，拿算力换时间。</p>
+      </div>
+      <div class="card">
+        <h3>推的时候：13 MHz</h3>
+        <p>缓冲推给屏幕基本是等 SPI 搬数据，CPU 在空转。降到 1/5，省电，也不耽误进度。</p>
+      </div>
+      <div class="card acc">
+        <h3>推完：立刻睡</h3>
+        <p>不留在循环里空转，直接睡到下一个节拍。醒来第一件事再决定要不要拉频。</p>
+      </div>
+    </div>
+    <div class="card" style="margin-top:24px">
+      <h3>什么情况才会拉高</h3>
+      <p>只有 2 种情况会拉高：<b>正在画</b>，或者<b>蓝牙开着</b>。其余时间一律 13 MHz。一次刷屏里，主频会在 2 档之间来回切好几次。</p>
+    </div>
+  </div>
+  <div class="foot">前一页讲 TMOS 不能让一个任务占太久，这一页讲用多快的钟跑：一个管让出，一个管速度，两件事分开调。</div>
+  <div class="pageno"></div>
+</section>
+
+<!-- ================= 17 五层架构 ================= -->
+<section class="slide">
+  <div class="head">
+    <div class="kicker">硬仗 2 / 5 · 卡顿</div>
+    <h2>六层架构，一半代码不碰硬件</h2>
+  </div>
+  <div class="body">
+    <div class="stack">
+      <div class="layer l5"><span class="tag">L5</span><span class="nm">入口</span>
+        <span class="ds">src/Main.c：Board → BLE → HAL → App_Init → App_Run</span></div>
+      <div class="layer l4"><span class="tag">L4</span><span class="nm">业务 APP</span>
+        <span class="ds">14 个模块，全部是 TMOS 任务 + 状态机</span></div>
+      <div class="layer l3"><span class="tag">L3</span><span class="nm">领域算法</span>
+        <span class="ds">零硬件依赖，摆在电脑上就能跑测试</span></div>
+      <div class="layer l2"><span class="tag">L2</span><span class="nm">硬件抽象</span>
+        <span class="ds">依赖注入，总线与时序从外部传入，换芯片不改驱动</span></div>
+      <div class="layer l1"><span class="tag">L1</span><span class="nm">三方库</span>
+        <span class="ds">u8g2 字形 · TinyFrame 组帧 · lwbtn · flashstore A/B</span></div>
+      <div class="layer"><span class="tag">L0</span><span class="nm">WCH SDK</span>
+        <span class="ds">StdPeriphDriver · RVMSIS · CH58xBLE ROM，TMOS 在这里</span></div>
+    </div>
+  </div>
+  <div class="foot">约 30 个主机端测试直插 L3，用桩替换 L2，跑回归不需要开发板。</div>
+  <div class="pageno"></div>
+</section>
+
+<!-- ================= 15 硬仗② 内存 ================= -->
+<section class="slide">
+  <div class="head">
+    <div class="kicker">硬仗 3 / 5 · 内存</div>
+    <h2>30 天历史塞进 96 KB</h2>
+  </div>
+  <div class="body">
+    <p class="lead" style="font-size:29px;margin:0 0 34px">
+      分钟级存 30 天要 <b>43,200 个点</b>，96 KB RAM 只装得下四分之一。</p>
+    <figure style="width:100%">
+      <svg viewBox="0 0 1400 320" role="img" aria-label="从采样到显示的数据流水线">
+        <defs>
+          <marker id="a2" markerWidth="10" markerHeight="10" refX="9" refY="4" orient="auto">
+            <path d="M0,0 L9,4 L0,8 z" fill="#5a6472"/></marker>
+        </defs>
+        <g font-family="Segoe UI,Microsoft YaHei,sans-serif">
+          <rect x="4" y="76" width="228" height="156" rx="16" fill="#eef2f6" stroke="#64707e" stroke-width="2"/>
+          <text x="118" y="136" text-anchor="middle" font-size="26" font-weight="700" fill="#101822">RTC 定时</text>
+          <text x="118" y="176" text-anchor="middle" font-size="21" fill="#5a6472">60 秒唤醒</text>
+
+          <rect x="282" y="76" width="252" height="156" rx="16" fill="#e6f3ed" stroke="#0d7a5c" stroke-width="2"/>
+          <text x="408" y="136" text-anchor="middle" font-size="26" font-weight="700" fill="#101822">软 I²C 采样</text>
+          <text x="408" y="176" text-anchor="middle" font-size="21" fill="#5a6472">每次只占 10 ms</text>
+
+          <rect x="584" y="76" width="226" height="156" rx="16" fill="#fdeee4" stroke="#c2410c" stroke-width="2"/>
+          <text x="697" y="136" text-anchor="middle" font-size="26" font-weight="700" fill="#101822">每点 4 字节</text>
+          <text x="697" y="176" text-anchor="middle" font-size="21" fill="#5a6472">0.1 ℃ / 0.1 %RH</text>
+
+          <rect x="860" y="52" width="292" height="204" rx="16" fill="#fdeee4" stroke="#c2410c" stroke-width="2"/>
+          <text x="1006" y="102" text-anchor="middle" font-size="26" font-weight="700" fill="#101822">双区历史 40 KB</text>
+          <text x="1006" y="140" text-anchor="middle" font-size="21" fill="#5a6472">近区 1,440 点 · 分钟粒度</text>
+          <text x="1006" y="170" text-anchor="middle" font-size="21" fill="#5a6472">远区 8,640 点 · 5 分钟</text>
+          <text x="1006" y="212" text-anchor="middle" font-size="21" font-weight="700" fill="#c2410c">最旧 5 个 → LTTB 选 1 个</text>
+
+          <rect x="1202" y="76" width="192" height="156" rx="16" fill="#e7f0fb" stroke="#1a5fb4" stroke-width="2"/>
+          <text x="1298" y="136" text-anchor="middle" font-size="26" font-weight="700" fill="#101822">切片绘图</text>
+          <text x="1298" y="176" text-anchor="middle" font-size="21" fill="#5a6472">15.2 KB 画布</text>
+
+          <line x1="236" y1="154" x2="276" y2="154" stroke="#5a6472" stroke-width="3" marker-end="url(#a2)"/>
+          <line x1="538" y1="154" x2="578" y2="154" stroke="#5a6472" stroke-width="3" marker-end="url(#a2)"/>
+          <line x1="814" y1="154" x2="854" y2="154" stroke="#5a6472" stroke-width="3" marker-end="url(#a2)"/>
+          <line x1="1156" y1="154" x2="1196" y2="154" stroke="#5a6472" stroke-width="3" marker-end="url(#a2)"/>
+
+          <text x="700" y="300" text-anchor="middle" font-size="22" fill="#5a6472">
+            历史在绘图期间还在增长，版本号一变就重取切片重画，杜绝半新半旧的混合帧</text>
+        </g>
+      </svg>
+    </figure>
+  </div>
+  <div class="foot"><b>RAM 账本</b>：画布 15.2 KB + 基线 15 KB + 历史 40.3 KB ≈ 七成，全程只有一份屏幕缓冲。</div>
+  <div class="pageno"></div>
+</section>
+
+<!-- ================= 16 LTTB ================= -->
+<section class="slide">
+  <div class="head">
+    <div class="kicker">硬仗 3 / 5 · 内存</div>
+    <h2>压到 12 个点，平均法抹平了峰谷</h2>
+  </div>
+  <div class="body">
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:44px">
+      <figure>
+        <svg viewBox="0 0 660 250" role="img" aria-label="取平均降采样">
+          <rect x="0" y="0" width="660" height="200" rx="12" fill="#f2f5f8"/>
+          <polyline points="20,170 75,70 130,120 185,30 240,110 295,90 350,150 405,50 460,120 515,75 570,140 625,40"
+            fill="none" stroke="#c3ccd6" stroke-width="3"/>
+          <polyline points="20,150 175,140 330,130 485,120 625,110"
+            fill="none" stroke="#c2410c" stroke-width="7" stroke-linejoin="round"/>
+          <text x="330" y="234" text-anchor="middle" font-size="26" font-weight="700" fill="#c2410c">取平均：只剩一条斜线</text>
+        </svg>
+      </figure>
+      <figure>
+        <svg viewBox="0 0 660 250" role="img" aria-label="LTTB 降采样">
+          <rect x="0" y="0" width="660" height="200" rx="12" fill="#f2f5f8"/>
+          <polyline points="20,170 75,70 130,120 185,30 240,110 295,90 350,150 405,50 460,120 515,75 570,140 625,40"
+            fill="none" stroke="#c3ccd6" stroke-width="3"/>
+          <polyline points="20,170 75,70 185,30 295,90 350,150 405,50 515,75 570,140 625,40"
+            fill="none" stroke="#0d7a5c" stroke-width="7" stroke-linejoin="round" stroke-linecap="round"/>
+          <text x="330" y="234" text-anchor="middle" font-size="26" font-weight="700" fill="#0d7a5c">LTTB：峰、谷、拐点都在</text>
+        </svg>
+      </figure>
+    </div>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:44px;margin-top:26px">
+      <div style="text-align:center">
+        <div style="font-size:58px;font-weight:800;color:var(--warm);letter-spacing:-2px;line-height:1.05;font-variant-numeric:tabular-nums">76 → 50</div>
+        <div style="font-size:22px;color:var(--sub);margin-top:4px">峰谷差只剩这么多，取平均的代价</div>
+      </div>
+      <div style="text-align:center">
+        <div style="font-size:58px;font-weight:800;color:var(--acc);letter-spacing:-2px;line-height:1.05;font-variant-numeric:tabular-nums">76 → 74</div>
+        <div style="font-size:22px;color:var(--sub);margin-top:4px">峰谷差几乎无损，LTTB 的收益</div>
+      </div>
+    </div>
+  </div>
+  <div class="foot">LTTB 让相邻三点围出最大面积，天然挑中极值与拐点。灰线是原始 60 点，粗线是压到 12 点。</div>
+  <div class="pageno"></div>
+</section>
+
+<!-- ================= 蓝牙是什么 ================= -->
+<section class="slide">
+  <div class="head">
+    <div class="kicker">硬仗 4 / 5 · 连接</div>
+    <h2>低功耗蓝牙是什么：隔一会儿说一句话</h2>
+  </div>
+  <div class="body">
+    <p class="lead" style="font-size:28px;margin:0 0 30px">
+      它不追求快，追求的是几乎不耗电：手机、电脑、网页都能直接连它，<b>不用装驱动，也不用装 App。</b></p>
+    <div class="cards c2" style="gap:26px 30px">
+      <div class="card">
+        <h3>它干的事只有一件</h3>
+        <p>让手机或电脑，和几米外的一个小设备，互相递几十个字节。手环、温湿度计、门锁、电子价签，用的都是它。</p>
+      </div>
+      <div class="card">
+        <h3>它有多慢</h3>
+        <p>一次只能带 <b>20 到 244 个字节</b>。40 KB 的历史要拆成两百多帧才发得完。</p>
+      </div>
+      <div class="card">
+        <h3>它怎么做到省电</h3>
+        <p>不保持「一直连着」，而是隔一段时间才通一次话，这个间隔可以在 7.5 到 30 毫秒之间约定；没话说的时候，芯片接着睡。</p>
+      </div>
+      <div class="card acc">
+        <h3>它和 Wi-Fi 的分工</h3>
+        <p>Wi-Fi 拿来传视频和大文件；低功耗蓝牙拿来递一个温度、一条命令，然后马上回去睡。</p>
+      </div>
+    </div>
+  </div>
+  <div class="foot">所以用它的功夫不在「传得快」，在什么时候连、连多久、一次能带多少。这三件事，决定了后面每一个设计。</div>
+  <div class="pageno"></div>
+</section>
+
+<!-- ================= 蓝牙 怎么开始说话 ================= -->
+<section class="slide">
+  <div class="head">
+    <div class="kicker">硬仗 4 / 5 · 连接</div>
+    <h2>它俩怎么开始说话：设备先喊，手机再连</h2>
+  </div>
+  <div class="body">
+    <p class="lead" style="font-size:28px;margin:0 0 30px">
+      蓝牙设备不会「插上线就能通」，得先互相找到、再约好怎么说话。<b>顺序是固定的三步。</b></p>
+    <div class="cards c3" style="gap:26px">
+      <div class="card">
+        <h3><span class="num-badge">1</span>喊</h3>
+        <p>设备上电后，每隔一段时间往外广播一次，包里写着自己叫什么、能干什么。这一步叫广播。</p>
+      </div>
+      <div class="card">
+        <h3><span class="num-badge">2</span>连</h3>
+        <p>手机或电脑扫到这个广播，发起连接。连上之后就不再喊了，改成一对一。</p>
+      </div>
+      <div class="card">
+        <h3><span class="num-badge">3</span>说</h3>
+        <p>连上之后双方按约定的间隔互发小包。但发过去的那串字节对方怎么解释，得有统一格式。</p>
+      </div>
+    </div>
+    <div class="card acc" style="margin-top:26px">
+      <h3>没有统一格式会怎样</h3>
+      <p>每家的设备都自己定义字节含义，手机就不知道该问谁要温度、往哪儿发命令。<b>BLE 把这件事标准化了，那套格式有名字，下一页讲。</b></p>
+    </div>
+  </div>
+  <div class="foot">这个产品把第一步关掉了：平时不喊，长按之后才喊 60 秒。为什么这么设计，往下第三页讲。</div>
+  <div class="pageno"></div>
+</section>
+
+<!-- ================= 蓝牙名词 ================= -->
+<section class="slide">
+  <div class="head">
+    <div class="kicker">硬仗 4 / 5 · 连接</div>
+    <h2>GATT 表里装什么：服务、特征、权限</h2>
+  </div>
+  <div class="body">
+    <p class="lead" style="font-size:25px;margin:0 0 18px">
+      上一页说的「统一格式」叫 <b>GATT</b>。设备把自己会的事列成一张表，表分三层。</p>
+    <figure style="width:100%">
+      <svg viewBox="0 0 1400 300" style="height:250px" role="img" aria-label="低功耗蓝牙通信模型">
+        <defs>
+          <marker id="ab" markerWidth="10" markerHeight="10" refX="9" refY="4" orient="auto">
+            <path d="M0,0 L9,4 L0,8 z" fill="#5a6472"/></marker>
+        </defs>
+        <rect x="30" y="70" width="300" height="160" rx="16" fill="#e7f0fb" stroke="#1a5fb4" stroke-width="2"/>
+        <text x="180" y="128" text-anchor="middle" font-size="28" font-weight="800" fill="#1a5fb4">浏览器</text>
+        <text x="180" y="168" text-anchor="middle" font-size="21" fill="#5a6472">Web Bluetooth</text>
+        <text x="180" y="202" text-anchor="middle" font-size="21" fill="#5a6472">不装 App</text>
+
+        <rect x="460" y="34" width="520" height="232" rx="18" fill="#f2f5f8" stroke="#64707e" stroke-width="2"/>
+        <text x="720" y="74" text-anchor="middle" font-size="23" font-weight="700" fill="#101822">设备里的 GATT 表</text>
+        <rect x="492" y="92" width="456" height="50" rx="10" fill="#fdeee4" stroke="#c2410c" stroke-width="1.8"/>
+        <text x="720" y="125" text-anchor="middle" font-size="21" fill="#c2410c">服务 0xFFE0</text>
+        <rect x="492" y="158" width="214" height="52" rx="10" fill="#fdeee4" stroke="#c2410c" stroke-width="1.8"/>
+        <text x="599" y="191" text-anchor="middle" font-size="20" fill="#101822">0xFFE1 可写</text>
+        <rect x="726" y="158" width="222" height="52" rx="10" fill="#e6f3ed" stroke="#0d7a5c" stroke-width="1.8"/>
+        <text x="837" y="191" text-anchor="middle" font-size="20" fill="#101822">0xFFE4 可通知</text>
+
+        <rect x="1110" y="70" width="260" height="160" rx="16" fill="#e6f3ed" stroke="#0d7a5c" stroke-width="2"/>
+        <text x="1240" y="128" text-anchor="middle" font-size="28" font-weight="800" fill="#0d7a5c">固件</text>
+        <text x="1240" y="168" text-anchor="middle" font-size="21" fill="#5a6472">收到字节</text>
+        <text x="1240" y="202" text-anchor="middle" font-size="21" fill="#5a6472">自己解释</text>
+
+        <line x1="334" y1="112" x2="452" y2="112" stroke="#5a6472" stroke-width="3" marker-end="url(#ab)"/>
+        <text x="393" y="98" text-anchor="middle" font-size="19" fill="#101822">写</text>
+        <line x1="452" y1="196" x2="334" y2="196" stroke="#5a6472" stroke-width="3" marker-end="url(#ab)"/>
+        <text x="393" y="226" text-anchor="middle" font-size="19" fill="#101822">通知</text>
+
+        <line x1="984" y1="112" x2="1102" y2="112" stroke="#5a6472" stroke-width="3" marker-end="url(#ab)"/>
+        <line x1="1102" y1="196" x2="984" y2="196" stroke="#5a6472" stroke-width="3" marker-end="url(#ab)"/>
+      </svg>
+    </figure>
+    <div class="cards c3" style="gap:22px;margin-top:24px">
+      <div class="card" style="padding:22px 26px">
+        <h3 style="font-size:24px">服务</h3>
+        <p style="font-size:20px">一组相关功能打个包。标准的有温湿度服务、设备信息服务；本机自己定了一个 0xFFE0。</p>
+      </div>
+      <div class="card" style="padding:22px 26px">
+        <h3 style="font-size:24px">特征</h3>
+        <p style="font-size:20px">真正收发数据的那一项，挂在服务下面。0xFFE1 用来收，0xFFE4 用来发。</p>
+      </div>
+      <div class="card acc" style="padding:22px 26px">
+        <h3 style="font-size:24px">权限</h3>
+        <p style="font-size:20px">每个特征先声明自己能干什么：可读、可写、可通知。没声明的操作，浏览器那边直接失败。</p>
+      </div>
+    </div>
+  </div>
+  <div class="foot">表是固定的：连上之后浏览器先把这张表读一遍，知道该往哪个特征写命令、订哪个特征收数据。</div>
+  <div class="pageno"></div>
+</section>
+
+<!-- ================= 蓝牙 大小与流 ================= -->
+<section class="slide">
+  <div class="head">
+    <div class="kicker">硬仗 4 / 5 · 连接</div>
+    <h2>一次能带多少：20 字节到 244 字节</h2>
+  </div>
+  <div class="body">
+    <p class="lead" style="font-size:26px;margin:0 0 24px">
+      蓝牙规定了一次最多塞多少字节，这个上限叫 <b>MTU</b>（最大传输单元）。默认只有 <b>23</b>，扣掉 3 字节包头，实际能带 20 字节；双方协商后可以放大到 247，实际带 244。<b>再大就得拆。</b></p>
+    <div class="cards c2" style="gap:24px 30px">
+      <div class="card">
+        <h3><span class="num-badge">1</span>连接间隔</h3>
+        <p>连上之后双方约定多久通一次话，7.5 到 30 毫秒。间隔越短传得越快，也越费电。</p>
+      </div>
+      <div class="card">
+        <h3><span class="num-badge">2</span>一块数据拆几包，看这个上限</h3>
+        <p>导出一块 208 字节的数据：上限还是 20 时要拆 11 包，放大到 244 时一包就过去。</p>
+      </div>
+      <div class="card">
+        <h3><span class="num-badge">3</span>BLE 给的是消息流</h3>
+        <p>每一次写、每一条通知都是一个有边界的独立消息：写 10 字节过去，对面就收到 10 字节。</p>
+      </div>
+      <div class="card acc">
+        <h3><span class="num-badge">4</span>我们要的是字节流</h3>
+        <p>40 KB 要拆成两百多块接成一条连续的流。接起来之后，哪几个字节是一条命令就没人管了，<b>只能自己定「帧」</b>：在每段数据前面加几个字节，写清这段多长、是什么命令、有没有错。</p>
+      </div>
+    </div>
+  </div>
+  <div class="foot">一句话：消息自带边界，接成流之后边界就没了。所以一条命令从哪开始、到哪结束，只能自己在数据里标出来。</div>
+  <div class="pageno"></div>
+</section>
+
+<!-- ================= 蓝牙 标准特征 ================= -->
+<section class="slide">
+  <div class="head">
+    <div class="kicker">硬仗 4 / 5 · 连接</div>
+    <h2>标准特征：别人定好的那几项，拿来就能用</h2>
+  </div>
+  <div class="body">
+    <p class="lead" style="font-size:27px;margin:0 0 26px">
+      蓝牙联盟预先定义了一批服务和特征，含义固定、长度固定，<b>所有厂家的设备都照这个来。</b></p>
+    <div class="cards c3" style="gap:26px">
+      <div class="card">
+        <h3>电量</h3>
+        <p>电池服务 0x180F 下面挂一个电量特征 0x2A19，就是一个 0 到 100 的百分数。</p>
+      </div>
+      <div class="card">
+        <h3>温湿度</h3>
+        <p>环境传感服务 0x181A 下面，温度是 0x2A6E、湿度是 0x2A6F，各是一个定长数值。</p>
+      </div>
+      <div class="card">
+        <h3>设备信息</h3>
+        <p>设备信息服务 0x180A，厂商名、型号、固件版本各占一项，方便对方认出你是谁。</p>
+      </div>
+    </div>
+    <div class="card acc" style="margin-top:26px">
+      <h3>好处是通用</h3>
+      <p>用标准特征报的数据，任何手机、任何系统都认识，不用装 App，也不用看说明书。手机上能看到蓝牙耳机电量，靠的就是这一项。</p>
+    </div>
+  </div>
+  <div class="foot">代价也跟着来：每个标准特征都只表达定死的那一个量，长度也有规定，多一点都塞不进去。</div>
+  <div class="pageno"></div>
+</section>
+
+<!-- ================= 蓝牙 透传选型 ================= -->
+<section class="slide">
+  <div class="head">
+    <div class="kicker">硬仗 4 / 5 · 连接</div>
+    <h2>标准的温湿度特征，装不下 40 KB</h2>
+  </div>
+  <div class="body">
+    <div class="cards c2" style="gap:26px 30px">
+      <div class="card">
+        <h3>标准温湿度服务给什么</h3>
+        <p>标准服务就一个温度值、一个湿度值，定长、语义固定，适合读一次现在多少度。</p>
+      </div>
+      <div class="card">
+        <h3>这个产品要传什么</h3>
+        <p><b>40 KB 历史</b>要拆包、标位置、能报进度；<b>一张 15,000 字节的图</b>要压缩、拆包、写进设备存储；再加上设置、激活码、校时、重启。</p>
+      </div>
+    </div>
+    <div class="card acc" style="margin-top:26px">
+      <h3>所以自己定一套：只留一条通道，含义两头自己约</h3>
+      <p>这叫<b>透传</b>：管道只管搬字节，字节是什么意思由两头自己约好。所有命令塞进同一条通道，用类型字段区分，一问一答按帧 ID 配对。加一个新功能只是加一个类型号，表不用动。</p>
+    </div>
+  </div>
+  <div class="foot">帧格式自己定：一条通道跑完全部指令，从读温湿度、传图、导历史一直到重启，靠类型字段区分。</div>
+  <div class="pageno"></div>
+</section>
+
+<!-- ================= 蓝牙 经典用法 ================= -->
+<section class="slide">
+  <div class="head">
+    <div class="kicker">硬仗 4 / 5 · 连接</div>
+    <h2>别人怎么做：低功耗蓝牙的四种常见用法</h2>
+  </div>
+  <div class="body">
+    <p class="lead" style="font-size:27px;margin:0 0 26px">
+      省电路子不一样，设备醒来的方式就不一样。<b>市面上八成产品落在这四种里。</b></p>
+    <div class="cards c2" style="gap:22px 26px">
+      <div class="card" style="padding:24px 28px">
+        <h3 style="font-size:26px">温湿度标签</h3>
+        <p style="font-size:20px">每隔一分钟广播一次，把温湿度直接塞在广播包里，播完就睡。不需要谁连它，也不管有没有人收。</p>
+      </div>
+      <div class="card" style="padding:24px 28px">
+        <h3 style="font-size:26px">蓝牙按钮、门铃</h3>
+        <p style="font-size:20px">按下才广播一次，发完就完事，不等谁回应。平时完全静默。</p>
+      </div>
+      <div class="card" style="padding:24px 28px">
+        <h3 style="font-size:26px">监护设备</h3>
+        <p style="font-size:20px">每十几分钟、半小时或一小时上报一次。可以约定唤醒时刻，到点醒来开个连接窗口传完，接着睡。</p>
+      </div>
+      <div class="card" style="padding:24px 28px">
+        <h3 style="font-size:26px">要随时能连</h3>
+        <p style="font-size:20px">那只能把广播间隔拉长、低占空比地等着，代价是连接来得慢，续航也差。</p>
+      </div>
+    </div>
+    <div class="card acc" style="margin-top:22px;padding:22px 28px">
+      <h3 style="font-size:25px">这个产品是第五种</h3>
+      <p style="font-size:20px">平时不广播、不等待、不连接；长按之后才开 60 秒窗。想连的人在这 60 秒里连上，过时不候。</p>
+    </div>
+  </div>
+  <div class="foot">前四种各有取舍：标签牺牲实时性，监护设备牺牲随机性，随时可连牺牲续航。它选的是完全不占待机预算。</div>
+  <div class="pageno"></div>
+</section>
+
+<!-- ================= 19 蓝牙窗口 ================= -->
+<section class="slide">
+  <div class="head">
+    <div class="kicker">硬仗 4 / 5 · 连接</div>
+    <h2>蓝牙只在按键后开 60 秒</h2>
+  </div>
+  <div class="body">
+    <p class="lead" style="font-size:27px;margin:0 0 22px">
+      它不做网关、不做实时推送：不需要定时广播温湿度，不需要客户端定时来连，也不需要周期醒来扫别人。<b>所以蓝牙默认彻底关死。</b></p>
+    <figure style="width:100%">
+      <svg viewBox="0 0 1400 320" role="img" aria-label="蓝牙窗口状态机">
+        <defs>
+          <marker id="a3" markerWidth="10" markerHeight="10" refX="9" refY="4" orient="auto">
+            <path d="M0,0 L9,4 L0,8 z" fill="#5a6472"/></marker>
+        </defs>
+        <g font-family="Segoe UI,Microsoft YaHei,sans-serif">
+          <rect x="30" y="60" width="280" height="110" rx="55" fill="#eef2f6" stroke="#64707e" stroke-width="2.5"/>
+          <text x="170" y="106" text-anchor="middle" font-size="28" font-weight="800" fill="#101822">OFF 关闭</text>
+          <text x="170" y="142" text-anchor="middle" font-size="21" fill="#5a6472">默认态 · 7.33 µA</text>
+
+          <rect x="520" y="60" width="350" height="110" rx="55" fill="#fdeee4" stroke="#c2410c" stroke-width="2.5"/>
+          <text x="695" y="106" text-anchor="middle" font-size="28" font-weight="800" fill="#101822">广播 60 秒</text>
+          <text x="695" y="142" text-anchor="middle" font-size="21" fill="#5a6472">100 ms 间隔 · 倒计时</text>
+
+          <rect x="1090" y="60" width="280" height="110" rx="55" fill="#e6f3ed" stroke="#0d7a5c" stroke-width="2.5"/>
+          <text x="1230" y="106" text-anchor="middle" font-size="28" font-weight="800" fill="#101822">CONNECTED</text>
+          <text x="1230" y="142" text-anchor="middle" font-size="21" fill="#5a6472">保持 · 禁止睡眠</text>
+
+          <line x1="316" y1="115" x2="512" y2="115" stroke="#5a6472" stroke-width="3" marker-end="url(#a3)"/>
+          <text x="414" y="98" text-anchor="middle" font-size="22" fill="#101822">长按 3 秒</text>
+
+          <line x1="876" y1="115" x2="1082" y2="115" stroke="#5a6472" stroke-width="3" marker-end="url(#a3)"/>
+          <text x="979" y="98" text-anchor="middle" font-size="22" fill="#101822">连接成功</text>
+
+          <line x1="1082" y1="152" x2="880" y2="152" stroke="#5a6472" stroke-width="3" marker-end="url(#a3)"/>
+          <text x="979" y="182" text-anchor="middle" font-size="22" fill="#5a6472">断开自动重开一窗</text>
+
+          <path d="M695,172 L695,252 L170,252 L170,174" fill="none" stroke="#5a6472" stroke-width="3" marker-end="url(#a3)"/>
+          <text x="430" y="242" text-anchor="middle" font-size="22" fill="#5a6472">60 秒没人连，或长按关闭</text>
+
+          <text x="700" y="300" text-anchor="middle" font-size="22" fill="#c2410c" font-weight="700">
+            连上的瞬间，网页自动读一次温湿度并校时，只写业务偏移，不打断蓝牙</text>
+        </g>
+      </svg>
+    </figure>
+  </div>
+  <div class="foot">被扫描不算连接，只有真的连上才续期：光扫不连，60 秒照样关。</div>
+  <div class="pageno"></div>
+</section>
+
+<!-- ================= 蓝牙 三种写法 ================= -->
+<section class="slide">
+  <div class="head">
+    <div class="kicker">硬仗 5 / 5 · 数据</div>
+    <h2>往特征里写，有三种写法，代价不一样</h2>
+  </div>
+  <div class="body">
+    <p class="lead" style="font-size:28px;margin:0 0 30px">
+      同样是发一包数据，蓝牙给了三种发法。<b>选哪种，决定了丢了之后谁来兜。</b></p>
+    <div class="cards c3" style="gap:26px">
+      <div class="card">
+        <h3>有应答写</h3>
+        <p>每发一包，对面回一个回执，确认收到了。可靠，但一来一回，速度差不多减半。</p>
+      </div>
+      <div class="card acc">
+        <h3>无应答写</h3>
+        <p>发完就走，不等回执。速度拉满，代价是<b>丢了不知道</b>，得靠上层自己兜。</p>
+      </div>
+      <div class="card">
+        <h3>通知</h3>
+        <p>方向反过来：设备主动把数据推给浏览器，不用浏览器来问。导出历史用的就是它。</p>
+      </div>
+    </div>
+    <div class="card" style="margin-top:26px">
+      <h3>这个产品怎么选</h3>
+      <p>发历史是设备往外推，用<b>通知</b>；发壁纸是浏览器往里灌几百个小包，用<b>无应答写</b>。代价落在两件事上：进度得设备端自己数，出错得靠最后一道校验发现。接下来两页分别讲这两件。</p>
+    </div>
+  </div>
+  <div class="foot">有应答写不是不能用：几百个小包每个都等一个来回，时间全花在等上，所以只留给必须确认的命令。</div>
+  <div class="pageno"></div>
+</section>
+
+<!-- ================= 蓝牙 下传 ================= -->
+<section class="slide">
+  <div class="head">
+    <div class="kicker">硬仗 5 / 5 · 数据</div>
+    <h2>30 天的温湿度历史，怎么传到浏览器</h2>
+  </div>
+  <div class="body">
+    <p class="lead" style="font-size:27px;margin:0 0 24px">
+      30 天一共 10,080 个点，光历史本身就占着 40 KB 内存，腾不出第二份来打包，<b>那就边读、边发。</b></p>
+    <div class="cards c2" style="gap:24px 30px">
+      <div class="card">
+        <h3><span class="num-badge">1</span>一块 208 字节的缓冲来回用</h3>
+        <p>192 字节数据加 16 字节帧头，这块发完才装下一块。整条链路没有队列，只有一个缓冲。</p>
+      </div>
+      <div class="card">
+        <h3><span class="num-badge">2</span>按 MTU 切片，每轮最多推 5 包</h3>
+        <p>帧按 MTU 减 3 切开，MTU 从 23 起、协商后自适应；每轮循环最多推 5 包，把 CPU 让给采样和刷屏。</p>
+      </div>
+      <div class="card">
+        <h3><span class="num-badge">3</span>卡死看有没有前进，不看总耗时</h3>
+        <p>发到哪儿了每往前挪一次就重新计时，3 秒没挪动才判失败。走得慢但一直在走，不算卡死。</p>
+      </div>
+      <div class="card acc">
+        <h3><span class="num-badge">4</span>结果</h3>
+        <p>40 KB 分两百多帧发完；导出期间采样、显示、按键照常，只冻结历史写入。</p>
+      </div>
+    </div>
+  </div>
+  <div class="foot">分三段走：开头先说清总点数、采样间隔、总字节数，中间一块块送数据，最后收尾。每块都带自己在整段里的位置，网页按位置拼回去。</div>
+  <div class="pageno"></div>
+</section>
+
+<!-- ================= 蓝牙 上传 ================= -->
+<section class="slide">
+  <div class="head">
+    <div class="kicker">硬仗 5 / 5 · 数据</div>
+    <h2>一张壁纸图片，怎么传到设备上</h2>
+  </div>
+  <div class="body">
+    <p class="lead" style="font-size:27px;margin:0 0 24px">
+      反方向是把壁纸推进设备：用无应答写把速度拉满，<b>代价是每包发出去不知道到没到。</b></p>
+    <div class="cards c2" style="gap:24px 30px">
+      <div class="card">
+        <h3><span class="num-badge">1</span>先在浏览器里压缩</h3>
+        <p>一张 400×300 的单色图不小，直接发要拆成很多包。浏览器先把它压缩一遍，体积小下去，包数跟着少，传得就快。</p>
+      </div>
+      <div class="card acc">
+        <h3><span class="num-badge">2</span>发出去不等回执</h3>
+        <p>几百个小包连着发，每包都不等对方确认。速度快，代价是发出去不知道到没到。</p>
+      </div>
+      <div class="card">
+        <h3><span class="num-badge">3</span>进度由设备端上报</h3>
+        <p>设备自己累计收到了多少字节，每满 1024 字节回一条通知给网页，进度条就是靠它走的。</p>
+      </div>
+      <div class="card">
+        <h3><span class="num-badge">4</span>传完再核对一次</h3>
+        <p>每包都带自己在整张图里的位置；整张传完核对一次校验值，对不上就重传，不会把半张图当成传完。</p>
+      </div>
+    </div>
+  </div>
+  <div class="foot">10 秒没进度就判超时，自动清状态、放开历史写入；传输期间设备的采样、显示、按键照常，只是别的命令一律回忙。</div>
+  <div class="pageno"></div>
+</section>
+
+<!-- ================= 21 成本 ================= -->
+<section class="slide">
+  <div class="head">
+    <div class="kicker">04 · 成本</div>
+    <h2>整机 55 元，30 套小批量</h2>
+  </div>
+  <div class="body g2">
+    <div>
+      <div class="hero" style="color:var(--warm)">≈55<small>元</small></div>
+      <p class="lead" style="font-size:25px;margin-top:18px">小批量 30 套均摊，主控只有约 3.5 元，<br>大头是屏幕和主板。</p>
+      <p class="lead" style="font-size:25px;margin-top:22px">量产拼板后，电子单板能压到 <b>10 元以内</b>，<br>不含屏幕。</p>
+    </div>
+    <div>
+      <table>
+        <tr><th>项目</th><th class="r">单套</th></tr>
+        <tr><td>PCB 打样 + 物料 + SMT</td><td class="r" style="font-weight:700">19.1 元</td></tr>
+        <tr><td>4.2″ 墨水屏</td><td class="r" style="font-weight:700">18 元</td></tr>
+        <tr><td>电池 + 卡簧 + 磁铁</td><td class="r" style="font-weight:700">8 元</td></tr>
+        <tr><td>3D 打印外壳（50 g）</td><td class="r" style="font-weight:700">10 元</td></tr>
+      </table>
+    </div>
+  </div>
+  <div class="foot">同价位的商业温湿度计要么没有历史，要么必须插电；主控选 CH584F 而不是 ESP32，也是为了把成本砍到刚好。</div>
+  <div class="pageno"></div>
+</section>
+
+<!-- ================= 现状与量产 ================= -->
+<section class="slide">
+  <div class="head">
+    <div class="kicker">05 · 现状</div>
+    <h2>现在还不量产，卡在四件事</h2>
+  </div>
+  <div class="body g2 wide">
+    <div class="blockers">
+      <div class="blk"><span class="bno">01</span><div><b>屏幕货源不可控</b>
+        <p>屏幕是闲鱼收的二手回收屏，来源随时可能断，也可能涨价。</p></div></div>
+      <div class="blk"><span class="bno">02</span><div><b>不知道有多少人要</b>
+        <p>需求摸不准，不敢先囤一批板子压在手里。</p></div></div>
+      <div class="blk"><span class="bno">03</span><div><b>功能克制的代价</b>
+        <p>拼不过功能堆满的墨水屏，囤了怕滞销。</p></div></div>
+      <div class="blk"><span class="bno">04</span><div><b>软件还没挂够</b>
+        <p>要挂机一年半载不出问题，才敢卖套件。</p></div></div>
+    </div>
+    <div class="cards" style="gap:18px">
+      <div class="card" style="padding:24px 26px">
+        <h3 style="font-size:26px">开模、打样、供应链，一样都少不了</h3>
+        <p style="font-size:21px">外壳要开注塑模，板子要几十到几百块一起挂机；打样排期、器件供货也得一条条跑通。</p>
+      </div>
+      <div class="card acc" style="padding:24px 26px">
+        <h3 style="font-size:26px">我能提供</h3>
+        <p style="font-size:21px">技术支持、产品维护与固件迭代；做过不少低功耗物联网和消费类产品。</p>
+      </div>
+      <div class="card" style="padding:24px 26px">
+        <h3 style="font-size:26px">下一步</h3>
+        <p style="font-size:21px">锂电池、外挂 RTC，等这一版挂稳了再看。</p>
+      </div>
+    </div>
+  </div>
+  <div class="foot">注塑、屏幕货源、代工、渠道这些<b>我管不了，也不接</b>；想自己动手的，仓库里的 BOM 和结构文件直接拿去用。</div>
+  <div class="pageno"></div>
+</section>
+
+<!-- ================= 授权与开源 ================= -->
+<section class="slide">
+  <div class="head">
+    <div class="kicker">06 · 开源与授权</div>
+    <h2>为什么只发预编译固件</h2>
+  </div>
+  <div class="body">
+    <p class="lead" style="font-size:28px;margin:0 0 30px">
+      思路、协议、实测数据、上位机，都在仓库里。<b>只有固件，我发的是 hex。</b></p>
+    <div class="cards c2" style="gap:28px">
+      <div class="card">
+        <h3>已经公开</h3>
+        <p>原理图、PCB、结构件模型、蓝牙协议全表、网页上位机，还有每项取舍背后的实测数据。</p>
+      </div>
+      <div class="card acc">
+        <h3>没公开的只有固件源码</h3>
+        <p>不强求拦住谁，只是不想把最后这一步也递出去；剩下的，按公开的思路都能自己补回来。</p>
+      </div>
+    </div>
+    <ul class="big sm" style="margin-top:28px;gap:14px">
+      <li>我知道 AI 现在能把这种项目做出来，我自己就是这么做出来的；也知道固件能被逆向</li>
+      <li>但「能跑起来」和「能长期不出问题」，是两件事</li>
+      <li><b>该踩的坑我先踩过一遍</b>，也挂了一段时间在用；你自己从零来，这些还得再踩一次</li>
+      <li>自己拆开研究是一回事，拆开换个壳去卖是另一回事</li>
+    </ul>
+    <p class="analogy">自己下厨也能做出来，只是要重新买菜、重新试错、重新洗锅；买一份现炒的，当场就能吃。</p>
+  </div>
+  <div class="foot">真想要源码，让 AI 按已经公开的思路重写一遍，你拿到的是自己的实现；想直接用，预编译 hex 免费激活，不激活也能用全部功能。</div>
+  <div class="pageno"></div>
+</section>
+
+<!-- ================= 烧录 1/2 先决条件 ================= -->
+<section class="slide">
+  <div class="head">
+    <div class="kicker">07 · 烧录</div>
+    <h2>烧之前，三条不能错：烧录器、模式、拆机片</h2>
+  </div>
+  <div class="body g2">
+    <figure>
+      <img src="../img/烧录/接口.jpg" alt="烧录焊盘与 WCH-LinkE 接线实拍" style="height:422px;width:auto">
+      <figcaption>板上 6 个焊盘：调试 TX、调试 RX、SWD、SCK、GND、+3.3V；<br>烧录只用 SWD、SCK、GND、3.3V 这四根。</figcaption>
+    </figure>
+    <div>
+      <div class="cards" style="gap:20px">
+        <div class="card" style="padding:24px 28px;background:var(--warm-bg)">
+          <h3 style="font-size:27px;color:var(--warm)">只能用 WCH 自家的烧录器</h3>
+          <p style="font-size:21px">这颗是 RISC-V 内核。ST-Link、J-Link、DAP-Link 都是配 ARM 的，认不了它。</p>
+        </div>
+        <div class="card" style="padding:24px 28px;background:var(--warm-bg)">
+          <h3 style="font-size:27px;color:var(--warm)">烧录器必须切到 WCH-LinkRV</h3>
+          <p style="font-size:21px">WCH-LinkE 有两种模式，默认那档是给 ARM 的。工具里要认成 RISC-V Link，再选 WCH-LinkRV。</p>
+        </div>
+        <div class="card acc" style="padding:24px 28px">
+          <h3 style="font-size:27px">拆机片：先按住橙色键，再上电</h3>
+          <p style="font-size:21px">上一手通常会把调试功能关掉，WCH-LinkE 直接连是连不上的。按住橙色键不放，再上电或接上烧录夹，让芯片进 Bootloader 等下载。</p>
+        </div>
+      </div>
+    </div>
+  </div>
+  <div class="foot">橙色键就是整机唯一的那个按键：平时单击切页、双击切时间窗、长按开蓝牙；烧拆机片时，它就是 Boot 脚。</div>
+  <div class="pageno"></div>
+</section>
+
+<!-- ================= 烧录 2/3 拆机片救援 ================= -->
+<section class="slide">
+  <div class="head">
+    <div class="kicker">07 · 烧录</div>
+    <h2>拆机片关了两线调试口：冷启动进 Bootloader</h2>
+  </div>
+  <div class="body g2">
+    <div>
+      <div class="verify" style="margin-top:0;background:var(--warm-bg)">
+        <h3 style="color:var(--warm)">冷启动四步</h3>
+        <div class="vrow"><span class="vno" style="color:var(--warm)">01</span><p><b>完全断电</b>：拔掉电池、断开一切供电，芯片必须真的掉电</p></div>
+        <div class="vrow"><span class="vno" style="color:var(--warm)">02</span><p><b>按住橙色键不放</b>：它就是 Boot 脚，按住等于把它拉低</p></div>
+        <div class="vrow"><span class="vno" style="color:var(--warm)">03</span><p><b>上电</b>：芯片只在上电瞬间采样 Boot 脚，这一步不能反</p></div>
+        <div class="vrow"><span class="vno" style="color:var(--warm)">04</span><p><b>松开</b>：芯片停在 Bootloader，WCHISPStudio 能认到 BOOT 设备</p></div>
+      </div>
+      <div class="card acc" style="margin-top:22px;padding:22px 28px">
+        <h3 style="font-size:26px">然后点「开启两线仿真」</h3>
+        <p style="font-size:21px">它会全片擦除，并把两线调试口重新打开；之后接 WCH-LinkE 走 SWD 就正常了。</p>
+      </div>
+    </div>
+    <div class="cards" style="gap:14px">
+      <div class="card" style="padding:18px 24px;background:var(--warm-bg)">
+        <h3 style="font-size:23px;color:var(--warm)">按 RESET 键没用</h3>
+        <p style="font-size:19px">只有上电复位才采 Boot 脚，按复位键不算。</p>
+      </div>
+      <div class="card" style="padding:18px 24px">
+        <h3 style="font-size:23px">停在里面会超时</h3>
+        <p style="font-size:19px">10 秒没被工具认到，或 60 秒没操作，芯片自己退出，跑回用户代码。</p>
+      </div>
+      <div class="card" style="padding:18px 24px">
+        <h3 style="font-size:23px">空片不用按</h3>
+        <p style="font-size:19px">程序区前 4K 还是空白的片子，上电自动停在 Bootloader。</p>
+      </div>
+      <div class="card" style="padding:18px 24px">
+        <h3 style="font-size:23px">另一条不用按键的路</h3>
+        <p style="font-size:19px">WCH-LinkUtility 里选「上电前擦除」，上电瞬间抢先擦掉用户代码。</p>
+      </div>
+    </div>
+  </div>
+  <div class="foot">Boot 脚默认是 <b>PB22</b>，低电平触发；如果上一手把它改成了 PB11（高电平触发），按橙色键就不灵了，得改成拉高 PB11 再上电。</div>
+  <div class="pageno"></div>
+</section>
+
+<!-- ================= 烧录 3/3 三步 ================= -->
+<section class="slide">
+  <div class="head">
+    <div class="kicker">07 · 烧录</div>
+    <h2>救回来之后，三步烧完再看版本号</h2>
+  </div>
+  <div class="body g2">
+    <figure>
+      <img src="../img/烧录/工具.png" alt="WCH-LinkUtility 烧录界面" style="height:468px;width:auto">
+      <figcaption>红圈三处：模式、目标文件、下载按钮</figcaption>
+    </figure>
+    <div>
+      <div class="verify" style="margin-top:0">
+        <h3>三步</h3>
+        <div class="vrow"><span class="vno">01</span><p><b>选文件</b>：系列 CH581/4/5、内核 RISC-V，目标文件指向最新的 .hex</p></div>
+        <div class="vrow"><span class="vno">02</span><p><b>勾选项</b>：全擦、下载、校验、复位并运行，四项都打勾</p></div>
+        <div class="vrow"><span class="vno">03</span><p><b>点下载</b>：窗口右下角出现「成功 1、共计 1」就算过</p></div>
+      </div>
+      <div class="card acc" style="margin-top:26px;padding:22px 28px">
+        <h3 style="font-size:26px">烧完怎么确认是哪一版</h3>
+        <p style="font-size:21px">连一次网页，系统信息末尾就是固件编译时间，和下载的文件对得上就是这一版。</p>
+      </div>
+    </div>
+  </div>
+  <div class="foot">勾了「全擦」，自定义图片和激活状态会一起清掉；它们本来不在 hex 里，烧完重新上传图片、重新激活即可。</div>
+  <div class="pageno"></div>
+</section>
+
+<!-- ================= 22 结尾 ================= -->
+<section class="slide">
+  <div class="head">
+    <div class="kicker">TH-Plot</div>
+    <h2>一年续航，12 mAh 采样，55 元成本</h2>
+  </div>
+  <div class="body">
+    <div class="cards c3" style="gap:30px">
+      <div class="card acc" style="padding:40px 34px">
+        <div style="font-size:58px;font-weight:800;color:var(--acc);letter-spacing:-2px">1年153天</div>
+        <p style="margin-top:14px;color:#3d4a56">5 分钟刷档的实测外推<br>最省档 10 年 324 天</p>
+      </div>
+      <div class="card" style="padding:40px 34px">
+        <div style="font-size:58px;font-weight:800;color:var(--blue);letter-spacing:-2px">12 mAh</div>
+        <p style="margin-top:14px">一年全部采样的耗电，电池的 1.2%</p>
+      </div>
+      <div class="card" style="padding:40px 34px">
+        <div style="font-size:58px;font-weight:800;color:var(--warm);letter-spacing:-2px">≈55 元</div>
+        <p style="margin-top:14px">小批量整机成本，电子单板还能压到 10 元</p>
+      </div>
+    </div>
+    <p class="lead" style="font-size:27px;margin-top:52px;text-align:center">
+      <b>不激活也能用全部功能</b>，只多一页版权页；预编译 hex 免费激活，源码照文档自己写也欢迎。</p>
+  </div>
+  <div class="foot"><b>继续看</b>：产品与硬件 README · 蓝牙协议全表 · 上位机 ch58x-th-plot.cacherivulet.cn</div>
+  <div class="pageno"></div>
+</section>
+
+</div><!-- /stage -->
+
+<div id="bar">
+  <button id="prev" aria-label="上一页">‹</button>
+  <span id="cnt">01 / 26</span>
+  <button id="next" aria-label="下一页">›</button>
+</div>
+
+<script>
+(function(){
+  var stage=document.getElementById('stage');
+  var slides=[].slice.call(stage.querySelectorAll('.slide'));
+  var n=slides.length, i=0;
+  var cnt=document.getElementById('cnt'), prog=document.getElementById('prog'), bar=document.getElementById('bar');
+
+  // 翻页提示：左右箭头常驻；底部文字提示首次翻页或 6 秒后淡出
+  var tipEl=isExport?null:stage.querySelector('.flip-hint.tip');
+  var hintTimer=setTimeout(function(){ if(tipEl) tipEl.classList.remove('show'); },6000);
+  function hideHint(){
+    clearTimeout(hintTimer);
+    if(tipEl) tipEl.classList.remove('show');
+  }
+
+  // 等比缩放到窗口
+  // 导出模式：?export 时铺满 1600x900 画布并隐藏界面控件，便于整页截图
+  // 触屏设备竖屏：舞台旋转 90°，把手机横过来即可全屏观看；系统自动旋转成横屏后恢复正常布局
+  var isExport = location.search.indexOf('export') >= 0;
+  var rotated = false;
+  function fit(){
+    var touch=(navigator.maxTouchPoints>0)||('ontouchstart' in window);
+    if(isExport){ rotated=false; document.body.classList.remove('phone-rotated'); stage.style.transform='none'; return; }
+    if(touch && window.innerHeight>window.innerWidth){
+      rotated=true;
+      var s=Math.min(window.innerWidth/910, (window.innerHeight-10)/1610);
+      stage.style.transform='rotate(90deg) scale('+s+')';
+    }else{
+      rotated=false;
+      var s=Math.min(window.innerWidth/1600, (window.innerHeight-8)/900);
+      stage.style.transform='scale('+s+')';
+    }
+    document.body.classList.toggle('phone-rotated',rotated);
+  }
+  fit(); window.addEventListener('resize',fit); window.addEventListener('orientationchange',fit);
+  if(isExport){
+    document.body.style.background = 'var(--bg)';
+    stage.style.boxShadow = 'none';
+    bar.style.display = 'none';
+    prog.style.display = 'none';
+    // 导出模式下翻页提示不该进画面（截图会直接进视频）
+    [].forEach.call(stage.querySelectorAll('.flip-hint'),function(el){el.style.display='none'});
+  }
+
+  function pad(x){return (x<10?'0':'')+x}
+  // 页码
+  slides.forEach(function(s,k){
+    var p=s.querySelector('.pageno');
+    if(p) p.textContent=pad(k+1)+' / '+pad(n);
+  });
+  function go(k,back){
+    hideHint();
+    if(k>=n){
+      // 已在最后一页仍向后翻：播放结束，通知父页面返回选择首页
+      try{ if(window.parent&&window.parent!==window) window.parent.postMessage('thplot-intro-end','*'); }catch(err){}
+      return;
+    }
+    if(k<0) return;
+    slides[i].classList.remove('active','back');
+    i=k;
+    var s=slides[i];
+    if(back) s.classList.add('back');
+    void s.offsetWidth;
+    s.classList.add('active');
+    cnt.textContent=pad(i+1)+' / '+pad(n);
+    prog.style.width=((i+1)/n*100)+'%';
+    if(history.replaceState) history.replaceState(null,'','#'+(i+1));
+  }
+  document.getElementById('prev').onclick=function(){go(i-1,true)};
+  document.getElementById('next').onclick=function(){go(i+1,false)};
+  document.addEventListener('keydown',function(e){
+    if(e.key==='ArrowRight'||e.key==='PageDown'||e.key===' '){e.preventDefault();go(i+1,false)}
+    else if(e.key==='ArrowLeft'||e.key==='PageUp'){e.preventDefault();go(i-1,true)}
+    else if(e.key==='Home'){e.preventDefault();go(0,true)}
+    else if(e.key==='End'){e.preventDefault();go(n-1,false)}
+    else if(e.key==='f'||e.key==='F'){
+      if(document.fullscreenElement) document.exitFullscreen();
+      else document.documentElement.requestFullscreen();
+    }
+  });
+  // 点击左/右半屏翻页；旋转模式下用户右侧对应视口下方
+  var lastSwipe=0;
+  if(!isExport) document.addEventListener('click',function(e){
+    if(bar.contains(e.target)) return;
+    if(e.target.closest && e.target.closest('a,button')) return;
+    var sel=window.getSelection?window.getSelection():null;
+    if(sel && String(sel)) return;
+    if(Date.now()-lastSwipe<600) return;
+    var goNext = rotated ? e.clientY>=window.innerHeight/2 : e.clientX>=window.innerWidth/2;
+    if(goNext) go(i+1,false); else go(i-1,true);
+  });
+
+  var sx=null, sy=null;
+  document.addEventListener('touchstart',function(e){
+    sx=e.touches[0].clientX; sy=e.touches[0].clientY;
+  },{passive:true});
+  document.addEventListener('touchend',function(e){
+    if(sx===null) return;
+    var dx=e.changedTouches[0].clientX-sx, dy=e.changedTouches[0].clientY-sy;
+    if(rotated){
+      if(Math.abs(dy)>50){ go(dy<0?i+1:i-1, dy>0); lastSwipe=Date.now(); }
+    }else{
+      if(Math.abs(dx)>50){ go(dx<0?i+1:i-1, dx>=0); lastSwipe=Date.now(); }
+    }
+    sx=null;
+  },{passive:true});
+
+  // 导航条闲置自动隐藏
+  var t=null;
+  function wake(){
+    bar.classList.remove('hide');
+    clearTimeout(t);
+    t=setTimeout(function(){bar.classList.add('hide')},2600);
+  }
+  document.addEventListener('mousemove',wake);
+  document.addEventListener('keydown',wake);
+
+  var h=parseInt((location.hash||'').replace('#',''),10);
+  i=(!isNaN(h)&&h>=1&&h<=n)?h-1:0;
+  slides[i].classList.add('active');
+  cnt.textContent=pad(i+1)+' / '+pad(n);
+  prog.style.width=((i+1)/n*100)+'%';
+  wake();
+  requestAnimationFrame(function(){
+    [].forEach.call(stage.querySelectorAll('.flip-hint'),function(el){el.classList.add('show')});
+  });
+})();
+</script>
+</body>
+</html>

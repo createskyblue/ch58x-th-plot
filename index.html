@@ -120,8 +120,50 @@ dialog p{margin:0 0 18px}
   @media (max-width:900px){.grid{grid-template-columns:1fr}.readings{gap:32px}h1{font-size:28px}.model-preview{height:280px;min-height:280px}}
 
 .custom-image{margin:20px 0}.custom-image #image-connection{font-size:12px}.custom-card{border:1px solid var(--line);background:#fff;border-radius:14px;padding:22px;margin-bottom:18px}.custom-row{display:flex;flex-wrap:wrap;gap:12px;align-items:center}.custom-between{justify-content:space-between}.custom-muted,.custom-hint{color:var(--muted);font-size:12px;line-height:1.6}.custom-status{font-size:13px;min-height:22px}.custom-grid{display:grid;grid-template-columns:416px minmax(280px,360px) minmax(260px,320px);gap:32px;align-items:start;justify-content:center;margin-top:20px}.custom-grid>div{min-width:0}.custom-canvas-wrap{width:416px;max-width:none;overflow:visible;background:#f7f7f2;border:2px solid #111;padding:6px;border-radius:8px}.custom-canvas-wrap canvas{display:block;width:400px;height:300px;max-width:none;flex-shrink:0;image-rendering:pixelated}.custom-controls{display:grid;align-content:start;gap:16px;min-width:0}#image-mono-panel{position:static;width:auto}.custom-field{display:block;font-size:13px}.custom-field input,.custom-field select{display:block;margin-top:6px;max-width:100%}.custom-field input[type=file]{width:100%;font-size:13px}.custom-field input[type=color]{display:block;width:100%;height:42px;min-width:90px;padding:4px;border:1px solid #cbd9d1;border-radius:8px;background:#fff;cursor:pointer}.custom-field input[type=color]::-webkit-color-swatch-wrapper{padding:0}.custom-field input[type=color]::-webkit-color-swatch{border:0;border-radius:4px}.custom-row button,.custom-row .button-like{white-space:nowrap}.button-like{display:inline-block;border:1px solid #cbd9d1;background:#fff;border-radius:8px;padding:10px 15px;color:#254b3e;font:inherit;font-size:13px;cursor:pointer;line-height:normal;margin:0}.button-like:hover{background:#f1f7f3}.button-like:focus-within{outline:3px solid #88bda9;outline-offset:1px}.custom-field input[type=range]{width:100%;accent-color:var(--green)}#image-editor,#image-preview{cursor:grab;touch-action:none;user-select:none;-webkit-user-select:none}#image-editor{background:#222}#image-editor.dragging,#image-preview.dragging{cursor:grabbing}.custom-output-row{margin-top:12px}.custom-progress{height:10px;background:#eee;border-radius:999px;overflow:hidden;margin:10px 0}.custom-progress>span{display:block;height:100%;width:0;background:var(--green)}.custom-notice{font-size:13px;background:#f4f8f4;grid-column:1/-1}.custom-image h2{margin:0 0 8px;font-size:18px}@media(max-width:600px){.custom-grid{grid-template-columns:minmax(0,1fr);gap:24px}.custom-canvas-wrap{width:100%;max-width:416px}.custom-canvas-wrap canvas{width:100%;height:auto;aspect-ratio:4/3}.custom-controls{width:100%}#image-mono-panel{position:static;width:100%}.custom-card{padding:16px}.custom-row button{min-height:44px;touch-action:manipulation}}
- .custom-field input[type=file]{border:1px solid #cbd9d1;border-radius:8px;background:#f7faf8;padding:7px;width:100%;color:var(--muted)}.custom-field input[type=file]::file-selector-button{border:1px solid #b8cfc3;border-radius:7px;background:#fff;color:#254b3e;padding:8px 12px;margin-right:10px;font:inherit;cursor:pointer}.custom-field select{width:100%;border:1px solid #cbd9d1;border-radius:8px;background:#fff;color:#254b3e;padding:10px 12px;font:inherit}.custom-field select:focus,.custom-field input[type=file]:focus{outline:3px solid #88bda9;outline-offset:1px}.custom-progress{width:100%;height:9px;background:#e7eee9;border-radius:99px;overflow:hidden;margin:2px 0}.custom-progress>span{transition:width .15s ease}</style>
-<link rel="stylesheet" href="./canvas-editor.css?v=6ed8c47">
+ .custom-field input[type=file]{border:1px solid #cbd9d1;border-radius:8px;background:#f7faf8;padding:7px;width:100%;color:var(--muted)}.custom-field input[type=file]::file-selector-button{border:1px solid #b8cfc3;border-radius:7px;background:#fff;color:#254b3e;padding:8px 12px;margin-right:10px;font:inherit;cursor:pointer}.custom-field select{width:100%;border:1px solid #cbd9d1;border-radius:8px;background:#fff;color:#254b3e;padding:10px 12px;font:inherit}.custom-field select:focus,.custom-field input[type=file]:focus{outline:3px solid #88bda9;outline-offset:1px}.custom-progress{width:100%;height:9px;background:#e7eee9;border-radius:99px;overflow:hidden;margin:2px 0}.custom-progress>span{transition:width .15s ease}
+/* ===== 顶层功能标签页 ===== */
+.tabs{display:flex;gap:8px;margin:0 0 22px;position:sticky;top:0;z-index:40;background:#f3f6f4;padding:10px 0 12px;overflow-x:auto;scrollbar-width:none}
+.tabs::-webkit-scrollbar{display:none}
+.tab-btn{flex:0 0 auto;border:1px solid var(--line);background:#fff;border-radius:999px;padding:10px 18px;font-size:13px;color:var(--muted)}
+/* 提高优先级：避免全局 button:hover 在手机点击后粘住，盖掉选中态 */
+.tabs .tab-btn:hover{background:#e8f0eb;border-color:#cbd9d1;color:#254b3e}
+.tabs .tab-btn.active,.tabs .tab-btn.active:hover,.tabs .tab-btn.active:focus-visible{background:var(--green);border-color:var(--green);color:#fff}
+.tab-page[hidden]{display:none}
+.tab-short{display:none}
+/* 手机上用短标签，五个标签一行放得下，避免被截断 */
+@media(max-width:720px){
+  .tabs{gap:6px}
+  .tab-btn{padding:10px 13px}
+  .tab-long{display:none}
+  .tab-short{display:inline}
+}
+/* ===== 壁纸编辑器：桌面三栏布局；手机端画布吸附顶部，两段切换下方工具区 ===== */
+.editor-tabs{display:none}
+.custom-grid>.add-buttons{grid-area:addbtn}
+.custom-grid>.canvas-pin{grid-area:pin}
+.custom-grid>.editor-pane-canvas{grid-area:canvaspane}
+.custom-grid>.editor-pane-layers{grid-area:layers}
+.custom-grid>.editor-pane-output{grid-area:output}
+@media(min-width:721px){
+  .custom-grid{grid-template-areas:"addbtn layers output" "pin layers output" "canvaspane layers output"}
+  .custom-grid>.editor-pane-layers,.custom-grid>.editor-pane-output{grid-row:1/span 3}
+}
+@media(max-width:720px){
+  .editor-tabs{display:flex;gap:8px;margin:18px 0 2px}
+  .editor-tabs button{flex:1;border:1px solid var(--line);background:#fff;border-radius:10px;padding:11px 6px;font-size:13px;color:var(--muted)}
+  .editor-tabs button:hover{background:#e8f0eb;border-color:#cbd9d1;color:#254b3e}
+  .editor-tabs button.active,.editor-tabs button.active:hover,.editor-tabs button.active:focus-visible{background:var(--green);border-color:var(--green);color:#fff}
+  /* 两段只切换下方工具区：画布、添加按钮和单色预览两种模式下都保持可见 */
+  #custom-image[data-pane="edit"] .editor-pane-output{display:none}
+  #custom-image[data-pane="output"] .editor-pane-layers{display:none}
+  .custom-grid{display:block;margin-top:12px}
+  /* 画布预览吸附在顶部（不含添加按钮），编辑属性时始终可见 */
+  .canvas-pin{position:sticky;top:60px;z-index:30;background:#f3f6f4;padding-bottom:8px}
+}
+.font-advanced summary{cursor:pointer;color:var(--green);font-weight:600;padding:6px 0}
+.font-advanced[open]>summary{margin-bottom:10px}
+</style>
+<link rel="stylesheet" href="./canvas-editor.css?v=qr-battery1">
 <script type="importmap">
 {
   "imports": {
@@ -130,12 +172,55 @@ dialog p{margin:0 0 18px}
   }
 }
 </script>
+<style>
+/* ===== 落地页 ===== */
+#landing{position:fixed;inset:0;z-index:60;display:flex;align-items:center;justify-content:center;background:radial-gradient(1100px 560px at 18% -8%,#e2efe8,transparent 60%),radial-gradient(900px 500px at 100% 110%,#e6f0f5,transparent 55%),#f3f6f4;padding:28px}
+#landing[hidden]{display:none}
+body:has(>#landing:not([hidden])),body:has(>#intro-view:not([hidden])){overflow:hidden}
+.landing-panel{max-width:880px;width:100%}
+.landing-kicker{display:inline-flex;align-items:center;gap:12px;font-size:13px;font-weight:700;letter-spacing:3px;color:var(--green);text-transform:uppercase}
+.landing-kicker::before{content:"";width:36px;height:3px;background:var(--green);border-radius:2px}
+.landing-title{font-size:clamp(30px,5vw,46px);letter-spacing:-1px;margin:14px 0 10px;font-weight:800}
+.landing-sub{color:var(--muted);font-size:15px;line-height:1.8;margin:0}
+.landing-choices{display:grid;grid-template-columns:1fr 1fr;gap:18px;margin-top:34px}
+.landing-choice{display:flex;flex-direction:column;align-items:flex-start;gap:10px;text-align:left;padding:26px 26px 24px;border:1px solid var(--line);border-radius:16px;background:#fff;color:#18352f;font:inherit;cursor:pointer;box-shadow:0 3px 12px #163b2605;transition:transform .15s ease,box-shadow .15s ease,border-color .15s ease}
+.landing-choice:hover{border-color:var(--green);transform:translateY(-2px);box-shadow:0 10px 26px #163b2614}
+.landing-choice:focus-visible{outline:3px solid #88bda9;outline-offset:2px}
+.landing-ico{width:46px;height:46px;border-radius:12px;display:flex;align-items:center;justify-content:center;background:#e6f3ed;color:var(--green)}
+.landing-ico svg{width:24px;height:24px;fill:none;stroke:currentColor;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round}
+.landing-choice b{font-size:19px;display:flex;align-items:center;gap:10px}
+.landing-choice p{margin:0;font-size:13px;color:var(--muted);line-height:1.8}
+.landing-tag{font-size:11px;font-weight:600;color:#8a5200;background:#fff4e5;border:1px solid #f0c987;border-radius:20px;padding:3px 10px}
+.landing-foot{margin-top:26px;font-size:12px;color:var(--muted);line-height:1.8}
+/* ===== 项目介绍视图 ===== */
+#intro-view{position:fixed;inset:0;z-index:70;display:flex;flex-direction:column;background:#e9edf1}
+#intro-view[hidden]{display:none}
+.intro-bar{flex:0 0 auto;display:flex;align-items:center;justify-content:space-between;gap:16px;padding:9px 14px;background:#fff;border-bottom:1px solid var(--line)}
+.intro-bar b{font-size:14px}
+.intro-bar .actions{display:flex;gap:10px}
+#intro-frame{flex:1;width:100%;border:0;background:#e9edf1}
+/* 手机/窄屏：去掉介绍页顶部栏，改为左上角浮动返回按钮 */
+.intro-back-float{display:none}
+@media (max-width:960px){
+  .intro-bar{display:none}
+  .intro-back-float{display:flex;position:fixed;top:12px;left:12px;z-index:5;width:42px;height:42px;border-radius:50%;align-items:center;justify-content:center;padding:0;font-size:22px;line-height:1;color:#18352f;background:rgba(255,255,255,.88);border:1px solid var(--line);box-shadow:0 2px 10px #163b2626;backdrop-filter:blur(4px);cursor:pointer}
+}
+@media(max-width:650px){.landing-choices{grid-template-columns:1fr}}
+</style>
 </head>
 <body data-page-node-id="xwT3VOY1wx5Hg3pNhUcr38">
 <main data-page-node-id="99V0RT2hYXgW0EIy5hvMMF">
 <header data-page-node-id="KqG3SUBNxYi5M4U0cUhJKZ"><div data-page-node-id="BRBqEoSXoz0GrKc3A8hwpE"><h1 data-page-node-id="kw8avTkgBCGArbmR0K7deI">4.2寸墨水屏：一年续航、30天温湿度、万年历、壁纸</h1></div><span id="connection" class="badge" data-page-node-id="PZFMyi2CGOqSYmWKVNyKfA">未连接</span></header>
-<section class="toolbar" data-page-node-id="lpCHPe4q4o2VjIFoVakMIT"><button id="connect" class="primary" data-page-node-id="0SR2OXeb29hDqLgDkBcAZA">连接设备</button><span id="status" role="status" aria-live="polite" data-page-node-id="ag91RlHWkzF46g5yeKKQw7">请长按设备按键开启蓝牙窗口，再连接。</span><span class="muted" style="font-size:12px;white-space:nowrap">固件编译时间 <b id="build-stamp">—</b></span><button id="reboot" disabled title="让设备软件复位，用于固件更新后重启或从卡死状态恢复">重启设备</button></section>
+<section class="toolbar" data-page-node-id="lpCHPe4q4o2VjIFoVakMIT"><button id="connect" class="primary" data-page-node-id="0SR2OXeb29hDqLgDkBcAZA">连接设备</button><span id="status" role="status" aria-live="polite" data-page-node-id="ag91RlHWkzF46g5yeKKQw7">请长按设备按键开启蓝牙窗口，再连接。</span><span class="muted" style="font-size:12px;white-space:nowrap">固件编译时间 <b id="build-stamp">—</b></span><button id="reboot" disabled title="让设备软件复位，用于固件更新后重启或从卡死状态恢复">重启设备</button><button id="back-landing" title="返回首页选择页">首页</button></section>
 <p id="firmware-update" class="notice update-notice" role="status" hidden></p>
+<nav class="tabs" aria-label="功能切换">
+  <button class="tab-btn active" data-tab="overview">概览</button>
+  <button class="tab-btn" data-tab="history"><span class="tab-long">温湿度历史</span><span class="tab-short">历史</span></button>
+  <button class="tab-btn" data-tab="settings"><span class="tab-long">设备设置</span><span class="tab-short">设置</span></button>
+  <button class="tab-btn" data-tab="wallpaper"><span class="tab-long">壁纸 / 图片</span><span class="tab-short">壁纸</span></button>
+  <button class="tab-btn" data-tab="about">关于</button>
+</nav>
+<div class="tab-page" data-page="overview">
 <section class="card photo-card" id="photo-card">
   <div class="section-head"><h2>设备实拍</h2><span class="badge">自定义壁纸 · 温湿度曲线 · 万年历</span></div>
   <div class="photo-strip">
@@ -147,9 +232,13 @@ dialog p{margin:0 0 18px}
 </section>
 <div class="grid" data-page-node-id="pwebwfMUeuLgdiMqJHQt5k">
 <section class="card model-card" data-page-node-id="model-card"><div class="model-preview" id="model-preview" aria-label="温湿度计 3D 模型"></div></section>
-<section class="card current" data-page-node-id="bFOFtRnFmrWywCl9xmz2O3"><div class="section-head" data-page-node-id="SCYzMORpGVYgcddxGh9KjU"><h2 data-page-node-id="f21ZVsQYiACoXlx35BJGI4">当前环境</h2><button id="latest" disabled data-page-node-id="l22nRgfzOldD8xFVAsEIAF">立即读取</button></div><div><div class="readings" data-page-node-id="8MO9qSjJXqbeLhQRd2rJwK"><div data-page-node-id="Fp8QfyCS79veW0Z4BYNd5M"><span class="muted" data-page-node-id="g3r9YlN4kGLdyYKLIlGI0I">温度</span><strong id="temperature" data-page-node-id="s9ZdOElBoaarJzPL7YzzS5">—<small data-page-node-id="GItaadXpv6bbjvuyJ5JxaF"> °C</small></strong></div><div data-page-node-id="2KffZw0vBTrop6yhhyBT74"><span class="muted" data-page-node-id="VvkTtAsomsGDQqRgp6iarC">湿度</span><strong id="humidity" data-page-node-id="mCEXh6wWf3p2IGVXLWnDAi">—<small data-page-node-id="zG4bJ5cnkYSpiEr81sukaM"> %</small></strong></div></div><p id="measured" class="muted" data-page-node-id="iNKTbeypCKGMeSfOn9p9b1">尚未读取。</p></div></section>
+<section class="card current" data-page-node-id="bFOFtRnFmrWywCl9xmz2O3"><div class="section-head" data-page-node-id="SCYzMORpGVYgcddxGh9KjU"><h2 data-page-node-id="f21ZVsQYiACoXlx35BJGI4">当前环境</h2><button id="latest" disabled data-page-node-id="l22nRgfzOldD8xFVAsEIAF">立即读取</button></div><div><div class="readings" data-page-node-id="8MO9qSjJXqbeLhQRd2rJwK"><div data-page-node-id="Fp8QfyCS79veW0Z4BYNd5M"><span class="muted" data-page-node-id="g3r9YlN4kGLdyYKLIlGI0I">温度</span><strong id="temperature" data-page-node-id="s9ZdOElBoaarJzPL7YzzS5">—<small data-page-node-id="GItaadXpv6bbjvuyJ5JxaF"> °C</small></strong></div><div data-page-node-id="2KffZw0vBTrop6yhhyBT74"><span class="muted" data-page-node-id="VvkTtAsomsGDQqRgp6iarC">湿度</span><strong id="humidity" data-page-node-id="mCEXh6wWf3p2IGVXLWnDAi">—<small data-page-node-id="zG4bJ5cnkYSpiEr81sukaM"> %</small></strong></div><div><span class="muted">电池</span><strong id="battery">—<small> V</small></strong></div></div><p id="measured" class="muted" data-page-node-id="iNKTbeypCKGMeSfOn9p9b1">尚未读取。</p></div></section>
 </div>
+</div>
+<div class="tab-page" data-page="history" hidden>
 <section class="card history-card" data-page-node-id="NK1sqET3HN4RfHU2m4Yl1j"><div class="section-head" data-page-node-id="oQY7tY26OhjytP1hJuL2w0"><div data-page-node-id="SRtZOCmGs4qJ60xPJ5PQ6W"><h2 data-page-node-id="KrAihQsYiACoXlx35BJGI4">全部历史</h2></div><div class="actions" data-page-node-id="2OnF84mazzw9SFTkJhCFDs"><button id="history" class="primary" disabled data-page-node-id="gAIE3Dk1O4aviD75vzZszM">获取全部历史</button><button id="cancel" disabled data-page-node-id="vH4kDqdXwbCm2EhDdExGOJ">取消传输</button></div></div><p id="simulated-notice" class="notice" hidden></p><div class="progress-title" data-page-node-id="wULlIMKNkrP6TjEYGf6tQl"><span id="transfer-status" data-page-node-id="t0bkV65RZ8JCxgg48Pd3at">尚未开始传输</span><span id="percentage" data-page-node-id="9RpiKimADf95t4YYD4PhJa">0%</span></div><progress id="progress" value="0" max="100" aria-label="整次历史传输进度" data-page-node-id="cGSpXCAaMAs34yE8u816WW"></progress><p id="transfer-detail" class="muted" data-page-node-id="onsYz1t1FLhwLewQ8110q3"></p><div class="legend" data-page-node-id="RYH3GLZnjis26sd5VVOreb"><span data-page-node-id="6mYA8D2agDusWWXS7ZMWbS"><i class="dot temperature" data-page-node-id="koTaODLliJDgf2u1dtarkL"></i>温度 °C</span><span data-page-node-id="4WdzlW0FYkqTTB8UOL2ncG"><i class="dot humidity" data-page-node-id="8LDbRSvqQnzjNZUtGuTBCL"></i>湿度 %</span><span style="margin-left:auto" data-page-node-id="8TuluzidpxhOqR3FX7gMO3"><button id="csv" disabled data-page-node-id="lb5XxrzbUX36V8hrpArJeo">导出 CSV</button></span></div><p id="chart-source" class="hint" role="status">尚无历史数据</p><div class="chart-wrap" data-page-node-id="nqQkLByoLFASuSGHSUXRWA"><canvas id="chart-main" aria-label="温湿度历史曲线，可滚轮缩放、双击恢复全量" data-page-node-id="SCAN0k1b7NTQzIsNpxdPfG"></canvas><div id="chart-cursor" class="cursor-line" hidden></div><div id="chart-tooltip" class="tooltip" hidden data-page-node-id="tt8wd8vMfICzKKTQwPewHG"></div></div><canvas id="chart-mini" aria-label="全量缩略图，可拖动选区平移，拖动两端改范围，滚轮缩放" data-page-node-id="9e27DHUEfVpDUv4fXzPi5e"></canvas><div class="mini-summary"><span id="mini-range">全量缩略图</span><span>拖动两端调整范围 · 滚轮缩放</span></div><div class="history-import"><h3>导入测试历史</h3><p class="hint">获取设备历史或选择 CSV 可载入图表；点击「导入设备」会将当前图表的全部数据写入已连接设备并刷新屏幕。导入前请先备份；取消或中断后历史会清空，重启后需重新导入。</p><div class="actions" style="margin-top:14px"><label for="history-file" style="margin:0">历史 CSV</label><input id="history-file" type="file" accept=".csv,text/csv"><button id="import-history" class="primary" disabled>导入设备</button><button id="cancel-import" disabled>取消导入</button></div><progress id="import-progress" value="0" max="100" aria-label="历史导入进度" hidden></progress><p id="import-status" class="hint" role="status">当前图表可导入已连接并激活的设备；也可选择 CSV 载入图表。</p></div></section>
+</div>
+<div class="tab-page" data-page="settings" hidden>
 <section class="card device-settings" aria-labelledby="settings-title">
   <div class="section-head"><h2 id="settings-title">设备设置</h2><span id="settings-state" class="badge">正在读取设置</span></div>
   <div class="setting-field display-range">
@@ -172,7 +261,9 @@ dialog p{margin:0 0 18px}
   </div>
   <div class="settings-footer"><p class="hint">连接设备后可修改设置。</p><button id="save-settings" class="primary" disabled>保存设置</button></div>
 </section>
-<section class="custom-image" id="custom-image">
+</div>
+<div class="tab-page" data-page="wallpaper" hidden>
+<section class="custom-image" id="custom-image" data-pane="edit">
   <div class="custom-card">
     <div class="custom-row custom-between">
       <div><h2>壁纸编辑器</h2><p class="custom-muted">自由组合图片和文字，输出 400 × 300 单色画面。</p></div>
@@ -181,10 +272,16 @@ dialog p{margin:0 0 18px}
     </div>
     <p id="image-status" class="custom-status" role="status" aria-live="polite"></p>
     <div class="custom-row"><span id="image-activation-badge" class="badge">激活状态 —</span></div>
+    <div class="editor-tabs" role="tablist" aria-label="壁纸编辑器分区">
+      <button class="active" data-pane="edit">编辑</button>
+      <button data-pane="output">输出 / 上传</button>
+    </div>
     <div class="custom-grid">
-      <div>
-        <div class="custom-row" style="margin-bottom:12px"><button id="image-add-text">＋ 文本框</button><button id="image-clear">清空壁纸</button><button id="image-project-export">导出工程</button><label class="button-like">导入工程<input id="image-project-import" type="file" accept="application/json" hidden></label></div>
+      <div class="custom-row add-buttons" style="margin-bottom:12px"><button id="image-add-text">＋ 文本框</button><button id="image-add-qr">＋ 二维码</button><button id="image-clear">清空壁纸</button><button id="image-project-export">导出工程</button><label class="button-like">导入工程<input id="image-project-import" type="file" accept="application/json" hidden></label></div>
+      <div class="canvas-pin">
         <div class="custom-canvas-wrap"><canvas id="image-editor" width="400" height="300" aria-label="壁纸编辑区，可选择、移动和缩放图层"></canvas></div>
+      </div>
+      <div class="editor-pane editor-pane-canvas">
         <p class="custom-hint">点击选择，拖动移动，控制点缩放 / 旋转，双击文字编辑。滚轮或双指缩放，Shift+滚轮或双指旋转。可多次粘贴、拖入图片。</p>
         <div class="custom-output-row"><span class="custom-hint">设备输出预览 · 400 × 300</span>
           <div class="custom-canvas-wrap"><canvas id="image-preview" width="400" height="300" aria-label="单色输出预览，拖动可调整选中图层"></canvas></div>
@@ -192,7 +289,7 @@ dialog p{margin:0 0 18px}
         <p id="image-compression-state" class="custom-hint"></p>
         <p class="custom-hint">文字使用浏览器字体合成图片；自动换行，壁纸外的内容会被裁切。</p>
       </div>
-      <div class="custom-controls">
+      <div class="custom-controls editor-pane editor-pane-layers">
         <label class="custom-field">添加图片（可多选）<input type="file" id="image-file" accept="image/*" multiple></label>
         <div class="editor-panel">
           <h3>图层 · 列表上方显示在上层</h3>
@@ -205,10 +302,12 @@ dialog p{margin:0 0 18px}
           <div class="editor-fields" style="margin-top:12px">
             <label class="custom-field">字号（像素）<input id="image-font-size" type="number" min="8" max="200" step="1" value="16"></label>
 
+            <details class="font-advanced"><summary>更多字体选项</summary>
             <label class="custom-field">浏览器字体<select id="image-browser-font"><option value="sans-serif">系统无衬线</option><option value="serif" selected>系统衬线</option><option value="monospace">等宽字体</option><option value="Arial">Arial</option><option value="Georgia">Georgia</option><option value="Times New Roman">Times New Roman</option><option value="Courier New">Courier New</option></select></label>
             <label class="custom-field">本机字体搜索<input id="image-local-font-search" type="search" placeholder="输入字体名称过滤"></label>
             <label class="custom-field">本机字体<select id="image-local-font" size="5"><option value="">尚未读取本机字体</option></select><button type="button" id="image-load-fonts" style="margin-top:6px">读取本机字体</button></label>
             <label class="custom-field">自定义字体名称<input id="image-font-family" value="serif" placeholder="例如 Microsoft YaHei"></label>
+            </details>
             <label class="custom-field">对齐<select id="image-text-align"><option value="left">左对齐</option><option value="center">居中</option><option value="right">右对齐</option></select></label>
             <label class="custom-field">文字颜色<input id="image-text-color" type="color" value="#000000"></label><label class="custom-field">背景颜色<input id="image-text-background" type="color" value="#ffffff"></label><button type="button" id="image-swap-text-colors">交换颜色</button><label class="custom-row"><input id="image-text-bg-transparent" type="checkbox">背景透明</label>
             <label class="custom-row"><input id="image-text-bold" type="checkbox">粗体</label>
@@ -226,17 +325,27 @@ dialog p{margin:0 0 18px}
           <div class="custom-row" style="margin-top:12px"><button id="image-flip-x">水平翻转</button><button id="image-flip-y">垂直翻转</button></div>
           <div class="custom-row" style="margin-top:10px"><button id="image-zoom-out" aria-label="缩小选中图层">−</button><button id="image-zoom-in" aria-label="放大选中图层">＋</button><button id="image-rotate-left" aria-label="向左旋转">↺</button><button id="image-rotate-right" aria-label="向右旋转">↻</button><button id="image-zoom-reset">重置尺寸</button></div>
         </div>
-        <div class="custom-row"><button id="image-upload" class="primary" disabled>上传壁纸到设备</button><button id="image-cancel" disabled>取消上传</button></div>
-        <div class="custom-progress" aria-label="图片传输进度"><span id="image-progress-bar"></span></div>
-        <p id="image-upload-state" class="custom-status" role="status" aria-live="polite"></p>
+        <div id="image-qr-panel" class="editor-panel" hidden>
+          <h3>二维码</h3>
+          <label class="custom-field">内容（链接或文字）<textarea id="image-qr-content" rows="3" placeholder="https://example.com"></textarea></label>
+          <div class="custom-row" style="margin-top:10px"><button id="image-qr-update">更新二维码</button></div>
+          <p class="custom-hint">更新会重画图案，保留当前位置、大小和旋转。</p>
+        </div>
       </div>
+    <div class="editor-pane editor-pane-output">
     <details id="image-mono-panel" open><summary>单色输出调整</summary><div class="custom-controls" style="margin-top:16px">
 <label class="custom-field">抖动模式<select id="image-dither-mode"><option value="color">误差扩散（Floyd–Steinberg）</option><option value="classic">有序抖动（Bayer 8×8）</option><option value="binary">固定阈值二值化</option></select></label><label class="custom-field">阈值 <output id="image-threshold-value">50</output><input type="range" id="image-threshold" min="0" max="100" value="50"></label><label class="custom-field">对比度 <output id="image-contrast-value">100</output>%<input type="range" id="image-contrast" min="0" max="300" value="100"></label><label class="custom-field">亮度 <output id="image-brightness-value">0</output><input type="range" id="image-brightness" min="-100" max="100" value="0"></label><label class="custom-field">伽马 <output id="image-gamma-value">100</output>%<input type="range" id="image-gamma" min="10" max="300" value="100"></label><label class="custom-field">锐度 <output id="image-sharpness-value">100</output>%<input type="range" id="image-sharpness" min="0" max="100" value="100"></label><label class="custom-field">预设<select id="image-preset"><option value="custom">自定义</option><option value="photo">照片</option><option value="portrait">人像</option><option value="line">文字 / 线稿</option><option value="high">高对比度</option></select></label>
           <button id="image-invert">黑白反转</button>
         </div></details>
+    <div class="custom-row" style="margin-top:16px"><button id="image-upload" class="primary" disabled>上传壁纸到设备</button><button id="image-cancel" disabled>取消上传</button></div>
+        <div class="custom-progress" aria-label="图片传输进度"><span id="image-progress-bar"></span></div>
+        <p id="image-upload-state" class="custom-status" role="status" aria-live="polite"></p>
+    </div>
     <div class="custom-notice">上传成功后设备自动切到壁纸页；关闭开关后会跳过。上传结果显示传输速度与总耗时。</div>
   </div>
 </section>
+</div>
+<div class="tab-page" data-page="about" hidden>
 <details class="card" id="activation-card" data-page-node-id="P1xLvfjp7t00HyieYlMoFa"><summary data-page-node-id="geynaqHzdAzJ1ZVyWxwZtI"><span data-page-node-id="0MpPh9zM0LWULs17SsHzEV">激活码</span><span class="badge" id="activation-state" data-page-node-id="AP86sdfNBA1RZbxO48fQwH">未设置</span></summary><dl><dt>唯一 ID</dt><dd id="uid">—</dd></dl><label for="activation-input" data-page-node-id="ecBvELdQBKfSVTSBg25XZv">激活码 · 64 位十六进制字符</label><input id="activation-input" type="text" spellcheck="false" autocomplete="off" placeholder="粘贴 64 位十六进制激活码" data-page-node-id="yOEbHCMj0sN9G8SWU3QOfG"><div class="actions" style="margin-top:12px" data-page-node-id="QGu4Y96uKF8yuFsCZIR8E4"><button id="activation" class="primary" disabled data-page-node-id="XXcFuaTIEWs7rKfy1ZG5l8">写入设备</button></div><p class="hint" data-page-node-id="9QH7eiW0sz19GHAQirg7K9">激活码存在这台设备里，不在浏览器里。先连接设备，再填码写入；以后用手机或别的电脑打开本页面，连上这台设备会自动取回。</p></details>
 <section class="card about-card" id="about-card">
   <div class="section-head"><h2>关于 TH-Plot</h2><span class="badge" id="firmware-version">最新固件 —</span></div>
@@ -268,10 +377,12 @@ dialog p{margin:0 0 18px}
     </div>
   </div>
 </section>
+</div>
 <footer class="site-footer"><a href="https://github.com/createskyblue/ch58x-th-plot/" target="_blank" rel="noopener noreferrer">GitHub · createskyblue/ch58x-th-plot</a> · <a href="mailto:createskyblue@outlook.com">createskyblue@outlook.com</a><div style="margin-top:10px"><a href="https://beian.miit.gov.cn/" target="_blank" rel="noopener noreferrer">粤ICP备2026132464号-1</a></div></footer>
 </main>
 <dialog id="alert-dialog" aria-labelledby="alert-title"><div class="dialog-body"><h2 id="alert-title"></h2><p id="alert-message" class="muted"></p><div class="actions"><button id="alert-close" class="primary">知道了</button></div></div></dialog>
 <dialog id="reboot-dialog" aria-labelledby="reboot-title"><div class="dialog-body"><h2 id="reboot-title">重启设备？</h2><p id="reboot-message" class="muted">设备会立刻软件复位。重启后蓝牙会关闭，需要长按设备按键重新打开蓝牙窗口才能再次连接。</p><div class="actions"><button id="reboot-cancel">取消</button><button id="reboot-confirm" class="primary">确认重启</button></div></div></dialog>
+<dialog id="image-qr-dialog" aria-labelledby="image-qr-title"><div class="dialog-body"><h2 id="image-qr-title">插入二维码</h2><label class="custom-field" for="image-qr-text">内容（链接或文字）<textarea id="image-qr-text" rows="4" placeholder="https://example.com"></textarea></label><p class="hint">按内容自动选择最小的 QR 版本，纠错级别 M。插入后可拖动、缩放，黑白输出不做抖动。</p><div class="actions"><button id="image-qr-cancel">取消</button><button id="image-qr-confirm" class="primary">插入</button></div></div></dialog>
 <script>
 'use strict';
 function historyImportChecksum(bytes) {
@@ -1117,12 +1228,20 @@ element('reboot-confirm').addEventListener('click', async () => {
 });
 /* 读一次即时温湿度并写回卡片。不设 status：调用方自己决定怎么说，
    连接后自动读和用户点「立即读取」的文案不一样。 */
+function showBattery(millivolts) {
+    /* 0 表示旧固件（9 字节响应）或开机后还没测过电量：不显示数值。 */
+    element('battery').innerHTML = millivolts > 0
+        ? (millivolts / 1000).toFixed(2) + '<small> V</small>'
+        : '—<small> V</small>';
+}
 async function refreshLatest() {
     const data = await request(TYPES.latest);
-    if (data.length !== 9 || data[0]) throw new Error('读取失败，请再试一次');
+    /* 固件 v1 只发 9 字节；新固件追加 2 字节电池毫伏，两种长度都要认 */
+    if ((data.length !== 9 && data.length !== 11) || data[0]) throw new Error('读取失败，请再试一次');
     const view = new DataView(data.buffer, data.byteOffset, data.byteLength);
     element('temperature').textContent = (view.getInt16(1, true) / 10).toFixed(1) + ' °C';
     element('humidity').textContent = (view.getInt16(3, true) / 10).toFixed(1) + ' %';
+    showBattery(data.length === 11 ? view.getUint16(9, true) : 0);
     element('measured').textContent = '更新于 ' + new Date().toLocaleTimeString('zh-CN', {hour12:false});
 }
 action('latest', async () => {
@@ -1599,6 +1718,131 @@ loadFirmwareInfo();
   document.addEventListener('visibilitychange', () => { if (document.hidden) stop(); else start(); });
 })();
 </script>
-<script type="module" src="./image-app.js?v=text-threshold100"></script>
+<div id="landing">
+  <div class="landing-panel">
+    <span class="landing-kicker">TH-Plot · 磁吸墨水屏温湿度计</span>
+    <h1 class="landing-title">4.2 寸墨水屏温湿度计</h1>
+    <p class="landing-sub">一年续航 · 30 天温湿度历史 · 万年历 · 自定义壁纸。请选择要查看的内容。</p>
+    <div class="landing-choices">
+      <button class="landing-choice" id="enter-intro">
+        <span class="landing-ico" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M12 5.5C10.2 3.9 7.3 3.5 4 3.5v14.2c3.3 0 6.2.4 8 2 1.8-1.6 4.7-2 8-2V3.5c-3.3 0-6.2.4-8 2z"/><path d="M12 5.5v14.2"/></svg></span>
+        <b>项目介绍 <span class="landing-tag">最新</span></b>
+        <p>26 页图文详解：产品定位、硬件设计、传感器热隔离、低功耗策略、固件架构与蓝牙协议。支持键盘、触摸翻页。</p>
+      </button>
+      <button class="landing-choice" id="enter-app">
+        <span class="landing-ico" aria-hidden="true"><svg viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="12" rx="2"/><path d="M8 20h8M12 16v4"/></svg></span>
+        <b>上位机</b>
+        <p>蓝牙连接设备：查看实时温湿度与 30 天历史曲线、导入导出数据、上传壁纸与图片、修改设备设置。</p>
+      </button>
+    </div>
+    <p class="landing-foot">上位机使用 Web Bluetooth，需要 Chrome、Edge 等基于 Chromium 的桌面或安卓浏览器，且设备需支持低功耗蓝牙。</p>
+  </div>
+</div>
+<div id="intro-view" hidden>
+  <div class="intro-bar">
+    <b>项目介绍 · 项目架构详解</b>
+    <div class="actions"><button id="intro-home">返回首页</button><button id="intro-app" class="primary">进入上位机</button></div>
+  </div>
+  <iframe id="intro-frame" src="about:blank" title="项目架构详解"></iframe>
+  <button class="intro-back-float" id="intro-back-float" aria-label="返回首页" title="返回首页">‹</button>
+</div>
+<script>
+(() => {
+  const landing = document.getElementById('landing');
+  const introView = document.getElementById('intro-view');
+  const introFrame = document.getElementById('intro-frame');
+  let introLoaded = false;
+  const showApp = () => {
+    landing.hidden = true;
+    introView.hidden = true;
+  };
+  const showLanding = (resetIntro) => {
+    landing.hidden = false;
+    introView.hidden = true;
+    if (resetIntro) {
+      introFrame.src = 'about:blank';
+      introLoaded = false;
+    }
+    window.scrollTo(0, 0);
+  };
+  const showIntro = () => {
+    if (!introLoaded) {
+      introFrame.src = 'docs/项目架构详解.html?v=20261026c';
+      introLoaded = true;
+    }
+    landing.hidden = true;
+    introView.hidden = false;
+    introFrame.focus();
+  };
+  introFrame.addEventListener('load', () => { if (!introView.hidden) introFrame.focus(); });
+  // 介绍页播放结束（在最后一页继续向后翻）→ 返回首页并在下次进入时重新播放
+  window.addEventListener('message', (e) => {
+    if (e.source !== introFrame.contentWindow) return;
+    if (e.data === 'thplot-intro-end') showLanding(true);
+  });
+  document.getElementById('enter-intro').addEventListener('click', showIntro);
+  document.getElementById('enter-app').addEventListener('click', showApp);
+  document.getElementById('intro-home').addEventListener('click', () => showLanding());
+  document.getElementById('intro-back-float').addEventListener('click', () => showLanding());
+  document.getElementById('intro-app').addEventListener('click', showApp);
+  document.getElementById('back-landing').addEventListener('click', () => showLanding());
+})();
+</script>
+<script>
+(() => {
+  // ===== 顶层功能标签页 =====
+  const tabBtns = [...document.querySelectorAll('.tab-btn')];
+  const tabPages = [...document.querySelectorAll('.tab-page')];
+  const selectTab = (name) => {
+    tabBtns.forEach(b => b.classList.toggle('active', b.dataset.tab === name));
+    tabPages.forEach(p => { p.hidden = p.dataset.page !== name; });
+    window.dispatchEvent(new Event('resize'));
+  };
+  tabBtns.forEach(b => b.addEventListener('click', () => selectTab(b.dataset.tab)));
+
+  // ===== 壁纸编辑器移动端分区 =====
+  const editor = document.getElementById('custom-image');
+  const paneBtns = [...document.querySelectorAll('.editor-tabs button')];
+  const setPane = (name) => {
+    if (!editor) return;
+    editor.dataset.pane = name;
+    paneBtns.forEach(b => b.classList.toggle('active', b.dataset.pane === name));
+  };
+  paneBtns.forEach(b => b.addEventListener('click', () => setPane(b.dataset.pane)));
+  // 手机端：属性面板出现时确保在「编辑」页，把面板挪到控件区最前，
+  // 并用瞬时滚动让它停在吸附画布正下方（两遍校准，防止布局抖动导致落点偏差）
+  if (editor) {
+    const propPanelIds = ['image-text-panel', 'image-object-panel', 'image-qr-panel'];
+    let lastPanel = null, lastAt = 0;
+    const panelObserver = new MutationObserver(() => {
+      if (!window.matchMedia('(max-width:720px)').matches) return;
+      const open = propPanelIds.map(id => document.getElementById(id)).find(el => el && !el.hidden);
+      if (!open) return;
+      const now = Date.now();
+      if (open === lastPanel && now - lastAt < 800) return;
+      lastPanel = open; lastAt = now;
+      if (editor.dataset.pane !== 'edit') setPane('edit');
+      if (open.parentElement && open.parentElement.firstElementChild !== open)
+        open.parentElement.prepend(open);
+      const place = () => {
+        const pin = document.querySelector('.canvas-pin');
+        const pinH = pin ? pin.getBoundingClientRect().height : 0;
+        const top = open.getBoundingClientRect().top + window.scrollY - pinH - 74;
+        window.scrollTo(0, Math.max(0, top));
+      };
+      setTimeout(place, 80);
+      setTimeout(place, 320);
+    });
+    propPanelIds.forEach(id => {
+      const el = document.getElementById(id);
+      if (el) panelObserver.observe(el, { attributes: true, attributeFilter: ['hidden'] });
+    });
+  }
+  // 字体高级选项：桌面端默认展开，手机端收起
+  const fontAdvanced = document.querySelector('.font-advanced');
+  if (fontAdvanced && window.matchMedia('(min-width:721px)').matches) fontAdvanced.open = true;
+})();
+</script>
+<script type="module" src="./image-app.js?v=qr-battery1"></script>
 </body>
 </html>

@@ -1,4 +1,5 @@
 import {Canvas, FabricImage, Textbox, Point} from './vendor/fabric.js';
+import {qrcode} from './vendor/qrcode.js';
 
 export class CanvasEditor {
   constructor(element, {onChange = () => {}, onSelection = () => {}} = {}) {
@@ -49,7 +50,9 @@ export class CanvasEditor {
   setBackground(color) { this.canvas.backgroundColor=color; this.canvas.renderAll(); this.changed(); }
 
   async exportProject() {
-    return {version:1, canvas:this.canvas.toJSON(['textBackground','monoParams']), monoParams:this.objects.map(object=>object.monoParams||null)};
+    /* fabric v7 的 toJSON() 不再接受 propertiesToInclude，必须用 toObject(props)，
+       否则 monoParams / isQr / qrText 会被静默丢弃（v7.4.0 升级后引入的回归）。 */
+    return {version:1, canvas:this.canvas.toObject(['textBackground','monoParams','isQr','qrText']), monoParams:this.objects.map(object=>object.monoParams||null)};
   }
 
   async importProject(project) {
@@ -102,6 +105,46 @@ export class CanvasEditor {
     object.monoParams={mode:'color',threshold:50,contrast:100,brightness:0,gamma:100,sharpness:100,invert:false};
     this.canvas.add(object);this.select(object);this.changed();
     return object;
+  }
+
+  /* 生成二维码画布：白底静区 + 黑色模块，版本按内容自动取最小，纠错级别 M。 */
+  static renderQrCanvas(text) {
+    const qr = qrcode(0, 'M');
+    qr.addData(text);
+    qr.make();
+    const modules = qr.getModuleCount(), quiet = 2, moduleSize = 4;
+    const size = (modules + quiet * 2) * moduleSize;
+    const source = document.createElement('canvas');
+    source.width = size; source.height = size;
+    const context = source.getContext('2d');
+    context.fillStyle = '#ffffff'; context.fillRect(0, 0, size, size);
+    context.fillStyle = '#000000';
+    for (let row = 0; row < modules; row++)
+      for (let column = 0; column < modules; column++)
+        if (qr.isDark(row, column))
+          context.fillRect((quiet + column) * moduleSize, (quiet + row) * moduleSize, moduleSize, moduleSize);
+    return source;
+  }
+
+  addQr(text) {
+    if (this.locked) return null;
+    const object = this.addImage(CanvasEditor.renderQrCanvas(text));
+    if (!object) return null;
+    object.isQr = true; object.qrText = text;
+    // 二维码和文字一样走固定阈值二值化，避免抖动把模块啃出麻点。
+    object.monoParams={mode:'binary',threshold:100,contrast:100,brightness:0,gamma:100,sharpness:100,invert:false};
+    this.select(object);this.changed();
+    return object;
+  }
+
+  /* 重画选中二维码的图案，保留位置、缩放与旋转。 */
+  updateQr(object, text) {
+    if (this.locked || !object || object.isQr !== true) return false;
+    const kept = object.getScaledWidth();
+    object.setElement(CanvasEditor.renderQrCanvas(text));
+    object.set({scaleX:kept/object.width, scaleY:kept/object.width, qrText:text});
+    object.setCoords();this.changed();
+    return true;
   }
 
   updateSelected(properties) {

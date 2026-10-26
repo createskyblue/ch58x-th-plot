@@ -1,7 +1,7 @@
 {
   "file": "firmware/CH584F_EPD_tempHumPlot.hex",
-  "buildStamp": "2026-10-19 19:42:21",
-  "rawBuildStamp": "Oct 19 2026 19:42:21",
-  "size": 1151961,
-  "sha256": "910b251bdde7884376fec4aa0b7e18a6983fc8b714dd4ab247d53d736f4ac25b"
+  "buildStamp": "2026-10-26 03:58:17",
+  "rawBuildStamp": "Oct 26 2026 03:58:17",
+  "size": 1152567,
+  "sha256": "57266b89d2200c41f919f5ce82efa5c09d6ff2871a81b8cc9697f91521aa98ee"
 }
