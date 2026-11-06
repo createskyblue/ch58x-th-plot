@@ -36,9 +36,10 @@ button:focus-visible,input:focus-visible,select:focus-visible{outline:3px solid 
 .grid>.card{margin-bottom:0}
 .section-head{display:flex;justify-content:space-between;align-items:flex-start;gap:16px}
 .section-head p{margin:0 0 16px}.section-head h2{margin-bottom:6px}
-.readings{display:flex;gap:65px;padding:20px 0 8px}
-.readings strong{display:block;font-size:52px;font-weight:500;letter-spacing:-2px}
-.readings small{font-size:22px;letter-spacing:0;color:var(--muted)}
+.readings{display:flex;gap:clamp(6px,5vw,65px);padding:20px 0 8px}
+.readings>div{flex:1 1 0;min-width:0}
+.readings strong{display:block;font-size:clamp(20px,7vw,52px);font-weight:500;letter-spacing:-2px;white-space:nowrap}
+.readings small{font-size:clamp(11px,3vw,22px);letter-spacing:0;color:var(--muted)}
 dl{display:grid;grid-template-columns:90px 1fr;gap:12px;font-size:13px;margin:20px 0 0}
 dt{color:var(--muted)}dd{margin:0;overflow-wrap:anywhere;font-variant-numeric:tabular-nums}
 label{display:block;font-size:13px;color:var(--muted);margin-bottom:8px}
@@ -79,16 +80,35 @@ progress{width:100%;height:8px;margin:6px 0 4px}
 @media(max-width:650px){.history-card .section-head{flex-wrap:wrap}.history-card .section-head h2{white-space:nowrap}.legend{gap:12px;flex-wrap:wrap}}
 .dot{display:inline-block;width:10px;height:10px;border-radius:50%;margin-right:6px;vertical-align:middle}
 .dot.temperature{background:var(--temp)}.dot.humidity{background:var(--hum)}
-.chart-wrap{position:relative;margin-top:6px}
-#chart-main{display:block;width:100%;height:330px;border:1px solid var(--line);border-radius:10px;background:#fff;cursor:grab;user-select:none}
-#chart-mini{display:block;width:100%;height:90px;border:0;border-radius:10px;box-shadow:inset 0 0 0 1px var(--line);background:#f4f8f5;margin-top:12px;cursor:grab;user-select:none}
+.chart-wrap{position:relative;margin-top:6px;background:#fff;border-radius:10px}
+.chart-wrap-mini{margin-top:12px;background:#fff;box-shadow:inset 0 0 0 1px var(--line)}
+.chart-gl{position:absolute;inset:0;width:100%;height:100%;pointer-events:none;z-index:0}
+#chart-main-gl{z-index:1}
+#chart-main{position:relative;z-index:0;display:block;width:100%;height:330px;border:1px solid var(--line);border-radius:10px;background:transparent;cursor:grab;user-select:none;touch-action:none}
+#chart-mini{position:relative;z-index:1;display:block;width:100%;height:90px;border:0;border-radius:10px;background:transparent;cursor:grab;user-select:none;touch-action:none}
 #chart-source{overflow-wrap:anywhere}
 .mini-summary{display:flex;justify-content:space-between;gap:8px 20px;flex-wrap:wrap;margin-top:8px;font-size:12px;line-height:1.7;color:var(--muted)}
 #mini-range{color:var(--green)}
-.tooltip{position:absolute;pointer-events:none;background:#18352f;color:#fff;border-radius:8px;padding:9px 12px;font-size:12px;line-height:1.7;white-space:nowrap;box-shadow:0 4px 14px #163b2633;z-index:2}
+.tooltip{position:absolute;pointer-events:none;background:#18352f;color:#fff;border-radius:8px;padding:9px 12px;font-size:12px;line-height:1.7;white-space:nowrap;box-shadow:0 4px 14px #163b2633;z-index:4}
 .tooltip b{font-weight:600}
-.cursor-line{position:absolute;top:18px;bottom:34px;width:1px;background:rgba(23,107,84,.45);pointer-events:none;z-index:1}
+.cursor-line{position:absolute;top:18px;bottom:34px;width:1px;background:rgba(23,107,84,.45);pointer-events:none;z-index:2}
 .cursor-line::before{content:'';position:absolute;left:-3px;top:-4px;width:7px;height:7px;border-radius:50%;background:var(--green)}
+.selection-box{position:absolute;top:18px;bottom:34px;background:rgba(23,107,84,.14);border-left:1px solid #176b54;border-right:1px solid #176b54;pointer-events:none;z-index:3}
+.selection-info{display:flex;gap:10px;align-items:stretch;margin:8px 0 0;line-height:1.5;font-size:13px;color:#18352f}
+.selection-info[hidden]{display:none}
+.selection-cell{flex:1 1 0;min-width:0;background:#f7faf7;border:1px solid var(--line);border-radius:8px;padding:9px 10px}
+.selection-cell b{display:block;font-size:12px;color:#405a51;font-weight:600;white-space:nowrap}
+.selection-cell .arrow{font-size:13px;font-weight:700}
+.selection-cell .stat-row{display:flex;gap:6px;margin-top:6px}
+.selection-cell .stat{flex:1 1 0;min-width:0;text-align:center;background:rgba(255,255,255,.8);border-radius:6px;padding:5px 3px}
+.selection-cell .stat-label{display:block;font-size:11px;white-space:nowrap}
+.selection-cell .stat-value{display:block;font-size:15px;font-weight:700;white-space:nowrap}
+.selection-cell.time{background:#f7faf7;border-color:var(--line);color:#18352f}
+.selection-cell.temperature{background:#fdf3ec;border-color:#e8c3a6;color:#b4662f}
+.selection-cell.temperature b{color:#b4662f}
+.selection-cell.humidity{background:#eef6fa;border-color:#b9d7e5;color:#2f7591}
+.selection-cell.humidity b{color:#2f7591}
+@media(max-width:650px){.selection-info{flex-direction:column}}
 .hint{font-size:12px;color:var(--muted);margin:10px 0 0}
 .notice{background:#fff4e5;border:1px solid #f0c987;color:#8a5200;border-radius:10px;padding:10px 14px;font-size:13px;line-height:1.7;margin-top:16px}
 dialog{border:1px solid var(--line);border-radius:14px;background:#fff;color:inherit;padding:0;max-width:min(460px,92vw);box-shadow:0 18px 48px #163b2633}
@@ -114,17 +134,17 @@ dialog::backdrop{background:#163b2659}
 @media(max-width:650px){.about-card .about-grid{grid-template-columns:1fr;gap:18px}.link-grid{grid-template-columns:1fr}}
 dialog h2{margin:0 0 10px;font-size:17px}
 dialog p{margin:0 0 18px}
-  .model-card{display:flex;flex-direction:column;padding:0;overflow:hidden}
-  .model-preview{position:relative;flex:1;height:300px;min-height:300px;overflow:hidden}
+  .model-card{display:flex;flex-direction:column;padding:0;overflow:hidden;align-self:start}
+  .model-preview{position:relative;width:100%;aspect-ratio:1/1;overflow:hidden}
   .model-preview canvas{display:block;width:100%;height:100%;touch-action:none}
-  @media (max-width:900px){.grid{grid-template-columns:1fr}.readings{gap:32px}h1{font-size:28px}.model-preview{height:280px;min-height:280px}}
+  @media (max-width:900px){.grid{grid-template-columns:1fr}h1{font-size:28px}}
 
 .custom-image{margin:20px 0}.custom-image #image-connection{font-size:12px}.custom-card{border:1px solid var(--line);background:#fff;border-radius:14px;padding:22px;margin-bottom:18px}.custom-row{display:flex;flex-wrap:wrap;gap:12px;align-items:center}.custom-between{justify-content:space-between}.custom-muted,.custom-hint{color:var(--muted);font-size:12px;line-height:1.6}.custom-status{font-size:13px;min-height:22px}.custom-grid{display:grid;grid-template-columns:416px minmax(280px,360px) minmax(260px,320px);gap:32px;align-items:start;justify-content:center;margin-top:20px}.custom-grid>div{min-width:0}.custom-canvas-wrap{width:416px;max-width:none;overflow:visible;background:#f7f7f2;border:2px solid #111;padding:6px;border-radius:8px}.custom-canvas-wrap canvas{display:block;width:400px;height:300px;max-width:none;flex-shrink:0;image-rendering:pixelated}.custom-controls{display:grid;align-content:start;gap:16px;min-width:0}#image-mono-panel{position:static;width:auto}.custom-field{display:block;font-size:13px}.custom-field input,.custom-field select{display:block;margin-top:6px;max-width:100%}.custom-field input[type=file]{width:100%;font-size:13px}.custom-field input[type=color]{display:block;width:100%;height:42px;min-width:90px;padding:4px;border:1px solid #cbd9d1;border-radius:8px;background:#fff;cursor:pointer}.custom-field input[type=color]::-webkit-color-swatch-wrapper{padding:0}.custom-field input[type=color]::-webkit-color-swatch{border:0;border-radius:4px}.custom-row button,.custom-row .button-like{white-space:nowrap}.button-like{display:inline-block;border:1px solid #cbd9d1;background:#fff;border-radius:8px;padding:10px 15px;color:#254b3e;font:inherit;font-size:13px;cursor:pointer;line-height:normal;margin:0}.button-like:hover{background:#f1f7f3}.button-like:focus-within{outline:3px solid #88bda9;outline-offset:1px}.custom-field input[type=range]{width:100%;accent-color:var(--green)}#image-editor,#image-preview{cursor:grab;touch-action:none;user-select:none;-webkit-user-select:none}#image-editor{background:#222}#image-editor.dragging,#image-preview.dragging{cursor:grabbing}.custom-output-row{margin-top:12px}.custom-progress{height:10px;background:#eee;border-radius:999px;overflow:hidden;margin:10px 0}.custom-progress>span{display:block;height:100%;width:0;background:var(--green)}.custom-notice{font-size:13px;background:#f4f8f4;grid-column:1/-1}.custom-image h2{margin:0 0 8px;font-size:18px}@media(max-width:600px){.custom-grid{grid-template-columns:minmax(0,1fr);gap:24px}.custom-canvas-wrap{width:100%;max-width:416px}.custom-canvas-wrap canvas{width:100%;height:auto;aspect-ratio:4/3}.custom-controls{width:100%}#image-mono-panel{position:static;width:100%}.custom-card{padding:16px}.custom-row button{min-height:44px;touch-action:manipulation}}
  .custom-field input[type=file]{border:1px solid #cbd9d1;border-radius:8px;background:#f7faf8;padding:7px;width:100%;color:var(--muted)}.custom-field input[type=file]::file-selector-button{border:1px solid #b8cfc3;border-radius:7px;background:#fff;color:#254b3e;padding:8px 12px;margin-right:10px;font:inherit;cursor:pointer}.custom-field select{width:100%;border:1px solid #cbd9d1;border-radius:8px;background:#fff;color:#254b3e;padding:10px 12px;font:inherit}.custom-field select:focus,.custom-field input[type=file]:focus{outline:3px solid #88bda9;outline-offset:1px}.custom-progress{width:100%;height:9px;background:#e7eee9;border-radius:99px;overflow:hidden;margin:2px 0}.custom-progress>span{transition:width .15s ease}
 /* ===== 顶层功能标签页 ===== */
-.tabs{display:flex;gap:8px;margin:0 0 22px;position:sticky;top:0;z-index:40;background:#f3f6f4;padding:10px 0 12px;overflow-x:auto;scrollbar-width:none}
+.tabs{display:flex;align-items:center;gap:8px;margin:0 0 22px;position:sticky;top:0;z-index:40;background:#f3f6f4;padding:10px 0 12px;overflow-x:auto;scrollbar-width:none}
 .tabs::-webkit-scrollbar{display:none}
-.tab-btn{flex:0 0 auto;border:1px solid var(--line);background:#fff;border-radius:999px;padding:10px 18px;font-size:13px;color:var(--muted)}
+.tab-btn{flex:0 0 auto;display:inline-flex;align-items:center;justify-content:center;line-height:1;white-space:nowrap;border:1px solid var(--line);background:#fff;border-radius:999px;padding:10px 18px;font-size:13px;color:var(--muted)}
 /* 提高优先级：避免全局 button:hover 在手机点击后粘住，盖掉选中态 */
 .tabs .tab-btn:hover{background:#e8f0eb;border-color:#cbd9d1;color:#254b3e}
 .tabs .tab-btn.active,.tabs .tab-btn.active:hover,.tabs .tab-btn.active:focus-visible{background:var(--green);border-color:var(--green);color:#fff}
@@ -236,7 +256,7 @@ body:has(>#landing:not([hidden])),body:has(>#intro-view:not([hidden])){overflow:
 </div>
 </div>
 <div class="tab-page" data-page="history" hidden>
-<section class="card history-card" data-page-node-id="NK1sqET3HN4RfHU2m4Yl1j"><div class="section-head" data-page-node-id="oQY7tY26OhjytP1hJuL2w0"><div data-page-node-id="SRtZOCmGs4qJ60xPJ5PQ6W"><h2 data-page-node-id="KrAihQsYiACoXlx35BJGI4">全部历史</h2></div><div class="actions" data-page-node-id="2OnF84mazzw9SFTkJhCFDs"><button id="history" class="primary" disabled data-page-node-id="gAIE3Dk1O4aviD75vzZszM">获取全部历史</button><button id="cancel" disabled data-page-node-id="vH4kDqdXwbCm2EhDdExGOJ">取消传输</button></div></div><p id="simulated-notice" class="notice" hidden></p><div class="progress-title" data-page-node-id="wULlIMKNkrP6TjEYGf6tQl"><span id="transfer-status" data-page-node-id="t0bkV65RZ8JCxgg48Pd3at">尚未开始传输</span><span id="percentage" data-page-node-id="9RpiKimADf95t4YYD4PhJa">0%</span></div><progress id="progress" value="0" max="100" aria-label="整次历史传输进度" data-page-node-id="cGSpXCAaMAs34yE8u816WW"></progress><p id="transfer-detail" class="muted" data-page-node-id="onsYz1t1FLhwLewQ8110q3"></p><div class="legend" data-page-node-id="RYH3GLZnjis26sd5VVOreb"><span data-page-node-id="6mYA8D2agDusWWXS7ZMWbS"><i class="dot temperature" data-page-node-id="koTaODLliJDgf2u1dtarkL"></i>温度 °C</span><span data-page-node-id="4WdzlW0FYkqTTB8UOL2ncG"><i class="dot humidity" data-page-node-id="8LDbRSvqQnzjNZUtGuTBCL"></i>湿度 %</span><span style="margin-left:auto" data-page-node-id="8TuluzidpxhOqR3FX7gMO3"><button id="csv" disabled data-page-node-id="lb5XxrzbUX36V8hrpArJeo">导出 CSV</button></span></div><p id="chart-source" class="hint" role="status">尚无历史数据</p><div class="chart-wrap" data-page-node-id="nqQkLByoLFASuSGHSUXRWA"><canvas id="chart-main" aria-label="温湿度历史曲线，可滚轮缩放、双击恢复全量" data-page-node-id="SCAN0k1b7NTQzIsNpxdPfG"></canvas><div id="chart-cursor" class="cursor-line" hidden></div><div id="chart-tooltip" class="tooltip" hidden data-page-node-id="tt8wd8vMfICzKKTQwPewHG"></div></div><canvas id="chart-mini" aria-label="全量缩略图，可拖动选区平移，拖动两端改范围，滚轮缩放" data-page-node-id="9e27DHUEfVpDUv4fXzPi5e"></canvas><div class="mini-summary"><span id="mini-range">全量缩略图</span><span>拖动两端调整范围 · 滚轮缩放</span></div><div class="history-import"><h3>导入测试历史</h3><p class="hint">获取设备历史或选择 CSV 可载入图表；点击「导入设备」会将当前图表的全部数据写入已连接设备并刷新屏幕。导入前请先备份；取消或中断后历史会清空，重启后需重新导入。</p><div class="actions" style="margin-top:14px"><label for="history-file" style="margin:0">历史 CSV</label><input id="history-file" type="file" accept=".csv,text/csv"><button id="import-history" class="primary" disabled>导入设备</button><button id="cancel-import" disabled>取消导入</button></div><progress id="import-progress" value="0" max="100" aria-label="历史导入进度" hidden></progress><p id="import-status" class="hint" role="status">当前图表可导入已连接并激活的设备；也可选择 CSV 载入图表。</p></div></section>
+<section class="card history-card" data-page-node-id="NK1sqET3HN4RfHU2m4Yl1j"><div class="section-head" data-page-node-id="oQY7tY26OhjytP1hJuL2w0"><div data-page-node-id="SRtZOCmGs4qJ60xPJ5PQ6W"><h2 data-page-node-id="KrAihQsYiACoXlx35BJGI4">全部历史</h2></div><div class="actions" data-page-node-id="2OnF84mazzw9SFTkJhCFDs"><button id="history" class="primary" disabled data-page-node-id="gAIE3Dk1O4aviD75vzZszM">获取全部历史</button><button id="cancel" disabled data-page-node-id="vH4kDqdXwbCm2EhDdExGOJ">取消传输</button></div></div><p id="simulated-notice" class="notice" hidden></p><div class="progress-title" data-page-node-id="wULlIMKNkrP6TjEYGf6tQl"><span id="transfer-status" data-page-node-id="t0bkV65RZ8JCxgg48Pd3at">尚未开始传输</span><span id="percentage" data-page-node-id="9RpiKimADf95t4YYD4PhJa">0%</span></div><progress id="progress" value="0" max="100" aria-label="整次历史传输进度" data-page-node-id="cGSpXCAaMAs34yE8u816WW"></progress><p id="transfer-detail" class="muted" data-page-node-id="onsYz1t1FLhwLewQ8110q3"></p><div class="legend" data-page-node-id="RYH3GLZnjis26sd5VVOreb"><span data-page-node-id="6mYA8D2agDusWWXS7ZMWbS"><i class="dot temperature" data-page-node-id="koTaODLliJDgf2u1dtarkL"></i>温度 °C</span><span data-page-node-id="4WdzlW0FYkqTTB8UOL2ncG"><i class="dot humidity" data-page-node-id="8LDbRSvqQnzjNZUtGuTBCL"></i>湿度 %</span><span style="margin-left:auto" data-page-node-id="8TuluzidpxhOqR3FX7gMO3"><button id="csv" disabled data-page-node-id="lb5XxrzbUX36V8hrpArJeo">导出 CSV</button></span></div><p id="chart-source" class="hint" role="status">尚无历史数据</p><div class="chart-wrap" data-page-node-id="nqQkLByoLFASuSGHSUXRWA"><canvas id="chart-main-gl" class="chart-gl" aria-hidden="true"></canvas><canvas id="chart-main" aria-label="温湿度历史曲线，可滚轮缩放、双击恢复全量" data-page-node-id="SCAN0k1b7NTQzIsNpxdPfG"></canvas><div id="chart-selection-box" class="selection-box" hidden></div><div id="chart-cursor" class="cursor-line" hidden></div><div id="chart-tooltip" class="tooltip" hidden data-page-node-id="tt8wd8vMfICzKKTQwPewHG"></div></div><div class="chart-wrap chart-wrap-mini"><canvas id="chart-mini-gl" class="chart-gl" aria-hidden="true"></canvas><canvas id="chart-mini" aria-label="全量缩略图，可拖动选区平移，拖动两端改范围，滚轮缩放" data-page-node-id="9e27DHUEfVpDUv4fXzPi5e"></canvas></div><div class="mini-summary"><span id="mini-range">全量缩略图</span><span>拖动两端调整范围、滚轮缩放，主图右键框选可查看选区统计</span></div><p id="chart-selection-info" class="hint selection-info" role="status" hidden></p><div class="history-import"><h3>导入测试历史</h3><p class="hint">获取设备历史或选择 CSV 可载入图表；点击「导入设备」会将当前图表的全部数据写入已连接设备并刷新屏幕。导入前请先备份；取消或中断后历史会清空，重启后需重新导入。</p><div class="actions" style="margin-top:14px"><label for="history-file" style="margin:0">历史 CSV</label><input id="history-file" type="file" accept=".csv,text/csv"><button id="import-history" class="primary" disabled>导入设备</button><button id="cancel-import" disabled>取消导入</button></div><progress id="import-progress" value="0" max="100" aria-label="历史导入进度" hidden></progress><p id="import-status" class="hint" role="status">当前图表可导入已连接并激活的设备；也可选择 CSV 载入图表。</p></div></section>
 </div>
 <div class="tab-page" data-page="settings" hidden>
 <section class="card device-settings" aria-labelledby="settings-title">
@@ -353,6 +373,7 @@ body:has(>#landing:not([hidden])),body:has(>#intro-view:not([hidden])){overflow:
   <div class="about-grid">
     <div>
       <h3>个人复刻 · 激活码</h3>
+      <p><b>激活的唯一作用是移除版权界面</b>，不激活也能使用全部功能。</p>
       <p>把设备页面显示的 <b>UID</b> 发到作者邮箱，邮件标题请写 <b>「温湿度计激活」</b>。</p>
       <p>正文请附上你在嘉立创打板的订单截图（嘉立创小助手里的打板订单）。个人复刻免费。</p>
       <p><b>2027 年前无限量激活码</b>。个人复刻做出来的成品，可以自己售卖多余的。</p>
@@ -374,6 +395,7 @@ body:has(>#landing:not([hidden])),body:has(>#intro-view:not([hidden])){overflow:
       <a class="about-link" href="https://oshwhub.com/createskyblue/project_itmmifuv" target="_blank" rel="noopener noreferrer"><b>嘉立创硬件开源平台</b><span>最新 PCB 在这里查看</span></a>
       <a class="about-link" href="https://makerworld.com.cn/zh/models/3096359-4-2cun-mo-shui-ping-wen-du-ji-yi-nian-xu-hang-30ti#profileId-3645676" target="_blank" rel="noopener noreferrer"><b>拓竹 3D 打印开源社区</b><span>最新结构在这里查看</span></a>
       <a class="about-link" href="https://www.mydigit.cn/thread-624292-1-1.html" target="_blank" rel="noopener noreferrer"><b>数码之家</b><span>欢迎评论区讨论</span></a>
+      <a class="about-link" href="https://github.com/dy/gl-waveform" target="_blank" rel="noopener noreferrer"><b>gl-waveform</b><span>高性能绘图库，十亿个点不卡顿</span></a>
     </div>
   </div>
 </section>
@@ -950,7 +972,7 @@ function download(name, data, type) {
 }
 
 function resetView() {
-    miniHover = null; drag = null; panMain = null;
+    miniHover = null; drag = null; panMain = null; clearSelection();
     document.removeEventListener('mousemove', dragMini); document.removeEventListener('mouseup', dragMiniEnd);
     document.removeEventListener('mousemove', panMainMove); document.removeEventListener('mouseup', panMainEnd);
     if (!points.length) { viewStart = 0; viewEnd = 0; return; }
@@ -964,13 +986,85 @@ function prepare(canvas) {
     context.setTransform(ratio, 0, 0, ratio, 0, 0);
     return {context, width: canvas.width / ratio, height: canvas.height / ratio};
 }
+/* 曲线由 gl-waveform 画在下层 WebGL2 画布上，2D 画布只画网格、刻度和选区。
+   没有 WebGL2 或模块没加载成功时，下面原有的 Canvas 2D 折线照常工作。 */
+const WAVE_STEP = 60;
+let WaveformClass = null;
+let waveformCacheSource = null, waveformCache = null;
+const waveformLayers = {main:null, mini:null};
+function waveformReady() {
+    return typeof WaveformClass === 'function' && typeof WebGL2RenderingContext !== 'undefined';
+}
+/* 历史点有 1 分钟和 5 分钟两种颗粒度，统一重采样到 60 秒栅格；5 分钟的缺口
+   按线性插值补齐，和原来 2D 折线两点直连的结果一致，其余位置留 NaN 作断点。 */
+function waveformSamples() {
+    if (waveformCacheSource === points) return waveformCache;
+    waveformCacheSource = points;
+    if (!points.length) return waveformCache = null;
+    const oldest = points[0].secondsAgo, newest = points[points.length - 1].secondsAgo;
+    const size = Math.max(1, Math.floor((oldest - newest) / WAVE_STEP) + 1);
+    const temperature = new Float32Array(size).fill(NaN);
+    const humidity = new Float32Array(size).fill(NaN);
+    const indices = points.map(point => Math.min(size - 1, Math.max(0, Math.round((oldest - point.secondsAgo) / WAVE_STEP))));
+    for (let i = 1; i < points.length; i++) {
+        const from = indices[i - 1], to = indices[i], a = points[i - 1], b = points[i];
+        for (let index = from + 1; index < to; index++) {
+            const weight = (index - from) / (to - from);
+            temperature[index] = a.temperature + (b.temperature - a.temperature) * weight;
+            humidity[index] = a.humidity + (b.humidity - a.humidity) * weight;
+        }
+    }
+    for (let i = 0; i < points.length; i++) {
+        temperature[indices[i]] = points[i].temperature;
+        humidity[indices[i]] = points[i].humidity;
+    }
+    return waveformCache = {oldest, size, temperature, humidity};
+}
+function waveformLayer(key, canvasId) {
+    if (!waveformReady()) return null;
+    if (waveformLayers[key]) return waveformLayers[key];
+    if (waveformLayers[key] === false) return null;
+    try {
+        const canvas = element(canvasId);
+        const temperature = new WaveformClass(canvas, {color:'#d07c46', rms:false, thickness:1});
+        const humidity = new WaveformClass(temperature.gl, {color:'#458eac', rms:false, thickness:1});
+        return waveformLayers[key] = {canvas, temperature, humidity, samples:undefined};
+    } catch (error) {
+        waveformLayers[key] = false;
+        return null;
+    }
+}
+function drawWaveform(key, canvasId, width, height, viewport, range, amplitude) {
+    const layer = waveformLayer(key, canvasId);
+    if (!layer) return false;
+    const ratio = window.devicePixelRatio || 1;
+    const deviceWidth = Math.max(1, Math.round(width * ratio)), deviceHeight = Math.max(1, Math.round(height * ratio));
+    if (layer.canvas.width !== deviceWidth || layer.canvas.height !== deviceHeight) {
+        layer.canvas.width = deviceWidth; layer.canvas.height = deviceHeight;
+    }
+    const samples = waveformSamples();
+    if (layer.samples !== samples) {
+        layer.temperature.update({data:samples ? samples.temperature : null});
+        layer.humidity.update({data:samples ? samples.humidity : null});
+        layer.samples = samples;
+    }
+    layer.temperature.update({range, viewport, amplitude, pixelRatio:ratio});
+    layer.humidity.update({range, viewport, amplitude:[0, 100], pixelRatio:ratio});
+    layer.temperature.clear();
+    if (samples) { layer.temperature.render(); layer.humidity.render(); }
+    return true;
+}
 function visiblePoints() { return points.filter(point => point.secondsAgo >= viewEnd - 0.001 && point.secondsAgo <= viewStart + 0.001); }
 function drawMain() {
     const {context, width, height} = prepare(element('chart-main'));
     context.clearRect(0, 0, width, height);
     const left = 54, right = Math.max(left + 1, width - 54), top = 18, bottom = Math.max(top + 1, height - 34);
     context.font = '12px sans-serif';
-    if (!points.length) { context.fillStyle = '#60756e'; context.fillText('选择 CSV 或获取设备历史后显示曲线', 16, top + 22); return; }
+    if (!points.length) {
+        context.fillStyle = '#60756e'; context.fillText('选择 CSV 或获取设备历史后显示曲线', 16, top + 22);
+        drawWaveform('main', 'chart-main-gl', width, height, [left, top, right - left, bottom - top], [0, 1], [0, 1]);
+        return;
+    }
     const shown = visiblePoints();
     let first = points.findIndex(point => point.secondsAgo <= viewStart);
     if (first < 0) first = points.length - 1;
@@ -999,20 +1093,26 @@ function drawMain() {
         context.fillText(axisText(sampleTime({secondsAgo:seconds})), timeTicks ? x(seconds) : (left + right) / 2, bottom + 22);
     }
     context.textAlign = 'left';
-    context.save(); context.beginPath(); context.rect(left, top, right - left, bottom - top); context.clip();
-    for (const [field, color, min, max] of [['temperature', '#d07c46', low, high], ['humidity', '#458eac', 0, 100]]) {
-        context.strokeStyle = color; context.lineWidth = 2; context.beginPath();
-        let started = false;
-        for (const point of connected) {
-            const px = x(point.secondsAgo), py = y(point[field], min, max);
-            if (started) context.lineTo(px, py); else { context.moveTo(px, py); started = true; }
+    const samples = waveformReady() ? waveformSamples() : null;
+    const oldest = samples ? samples.oldest : points[0].secondsAgo;
+    const from = Math.max(0, (oldest - viewStart) / WAVE_STEP), to = Math.max(from + 1, (oldest - viewEnd) / WAVE_STEP);
+    const glDrawn = drawWaveform('main', 'chart-main-gl', width, height, [left, top, right - left, bottom - top], [from, to], [low, high]);
+    if (!glDrawn) {
+        context.save(); context.beginPath(); context.rect(left, top, right - left, bottom - top); context.clip();
+        for (const [field, color, min, max] of [['temperature', '#d07c46', low, high], ['humidity', '#458eac', 0, 100]]) {
+            context.strokeStyle = color; context.lineWidth = 2; context.beginPath();
+            let started = false;
+            for (const point of connected) {
+                const px = x(point.secondsAgo), py = y(point[field], min, max);
+                if (started) context.lineTo(px, py); else { context.moveTo(px, py); started = true; }
+            }
+            context.stroke();
+            if (shown.length === 1) {
+                context.fillStyle = color; context.beginPath(); context.arc(x(shown[0].secondsAgo), y(shown[0][field], min, max), 3, 0, Math.PI * 2); context.fill();
+            }
         }
-        context.stroke();
-        if (shown.length === 1) {
-            context.fillStyle = color; context.beginPath(); context.arc(x(shown[0].secondsAgo), y(shown[0][field], min, max), 3, 0, Math.PI * 2); context.fill();
-        }
+        context.restore();
     }
-    context.restore();
 }
 function miniBounds(width, height = 90) {
     return {left:12, right:Math.max(13, width - 12), top:8, bottom:Math.max(9, height - 8)};
@@ -1064,31 +1164,36 @@ function drawMini() {
     const {context, width, height} = prepare(element('chart-mini'));
     context.clearRect(0, 0, width, height);
     element('mini-range').textContent = points.length ? rangeLabel() : '全量缩略图';
-    if (!points.length) return;
+    if (!points.length) {
+        drawWaveform('mini', 'chart-mini-gl', width, height, [12, 8, Math.max(1, width - 24), Math.max(1, height - 16)], [0, 1], [0, 1]);
+        return;
+    }
     const bounds = miniBounds(width, height), toX = seconds => miniToX(seconds, width);
     const temperatures = points.map(point => point.temperature);
     const low = Math.floor(Math.min(...temperatures) - 1), high = Math.ceil(Math.max(...temperatures) + 1);
     const from = toX(viewStart), to = toX(viewEnd);
-    context.fillStyle = 'rgba(24,53,47,0.06)';
-    context.fillRect(bounds.left, bounds.top, Math.max(0, from - bounds.left), bounds.bottom - bounds.top);
-    context.fillRect(to, bounds.top, Math.max(0, bounds.right - to), bounds.bottom - bounds.top);
-    context.fillStyle = 'rgba(23,107,84,0.04)';
+    context.fillStyle = 'rgba(23,107,84,0.10)';
     context.fillRect(from, bounds.top, Math.max(1, to - from), bounds.bottom - bounds.top);
-    for (const [field, color, min, max] of [['temperature', '#d07c46', low, high], ['humidity', '#458eac', 0, 100]]) {
-        context.strokeStyle = color; context.lineWidth = 1.25; context.beginPath();
-        for (let index = 0; index < points.length; index++) {
-            const point = points[index], px = toX(point.secondsAgo);
-            const py = bounds.bottom - (point[field] - min) / (max - min) * (bounds.bottom - bounds.top);
-            if (index) context.lineTo(px, py); else context.moveTo(px, py);
-        }
-        context.stroke();
-        if (points.length === 1) {
-            const py = bounds.bottom - (points[0][field] - min) / (max - min) * (bounds.bottom - bounds.top);
-            context.fillStyle = color; context.beginPath(); context.arc(toX(points[0].secondsAgo), py, 2.5, 0, Math.PI * 2); context.fill();
+    const samples = waveformReady() ? waveformSamples() : null;
+    const miniViewport = [bounds.left, bounds.top, bounds.right - bounds.left, bounds.bottom - bounds.top];
+    const glDrawn = drawWaveform('mini', 'chart-mini-gl', width, height, miniViewport, [0, samples ? samples.size : 1], [low, high]);
+    if (!glDrawn) {
+        for (const [field, color, min, max] of [['temperature', '#d07c46', low, high], ['humidity', '#458eac', 0, 100]]) {
+            context.strokeStyle = color; context.lineWidth = 1.25; context.beginPath();
+            for (let index = 0; index < points.length; index++) {
+                const point = points[index], px = toX(point.secondsAgo);
+                const py = bounds.bottom - (point[field] - min) / (max - min) * (bounds.bottom - bounds.top);
+                if (index) context.lineTo(px, py); else context.moveTo(px, py);
+            }
+            context.stroke();
+            if (points.length === 1) {
+                const py = bounds.bottom - (points[0][field] - min) / (max - min) * (bounds.bottom - bounds.top);
+                context.fillStyle = color; context.beginPath(); context.arc(toX(points[0].secondsAgo), py, 2.5, 0, Math.PI * 2); context.fill();
+            }
         }
     }
     if (points.length === 1) return;
-    context.strokeStyle = '#65a58e'; context.lineWidth = 1;
+    context.strokeStyle = '#176b54'; context.lineWidth = 1.5;
     context.beginPath(); context.roundRect(from, bounds.top, Math.max(1, to - from), bounds.bottom - bounds.top, 4); context.stroke();
     for (const x of [from, to]) {
         context.fillStyle = '#ffffff'; context.strokeStyle = '#176b54'; context.lineWidth = 1.5;
@@ -1097,7 +1202,7 @@ function drawMini() {
     }
     if (!drag && miniHover !== null && capturedAt) drawChip(context, timeText(sampleTime({secondsAgo:miniHover})), toX(miniHover), width);
 }
-function drawCharts() { hideTooltip(); drawMain(); drawMini(); }
+function drawCharts() { hideTooltip(); updateSelectionBox(); drawMain(); drawMini(); }
 function clampView() {
     const {newest, oldest} = historyBounds();
     const totalSpan = oldest - newest, minSpan = Math.min(totalSpan, Math.max(10, totalSpan / 1000));
@@ -1105,6 +1210,58 @@ function clampView() {
     if (viewStart - viewEnd < minSpan) { const center = (viewStart + viewEnd) / 2; viewStart = center + minSpan / 2; viewEnd = center - minSpan / 2; }
     if (viewStart > oldest) { const shift = viewStart - oldest; viewStart -= shift; viewEnd -= shift; }
     if (viewEnd < newest) { const shift = newest - viewEnd; viewStart += shift; viewEnd += shift; }
+}
+/* 右键框选：选区按时间范围存储，缩放平移后仍贴着同一段数据。 */
+let selection = null, selectDrag = null;
+function clearSelection() {
+    selection = null;
+    element('chart-selection-box').hidden = true;
+    element('chart-selection-info').hidden = true;
+}
+function mainSeconds(px) {
+    const plot = mainPlot();
+    return viewStart - (px - plot.left) / plot.width * (viewStart - viewEnd);
+}
+function updateSelectionBox() {
+    const box = element('chart-selection-box');
+    if (!selection || !points.length) { box.hidden = true; return; }
+    const plot = mainPlot(), span = viewStart - viewEnd;
+    if (!(span > 0)) { box.hidden = true; return; }
+    const x1 = plot.left + (viewStart - selection.from) / span * plot.width;
+    const x2 = plot.left + (viewStart - selection.to) / span * plot.width;
+    const from = Math.max(plot.left, Math.min(x1, x2)), to = Math.min(plot.right, Math.max(x1, x2));
+    if (to <= from) { box.hidden = true; return; }
+    box.hidden = false;
+    box.style.left = from.toFixed(1) + 'px';
+    box.style.width = (to - from).toFixed(1) + 'px';
+}
+function selectionStats() {
+    if (!selection) return;
+    const older = Math.max(selection.from, selection.to), newer = Math.min(selection.from, selection.to);
+    const chosen = points.filter(point => point.secondsAgo <= older + 0.001 && point.secondsAgo >= newer - 0.001);
+    const info = element('chart-selection-info');
+    info.hidden = false;
+    if (!chosen.length) { info.innerHTML = '<span class="selection-cell time">选区内没有历史点</span>'; return; }
+    const describe = field => {
+        let min = Infinity, max = -Infinity, sum = 0;
+        for (const point of chosen) {
+            const value = point[field];
+            if (value < min) min = value;
+            if (value > max) max = value;
+            sum += value;
+        }
+        return {min:min.toFixed(1), max:max.toFixed(1), avg:(sum / chosen.length).toFixed(1)};
+    };
+    const temperature = describe('temperature'), humidity = describe('humidity');
+    const width = older - newer;
+    const step = width >= 172800 ? 86400000 : width >= 7200 ? 3600000 : width >= 120 ? 60000 : 1000;
+    const time = timeText(sampleTime({secondsAgo:older})) + ' 至 ' + timeText(sampleTime({secondsAgo:newer}));
+    const statCell = (kind, title, values) => '<span class="selection-cell ' + kind + '"><b>' + title + '</b><span class="stat-row">' +
+        '<span class="stat"><span class="stat-label"><span class="arrow">▼</span> 最低</span><span class="stat-value">' + values.min + '</span></span>' +
+        '<span class="stat"><span class="stat-label"><span class="arrow">▲</span> 最高</span><span class="stat-value">' + values.max + '</span></span>' +
+        '<span class="stat"><span class="stat-label">平均</span><span class="stat-value">' + values.avg + '</span></span></span></span>';
+    info.innerHTML = '<span class="selection-cell time"><b>时间范围（' + formatSpan(width * 1000, step) + '、' + chosen.length + ' 个点）</b>' + time + '</span>' +
+        statCell('temperature', '温度 °C', temperature) + statCell('humidity', '湿度 %', humidity);
 }
 function hideTooltip() { element('chart-tooltip').hidden = true; element('chart-cursor').hidden = true; }
 function showTooltip(event) {
@@ -1127,9 +1284,10 @@ function showTooltip(event) {
     const tooltip = element('chart-tooltip');
     tooltip.innerHTML = '<div>' + timeText(sampleTime(nearest)) + '</div><div>温度 <b>' + nearest.temperature.toFixed(1) + ' °C</b></div><div>湿度 <b>' + nearest.humidity.toFixed(1) + ' %</b></div>';
     tooltip.hidden = false;
-    const flip = px > box.width - 200;
-    tooltip.style.left = (flip ? px - tooltip.offsetWidth - 14 : px + 14) + 'px';
-    tooltip.style.top = Math.max(6, (event.clientY - box.top) - 20) + 'px';
+    const tipWidth = tooltip.offsetWidth || 180, tipHeight = tooltip.offsetHeight || 70;
+    const flip = px + tipWidth + 20 > box.width;
+    tooltip.style.left = (flip ? Math.max(4, px - tipWidth - 14) : Math.min(box.width - tipWidth - 4, px + 14)) + 'px';
+    tooltip.style.top = Math.max(6, Math.min(box.height - tipHeight - 6, (event.clientY - box.top) - 20)) + 'px';
 }
 
 function action(id, handler, event = 'click') { element(id).addEventListener(event, async () => { try { await handler(); } catch (error) { status(error.message); } }); }
@@ -1176,6 +1334,12 @@ action('connect', async () => {
         element('activation-input').value = ''; setActivationLabel();
         await readUser();
         stage = '校验设备激活状态'; await verifyActivation();
+        /* 演示数据只在未连接时占位，连上设备就撤掉，避免把预览曲线当成设备历史。 */
+        if (chartOrigin === 'demo') {
+            points = []; capturedAt = 0; chartOrigin = null;
+            element('csv').disabled = true; element('chart-source').textContent = '尚无历史数据';
+            resetView(); drawCharts();
+        }
         connected(true); element('connection').textContent = '已连接';
         setActivationLabel();
         /* 连上就自动读一次当前温湿度，省得用户再点一下。
@@ -1366,6 +1530,23 @@ action('import-history', async () => {
     } catch (error) { element('import-status').textContent = error.message; throw error; }
     finally { if (importJob === job) { importJob = null; settingsControls(); } }
 });
+/* 演示数据是随页面发布的静态 CSV，用同一个解析器读入。页面打开时若没连设备，
+   直接显示它，并在图表上方用一行小字标清这不是设备数据。 */
+async function loadDemoHistory() {
+    if (typeof fetch !== 'function' || rx || exportId !== null || importJob || rangeBusy || chartOrigin) return;
+    try {
+        const response = await fetch('demo-history.csv', {cache:'no-store'});
+        if (!response.ok) throw new Error('HTTP ' + response.status);
+        const preview = readHistoryCsv(await response.text());
+        if (rx || exportId !== null || importJob || chartOrigin) return;
+        points = preview.points; capturedAt = preview.capturedAt; chartOrigin = 'demo';
+        showSimulationNotice(false);
+        element('chart-source').textContent = '演示数据，' + points.length + ' 个点（未连接设备），锯齿状波动是空调制冷波形';
+        resetView(); drawCharts(); element('csv').disabled = false;
+    } catch (error) {
+        element('chart-source').textContent = '演示数据不可用：' + error.message;
+    }
+}
 action('history', async () => {
     if (importJob) return;
     if (!requireHistoryKey()) return;
@@ -1395,8 +1576,14 @@ function mainPlot() {
     const left = 54, right = Math.max(left + 1, box.width - 54);
     return {left, right, width: right - left};
 }
+function mainPixel(clientX) {
+    const plot = mainPlot();
+    return Math.min(plot.right, Math.max(plot.left, clientX - mainCanvas.getBoundingClientRect().left));
+}
+mainCanvas.addEventListener('contextmenu', event => event.preventDefault());
+miniCanvas.addEventListener('contextmenu', event => event.preventDefault());
 mainCanvas.addEventListener('mousemove', event => {
-    if (panMain) return hideTooltip();
+    if (panMain || selectDrag) return hideTooltip();
     showTooltip(event);
     mainCanvas.style.cursor = 'grab';
 });
@@ -1404,6 +1591,15 @@ mainCanvas.addEventListener('mouseleave', () => { hideTooltip(); });
 mainCanvas.addEventListener('mousedown', event => {
     if (!points.length) return;
     event.preventDefault();
+    if (event.button === 2) {
+        const px = mainPixel(event.clientX);
+        selectDrag = {startX:px, currentX:px};
+        hideTooltip(); mainCanvas.style.cursor = 'crosshair';
+        document.addEventListener('mousemove', selectDragMove);
+        document.addEventListener('mouseup', selectDragEnd);
+        return;
+    }
+    if (event.button !== 0) return;
     panMain = {x:event.clientX, startStart:viewStart, startEnd:viewEnd};
     hideTooltip(); mainCanvas.style.cursor = 'grabbing';
     document.addEventListener('mousemove', panMainMove);
@@ -1421,6 +1617,27 @@ function panMainEnd() {
     document.removeEventListener('mousemove', panMainMove);
     document.removeEventListener('mouseup', panMainEnd);
 }
+function selectDragMove(event) {
+    if (!selectDrag) return;
+    selectDrag.currentX = mainPixel(event.clientX);
+    const from = Math.min(selectDrag.startX, selectDrag.currentX), to = Math.max(selectDrag.startX, selectDrag.currentX);
+    const box = element('chart-selection-box');
+    box.hidden = false;
+    box.style.left = from.toFixed(1) + 'px';
+    box.style.width = Math.max(1, to - from).toFixed(1) + 'px';
+}
+function selectDragEnd() {
+    document.removeEventListener('mousemove', selectDragMove);
+    document.removeEventListener('mouseup', selectDragEnd);
+    const drag = selectDrag;
+    selectDrag = null;
+    mainCanvas.style.cursor = 'grab';
+    if (!drag) return;
+    const from = Math.min(drag.startX, drag.currentX), to = Math.max(drag.startX, drag.currentX);
+    if (to - from < 3) { clearSelection(); return; }
+    selection = {from:mainSeconds(from), to:mainSeconds(to)};
+    updateSelectionBox(); selectionStats();
+}
 mainCanvas.addEventListener('wheel', event => {
     if (!points.length) return;
     event.preventDefault();
@@ -1429,10 +1646,8 @@ mainCanvas.addEventListener('wheel', event => {
     zoomAt(viewStart - ratio * (viewStart - viewEnd), event.deltaY > 0 ? 1.15 : 1 / 1.15);
 }, {passive:false});
 mainCanvas.addEventListener('dblclick', () => { resetView(); hideTooltip(); drawCharts(); });
-miniCanvas.addEventListener('mousedown', event => {
-    if (!points.length) return;
-    event.preventDefault();
-    const mode = miniHit(event.clientX), anchor = miniToSeconds(event.clientX);
+function startMiniDrag(clientX) {
+    const mode = miniHit(clientX), anchor = miniToSeconds(clientX);
     if (mode === 'jump') {
         const half = (viewStart - viewEnd) / 2;
         viewStart = anchor + half; viewEnd = anchor - half; clampView(); drawCharts();
@@ -1441,6 +1656,11 @@ miniCanvas.addEventListener('mousedown', event => {
     miniCanvas.style.cursor = 'grabbing'; hideTooltip(); drawCharts();
     document.addEventListener('mousemove', dragMini);
     document.addEventListener('mouseup', dragMiniEnd);
+}
+miniCanvas.addEventListener('mousedown', event => {
+    if (!points.length || event.button !== 0) return;
+    event.preventDefault();
+    startMiniDrag(event.clientX);
 });
 function dragMini(event) {
     if (!drag) return;
@@ -1476,14 +1696,100 @@ miniCanvas.addEventListener('wheel', event => {
     zoomAt(miniToSeconds(event.clientX), event.deltaY > 0 ? 1.15 : 1 / 1.15);
 }, {passive:false});
 miniCanvas.addEventListener('dblclick', () => { resetView(); hideTooltip(); drawCharts(); });
+/* 触屏：单指平移、双指捏合缩放，缩略图单指拖选区。preventDefault 阻止合成鼠标事件重复处理。 */
+let touchPan = null, touchPinch = null;
+mainCanvas.addEventListener('touchstart', event => {
+    if (!points.length) return;
+    event.preventDefault();
+    if (event.touches.length === 1) {
+        touchPinch = null;
+        touchPan = {x:event.touches[0].clientX, startStart:viewStart, startEnd:viewEnd};
+    } else if (event.touches.length === 2) {
+        touchPan = null;
+        touchPinch = {distance:Math.max(1, Math.abs(event.touches[0].clientX - event.touches[1].clientX)),
+            startStart:viewStart, startEnd:viewEnd};
+    }
+}, {passive:false});
+mainCanvas.addEventListener('touchmove', event => {
+    if (!points.length) return;
+    event.preventDefault();
+    if (touchPan && event.touches.length === 1) {
+        const plot = mainPlot();
+        const delta = (event.touches[0].clientX - touchPan.x) / plot.width * (touchPan.startStart - touchPan.startEnd);
+        viewStart = touchPan.startStart + delta; viewEnd = touchPan.startEnd + delta;
+        clampView(); hideTooltip(); drawCharts();
+    } else if (touchPinch && event.touches.length === 2) {
+        const distance = Math.max(1, Math.abs(event.touches[0].clientX - event.touches[1].clientX));
+        const center = (event.touches[0].clientX + event.touches[1].clientX) / 2;
+        const plot = mainPlot(), box = mainCanvas.getBoundingClientRect();
+        const ratio = Math.min(1, Math.max(0, (center - box.left - plot.left) / plot.width));
+        const anchor = touchPinch.startStart - ratio * (touchPinch.startStart - touchPinch.startEnd);
+        const span = (touchPinch.startStart - touchPinch.startEnd) * touchPinch.distance / distance;
+        viewStart = anchor + ratio * span; viewEnd = viewStart - span;
+        clampView(); hideTooltip(); drawCharts();
+    }
+}, {passive:false});
+mainCanvas.addEventListener('touchend', () => { touchPan = null; touchPinch = null; }, {passive:false});
+miniCanvas.addEventListener('touchstart', event => {
+    if (!points.length || event.touches.length !== 1) return;
+    event.preventDefault();
+    startMiniDrag(event.touches[0].clientX);
+}, {passive:false});
+miniCanvas.addEventListener('touchmove', event => {
+    if (!drag || event.touches.length !== 1) return;
+    event.preventDefault();
+    dragMini({clientX:event.touches[0].clientX});
+}, {passive:false});
+miniCanvas.addEventListener('touchend', () => { if (drag) dragMiniEnd(); }, {passive:false});
+/* 鼠标在窗口外松开时拖拽状态会卡住，统一收尾。 */
+function cancelChartDrags() {
+    if (panMain) panMainEnd();
+    if (drag) dragMiniEnd();
+    if (selectDrag) {
+        selectDrag = null;
+        document.removeEventListener('mousemove', selectDragMove);
+        document.removeEventListener('mouseup', selectDragEnd);
+        mainCanvas.style.cursor = 'grab';
+    }
+    touchPan = touchPinch = null;
+}
+window.addEventListener('blur', cancelChartDrags);
 window.addEventListener('resize', drawCharts);
 /* 帧间超时：连续 3 秒没有“成功进账一帧”才判卡死。每帧重置计时，所以不设整体
    时长上限——慢但在推进的传输不会被提前中止。与固件 HISTORY_STALL_TIMEOUT_MS 一致。 */
 setInterval(() => { if (exportId !== null && Date.now() - lastProgress >= 3000) abortHistory('传输超时，请重新获取'); }, 250);
 setActivationLabel();
+/* 模块脚本把类交给内联脚本，加载失败时 2D 折线仍然可用。 */
+if (typeof window !== 'undefined' && typeof window.addEventListener === 'function') {
+    window.addEventListener('gl-waveform-ready', () => {
+        WaveformClass = window.GlWaveform || null;
+        if (waveformReady()) drawCharts();
+    });
+}
 drawCharts();
 loadFirmwareInfo();
+loadDemoHistory();
+/* 手机访问提示。等 DOM 就绪再弹，确保 alert-dialog 已存在；同一会话只提示一次。 */
+if (typeof window.addEventListener === 'function') {
+    window.addEventListener('DOMContentLoaded', () => {
+        const ua = navigator.userAgent || '';
+        const mobile = /Android|iPhone|iPod|Windows Phone|Mobile/i.test(ua) ||
+            (navigator.maxTouchPoints > 1 && /Macintosh/i.test(ua)) ||
+            (typeof window.matchMedia === 'function' && window.matchMedia('(max-width: 820px) and (pointer: coarse)').matches);
+        if (!mobile) return;
+        try {
+            if (sessionStorage.getItem('thplot-mobile-notice') === '1') return;
+            sessionStorage.setItem('thplot-mobile-notice', '1');
+        } catch (error) { /* 隐私模式下 storage 不可用，仍按本次访问提示 */ }
+        showAlert('建议使用电脑端', '建议使用电脑端打开，图表缩放、3D 模型和壁纸编辑会获得更好的体验。');
+    });
+}
 </script>
+  <script type="module">
+    import Waveform from './vendor/gl-waveform.js';
+    window.GlWaveform = Waveform;
+    window.dispatchEvent(new Event('gl-waveform-ready'));
+  </script>
   <script type="module">
     import * as THREE from 'three';
     import {FBXLoader} from 'three/addons/loaders/FBXLoader.js';
@@ -1492,7 +1798,7 @@ loadFirmwareInfo();
     const modelHost = document.getElementById('model-preview');
     const scene = new THREE.Scene();
     const camera = new THREE.PerspectiveCamera(28, 1, 0.01, 100);
-    camera.position.set(0, -4.5, 0);
+    camera.position.set(-1.92, -4.76, 1.93);
     camera.up.set(0, 0, 1);
     const renderer = new THREE.WebGLRenderer({antialias:true, alpha:true, powerPreference:'high-performance'});
     renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, 2));
@@ -1513,9 +1819,11 @@ loadFirmwareInfo();
     scene.add(frontLight);
 
     const controls = new OrbitControls(camera, renderer.domElement);
-    controls.enableDamping = true;
-    controls.enablePan = false;
-    controls.enableRotate = false;
+    controls.enableDamping = false;
+    controls.enablePan = true;
+    controls.enableRotate = true;
+    controls.rotateSpeed = 0.5;
+    controls.panSpeed = 0.6;
     controls.minDistance = 1.1;
     controls.maxDistance = 8;
     controls.target.set(0, 0, 0);
@@ -1632,7 +1940,8 @@ loadFirmwareInfo();
         });
         if (screenMesh) {
             screenMesh.geometry.computeBoundingBox();
-            displayMaterial = new THREE.MeshBasicMaterial({map: screenTexture, side: THREE.DoubleSide, toneMapped: false, depthTest: false, depthWrite: false});
+            displayMaterial = new THREE.MeshBasicMaterial({map: screenTexture, side: THREE.FrontSide, toneMapped: false,
+                polygonOffset: true, polygonOffsetFactor: -1, polygonOffsetUnits: -1});
             const displaySurface = new THREE.Mesh(
                 createDisplayGeometry(screenMesh),
                 displayMaterial
@@ -1655,30 +1964,26 @@ loadFirmwareInfo();
     });
 
     const clock = new THREE.Clock();
+    let lastModelWidth = 0, lastModelHeight = 0;
     function resizeModel() {
-        const width = Math.max(1, modelHost.clientWidth);
-        const height = Math.max(1, modelHost.clientHeight);
+        const width = modelHost.clientWidth, height = modelHost.clientHeight;
+        /* 页面隐藏时尺寸为 0，别把相机和绘制缓冲写成 1×1；切回概览会重新校准。 */
+        if (width < 1 || height < 1) return;
+        if (width === lastModelWidth && height === lastModelHeight) return;
+        lastModelWidth = width; lastModelHeight = height;
         camera.aspect = width / height;
         camera.updateProjectionMatrix();
         renderer.setSize(width, height, false);
     }
     const resizeObserver = new ResizeObserver(resizeModel);
     resizeObserver.observe(modelHost);
+    window.addEventListener('resize', resizeModel);
     resizeModel();
-    let pointerX = 0;
-    let pointerY = 0;
-    const pointerTilt = 0.42;
-    window.addEventListener('pointermove', event => {
-        pointerX = THREE.MathUtils.clamp((event.clientX / Math.max(1, window.innerWidth)) * 2 - 1, -1, 1);
-        pointerY = THREE.MathUtils.clamp((event.clientY / Math.max(1, window.innerHeight)) * 2 - 1, -1, 1);
-    });
     function renderModel() {
+        /* 每帧按实际尺寸校准，避免首屏布局未稳定时算错高度后一直不修正。 */
+        resizeModel();
         const delta = clock.getDelta();
         modelObject?.userData.mixer?.update(delta);
-        if (modelObject) {
-            modelObject.rotation.x += ((pointerY * pointerTilt) - modelObject.rotation.x) * 0.08;
-            modelObject.rotation.z += ((pointerX * pointerTilt) - modelObject.rotation.z) * 0.08;
-        }
         controls.update();
         renderer.render(scene, camera);
         requestAnimationFrame(renderModel);
