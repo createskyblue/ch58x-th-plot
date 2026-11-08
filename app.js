@@ -48,12 +48,12 @@ let importJob = null;
 let chartOrigin = null, previewSequence = 0, plottedSimulated = false;
 const DEVICE_RANGE_LABELS = ['1 小时', '2 小时', '3 小时', '4 小时', '6 小时', '8 小时', '12 小时', '1 天', '3 天', '7 天', '15 天', '30 天'];
 let rangeReady = false, rangeBusy = false;
-let activated = false, settingsBusy = false, settingsReady = false, settingsError = '', savedSettings = [0, 0];
+let activated = false, settingsBusy = false, settingsReady = false, settingsError = '', savedSettings = [0, 0, 0];
 function settingsControls() {
     const rangeLocked = !rx || rangeBusy || settingsBusy || exportId !== null || !!importJob;
     element('read-device-range').disabled = rangeLocked;
     element('device-range').disabled = rangeLocked || !rangeReady;
-    for (const id of ['history-mode', 'refresh-on-change', 'save-settings']) element(id).disabled = !rx || !settingsReady || settingsBusy || rangeBusy || exportId !== null || !!importJob;
+    for (const id of ['history-mode', 'refresh-on-change', 'dew-point', 'save-settings']) element(id).disabled = !rx || !settingsReady || settingsBusy || rangeBusy || exportId !== null || !!importJob;
     element('history-file').disabled = exportId !== null || !!importJob;
     element('import-history').disabled = !rx || !activated || !settingsReady || settingsBusy || rangeBusy || exportId !== null || !!importJob;
     element('cancel-import').disabled = !importJob || importJob.committing;
@@ -83,15 +83,22 @@ async function readSettings() {
     settingsReady = false; settingsError = ''; settingsControls();
     try {
         const data = await request(TYPES.settingsRead);
-        if (data.length !== 2 || data[0] > 1 || data[1] > 1) throw new Error('设置响应错误');
-        savedSettings = [...data]; element('history-mode').value = String(data[0]); element('refresh-on-change').checked = !!data[1];
+        if (data.length !== 3 || data[0] > 1 || data[1] > 1 || data[2] > 1) throw new Error('设置响应错误');
+        savedSettings = [...data]; element('history-mode').value = String(data[0]); element('refresh-on-change').checked = !!data[1]; element('dew-point').checked = !!data[2];
         settingsReady = true;
     } catch (error) { settingsError = error.message; throw error; }
     finally { settingsControls(); }
 }
 const pending = new Map();
 const deviceButtons = ['latest', 'save-user', 'read-user', 'clear-user', 'history', 'disconnect', 'reboot'];
-function connected(enabled) { for (const name of deviceButtons) element(name).disabled = !enabled; element('connect').disabled = enabled; settingsControls(); }
+function connected(enabled) {
+    for (const name of deviceButtons) element(name).disabled = !enabled;
+    element('connect').disabled = enabled; settingsControls();
+    /* 壁纸页是独立模块、自己维护一套连接状态。这里派事件同步，
+       否则壁纸页的读取缩略图 / 上传按钮永远停在禁用态。 */
+    window.dispatchEvent(new CustomEvent(enabled ? 'thplot:device-ready' : 'thplot:device-lost',
+        { detail: enabled ? { rx, tx, device } : {} }));
+}
 function renderProgress() {
     const progress = ending ? Math.min(99, receiver.progress) : receiver.progress;
     element('progress').value = progress; element('percentage').textContent = progress + '%';
@@ -140,7 +147,7 @@ function request(type, data = new Uint8Array()) {
         write(id, type, data).catch(error => { clearTimeout(timer); pending.delete(id); reject(error); });
     });
 }
-const errors = {1:'请求格式错误', 2:'设备忙，请稍后重试', 3:'设备密钥派生或 UID 不可用，历史导出已拒绝（不会返回明文）', 4:'传感器或 Flash 操作失败', 5:'设备操作超时', 6:'设备未激活，无法修改设置'};
+const errors = {1:'请求格式错误', 2:'设备正忙，请稍等再试', 3:'设备密钥派生或 UID 不可用，暂时无法导出历史（不会返回明文）', 4:'传感器或 Flash 操作失败', 5:'设备操作超时，请稍后重试', 6:'设备未激活，无法修改设置'};
 const parser = new FrameParser(onFrame, error => { if (exportId !== null) abortHistory(error.message); else status(error.message); });
 function onFrame(message) {
     if (message.type === TYPES.imageProgress) return;
@@ -388,13 +395,17 @@ action('device-range', async () => {
         throw error;
     } finally { rangeBusy = false; settingsControls(); }
 }, 'change');
+action('dew-point', () => {
+    if (!element('dew-point').checked || savedSettings[2]) return;
+    if (!confirm('开启露点后，设备每画一个历史点都要现算一次露点，刷屏会比显示湿度时慢。内存只剩约 5 KB，只能用时间换内存。仍要开启吗？')) element('dew-point').checked = false;
+}, 'change');
 action('save-settings', async () => {
     if (!settingsReady || settingsBusy || rangeBusy || exportId !== null || importJob || !rx) return;
-    const mode = Number(element('history-mode').value), immediate = element('refresh-on-change').checked ? 1 : 0;
+    const mode = Number(element('history-mode').value), immediate = element('refresh-on-change').checked ? 1 : 0, dew = element('dew-point').checked ? 1 : 0;
     if (mode !== savedSettings[0] && !confirm('切换历史颗粒度会清空设备已有历史，建议先导出。继续切换？')) return;
     if (immediate && !savedSettings[1] && !confirm('开启温湿度变化立即刷新会降低续航时间，尤其空调造成的周期性温度变化可能导致频繁刷新。仍然开启？')) return;
     settingsBusy = true; settingsControls();
-    try { await request(TYPES.settingsWrite, Uint8Array.of(mode, immediate)); await readSettings(); status('设备设置已保存'); }
+    try { await request(TYPES.settingsWrite, Uint8Array.of(mode, immediate, dew)); await readSettings(); status('设备设置已保存'); }
     finally { settingsBusy = false; settingsControls(); }
 });
 settingsControls();

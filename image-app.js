@@ -2,7 +2,8 @@ import {TYPES, encodeFrame, FrameParser, writeRxFrame, setRxWriteSize} from './p
 import {IMAGE_WIDTH, IMAGE_HEIGHT, IMAGE_BYTES, ditherPixels, monoToRgba, prepareMonochromeRgba} from './image-dither.js?v=transparent-alpha-preset-fix';
 import {lz4CompressBlock} from './lz4.js';
 import {uploadImageBytes} from './image-transfer.js';
-import {CanvasEditor} from './canvas-editor.js?v=qr-battery1';
+import {CanvasEditor} from './canvas-editor.js?v=project-idb5';
+import localforage from './vendor/localforage.js?v=project-idb5';
 
 const element = id => document.getElementById(id);
 const status = text => { element('image-status').textContent = text; };
@@ -12,10 +13,58 @@ const syncParameterLabels = () => {
   for (const name of ['threshold', 'contrast', 'brightness', 'gamma', 'sharpness'])
     element(`image-${name}-value`).value = element(`image-${name}`).value;
 };
-async function saveProject() {
+/* 工程里带着图片数据，localStorage 只有 5 MB，一张手机照片就能顶满。
+   所以工程一律存 IndexedDB（localForage 默认驱动），localStorage 只留旧版本迁移。 */
+const projectStore = localforage.createInstance({name:'thplot', storeName:'projects'});
+const projectKey = slot => 'project.' + slot;
+let suppressSave = false;
+
+/* 编辑时 onChange 触发得很密，保存按顺序排队，避免旧快照晚到把新快照盖掉。 */
+let saveQueue = Promise.resolve();
+function saveProject(slot = selectedSlot) {
+  /* 先固定槽位号：await 期间如果用户切了槽，不能把旧画布写进新槽。 */
+  const target = slot;
+  saveQueue = saveQueue.then(async () => {
+    if (!editor) return;
+    await projectStore.setItem(projectKey(target), await editor.exportProject());
+  }).catch(error => { status('保存工程失败：' + error.message); });
+  return saveQueue;
+}
+
+/* 旧版本把工程压在 localStorage，图片一大就写不进去，保存直接报超配额。
+   打开页面时把旧记录搬进 IndexedDB，再把 localStorage 让出来。
+   槽位自己的记录优先，旧的单份工程最后处理，只有槽 1 空着才落进去。 */
+async function migrateLegacyProjects() {
+  const entries = [];
+  for (let slot = 0; slot < SLOT_COUNT; slot++) entries.push(['thplot.canvas.project.' + slot, slot]);
+  entries.push(['thplot.canvas.project', 0]);
+  for (const [key, slot] of entries) {
+    let raw = null;
+    try { raw = localStorage.getItem(key); } catch { continue; }
+    if (!raw) continue;
+    try {
+      const project = JSON.parse(raw);
+      if (!(await projectStore.getItem(projectKey(slot))))
+        await projectStore.setItem(projectKey(slot), project);
+    } catch {}
+    try { localStorage.removeItem(key); } catch {}
+  }
+}
+
+async function loadSlotProject(slot) {
+  /* 加载期间 editor.clear()/import 会触发 onChange，必须先压住自动保存，
+     否则空画布会把刚切过去的那份工程覆盖掉。 */
+  suppressSave = true;
   try {
-    if (editor) localStorage.setItem('thplot.canvas.project', JSON.stringify(await editor.exportProject()));
-  } catch (error) { status('保存工程失败：'+error.message); }
+    const saved = await projectStore.getItem(projectKey(slot));
+    editor.clear();
+    if (saved) {
+      try { await editor.importProject(saved); }
+      catch { await projectStore.removeItem(projectKey(slot)); }
+    }
+  } finally { suppressSave = false; }
+  renderPreview();
+  controls();
 }
 
 let device, rx, tx;
@@ -33,6 +82,8 @@ let restoreProjectPromise = Promise.resolve();
 let loadSequence = 0;
 let importQueue = Promise.resolve(), importsPending = 0;
 let bits = null;
+let selectedSlot = 0;
+let readingPreviews = false;
 let renderingPreview = false;
 let previewScheduled = false;
 let invert = false;
@@ -55,7 +106,7 @@ const parser = new FrameParser(message => {
   if (!job) return;
   if (message.type === TYPES.error) {
     const code = message.data[0];
-    const labels = ['', '设备拒绝请求', '设备忙', '设备不支持', 'Flash 操作失败', '超时', '设备未激活'];
+    const labels = ['', '设备暂时没法处理，请稍后重试', '设备正忙，请稍等再试', '这个功能设备不支持', '存储操作没成功，请重试', '等太久了，请再试一次', '设备未激活'];
     pending.delete(message.id);
     clearTimeout(job.timer);
     job.reject(new Error(labels[code] || ('设备错误 ' + code)));
@@ -111,7 +162,6 @@ function setConnected(value) {
   connected = value;
   element('image-connect').disabled = value;
   element('image-disconnect').disabled = !value;
-  element('image-connection').textContent = value ? '已连接' : '未连接';
   controls();
 }
 
@@ -120,15 +170,26 @@ function controls() {
   element('image-image-enabled').disabled = !connected || uploading;
   element('image-upload').disabled = !canImage || !bits || importsPending > 0;
   element('image-cancel').disabled = !uploading || uploadCancelled || committing;
+  /* 进度条只在上传时出现，空闲时不占位置。 */
+  element('image-progress').hidden = !uploading;
+  element('image-read-previews').disabled = !connected || uploading || readingPreviews;
+  /* 按钮灰着必须告诉用户为什么，否则只会以为功能坏了 */
+  const readHint = element('image-read-hint');
+  if (readHint) readHint.textContent = !connected ? '未连接设备，点顶部「连接设备」'
+    : readingPreviews ? '正在读取三个槽位…'
+    : uploading ? '上传中，暂不可读取' : '回传 80×60 缩略图';
+  element('image-read-previews').title = connected ? '读取设备上三个槽位的缩略图'
+    : '请先点顶部「连接设备」';
+  for (let slot = 0; slot < SLOT_COUNT; slot++) {
+    const full = element(`image-slot-full-${slot}`);
+    if (full) full.disabled = !connected || uploading || readingPreviews;
+  }
   if (editor && editor.locked !== uploading) editor.setLocked(uploading);
   for (const id of ['image-file','image-add-text','image-add-qr','image-clear','image-invert','image-preset'])
     element(id).disabled = uploading;
   syncEditorControls();
   for (const id of ['image-dither-mode', 'image-threshold', 'image-contrast', 'image-brightness', 'image-gamma', 'image-sharpness'])
     element(id).disabled = uploading;
-  /* 壁纸上传/开关不再要求激活；徽章只作展示。 */
-  element('image-activation-badge').textContent = connected ? (activated ? '已激活' : '未激活') : '激活状态 —';
-  element('image-activation-badge').style.color = connected && !activated ? '#a33' : '';
 }
 
 async function readActivation() {
@@ -318,6 +379,208 @@ function loadFiles(files, {defaultImage=false}={}) {
   return job.finally(()=>{importsPending--;controls();});
 }
 
+/* 设备把 400x300 按 5x5 块降到 80x60，每块按黑点占比取 0～15 级灰度，
+   4bpp 打包共 2400 字节；一帧放不下，按 960 字节分 3 页拉。 */
+const PREVIEW_W = 80, PREVIEW_H = 60, PREVIEW_BYTES = 2400, PREVIEW_PAGE = 960, SLOT_COUNT = 3;
+/* 0 级当白底跳过，1～15 由浅到深，15 是全黑。 */
+const PREVIEW_GRAYS = Array.from({length: 16}, (_, level) => {
+  const value = 255 - level * 17;
+  return `rgb(${value},${value},${value})`;
+});
+
+function drawSlotPreview(canvas, data, slot, valid) {
+  const ctx = canvas.getContext('2d');
+  /* 每次都先清白底，否则上一次的"未读取"字样或旧缩略图会残留在新图下面。 */
+  ctx.fillStyle = '#fff';
+  ctx.fillRect(0, 0, canvas.width, canvas.height);
+  const label = element(`image-slot-state-${slot}`);
+  /* data === null 是"还没读过"，跟设备上真的是空槽不是一回事。状态只写在下方标签，画布不重复写字。 */
+  if (data === null) { label.textContent = '未读取'; return; }
+  if (!valid) { label.textContent = '空槽'; return; }
+  const sx = canvas.width / PREVIEW_W, sy = canvas.height / PREVIEW_H;
+  for (let row = 0; row < PREVIEW_H; row++) {
+    for (let col = 0; col < PREVIEW_W; col++) {
+      const index = row * PREVIEW_W + col;
+      const packed = data[2 + (index >> 1)];
+      const gray = (index & 1) ? (packed & 0x0F) : (packed >> 4);
+      if (!gray) continue;
+      ctx.fillStyle = PREVIEW_GRAYS[gray];
+      ctx.fillRect(Math.floor(col * sx), Math.floor(row * sy), Math.ceil(sx), Math.ceil(sy));
+    }
+  }
+  label.textContent = '已有壁纸';
+}
+
+/* 点缩略图即为选中：既选上传目标，也切到这一张自己的工程。 */
+let slotSwitchToken = 0;
+async function selectSlot(slot) {
+  if (slot < 0 || slot >= SLOT_COUNT || uploading) return;
+  const token = ++slotSwitchToken;
+  if (slot !== selectedSlot) {
+    const previous = selectedSlot;
+    /* 切走前把二维码输入框关掉，否则它会盖在新工程上面。 */
+    const qrDialog = element('image-qr-dialog');
+    if (qrDialog && qrDialog.open) qrDialog.close();
+    await saveProject(previous);
+    if (token !== slotSwitchToken) return;
+    selectedSlot = slot;
+    await loadSlotProject(slot);
+    if (token !== slotSwitchToken) return;
+    status(`已切到第 ${slot + 1} 张的工程。`);
+  }
+  for (let i = 0; i < SLOT_COUNT; i++)
+    element(`image-slot-card-${i}`).classList.toggle('selected', i === slot);
+  element('image-upload').textContent = `上传到第 ${slot + 1} 张`;
+  /* 选中哪张，设备就显示哪张；空槽时设备不会切过去，这时别报成故障。 */
+  if (connected && token === slotSwitchToken) {
+    try {
+      const reply = await request(TYPES.imageSelect, Uint8Array.of(slot));
+      if (reply.length !== 1 || reply[0] !== 0) throw new Error('empty');
+      uploadState(`设备已切到第 ${slot + 1} 张。`);
+    } catch (error) {
+      if (!connected || token !== slotSwitchToken) return;
+      /* 设备正在刷屏也会走到这里，不能一律说成"空的"，那样会误导。 */
+      const busy = /忙|没法处理|等太久/.test(error.message);
+      uploadState(busy ? '设备正忙，等它刷完这一屏再切过去。'
+        : `第 ${slot + 1} 张还是空的，上传后设备才会切过去。`);
+    }
+  }
+}
+
+/* 设备正在刷屏时读不了缩略图（解码要借屏幕缓冲），等一下重试即可。 */
+/* 缩略图 2400 字节分 3 页拉，每页 960，拼成一份带头信息的结果交给 drawSlotPreview。 */
+async function requestPreview(slot) {
+  for (let attempt = 0; attempt < 3; attempt++) {
+    try {
+      const packed = new Uint8Array(2 + PREVIEW_BYTES);
+      packed[0] = slot;
+      for (let offset = 0; offset < PREVIEW_BYTES; offset += PREVIEW_PAGE) {
+        const response = await request(TYPES.imagePreview,
+          Uint8Array.of(slot, offset & 0xFF, (offset >> 8) & 0xFF));
+        if (response.length < 4 || response[0] !== slot)
+          throw new Error('缩略图响应错误');
+        if ((response[2] | (response[3] << 8)) !== offset)
+          throw new Error('缩略图分页错位');
+        packed[1] = response[1];
+        const chunk = response.subarray(4, 4 + Math.min(PREVIEW_PAGE, PREVIEW_BYTES - offset));
+        packed.set(chunk, 2 + offset);
+      }
+      return packed;
+    } catch (error) {
+      if (attempt === 2 || !connected) throw error;
+      await new Promise(resolve => setTimeout(resolve, 500));
+    }
+  }
+}
+
+/* 用刚上传的位图本地算 80×60，立刻刷新卡片。
+   上传成功后设备正在整屏刷新，这时向它要缩略图必然被拒，本地算没有这个问题。 */
+function downsampledPreview(bits) {
+  const out = new Uint8Array(PREVIEW_BYTES);
+  const stride = IMAGE_WIDTH / 8, step = IMAGE_WIDTH / PREVIEW_W;
+  let index = 0;
+  for (let row = 0; row < PREVIEW_H; row++) {
+    for (let col = 0; col < PREVIEW_W; col++) {
+      let hits = 0;
+      for (let dy = 0; dy < step; dy++) {
+        const y = row * step + dy;
+        for (let dx = 0; dx < step; dx++) {
+          const x = col * step + dx;
+          if ((bits[y * stride + (x >> 3)] >> (7 - (x & 7))) & 1) hits++;
+        }
+      }
+      const gray = Math.round(hits * 15 / (step * step));
+      if ((index & 1) === 0) out[index >> 1] = gray << 4;
+      else out[index >> 1] |= gray;
+      index++;
+    }
+  }
+  return out;
+}
+
+/* 原图按钮：只拉这一张的 400x300 原始位图，分 16 页拼回来，1:1 画进卡片。 */
+const IMAGE_FULL_PAGE = 960;
+function drawFullImage(canvas, data, slot) {
+  const ctx = canvas.getContext('2d');
+  const image = ctx.createImageData(IMAGE_WIDTH, IMAGE_HEIGHT);
+  const stride = IMAGE_WIDTH / 8;
+  for (let y = 0; y < IMAGE_HEIGHT; y++) {
+    for (let x = 0; x < IMAGE_WIDTH; x++) {
+      const bit = (data[y * stride + (x >> 3)] >> (7 - (x & 7))) & 1;
+      const index = (y * IMAGE_WIDTH + x) * 4;
+      const value = bit ? 0 : 255;
+      image.data[index] = image.data[index + 1] = image.data[index + 2] = value;
+      image.data[index + 3] = 255;
+    }
+  }
+  ctx.putImageData(image, 0, 0);
+  element(`image-slot-state-${slot}`).textContent = '原图';
+}
+
+/* 设备刷屏时读不了原图（解码要借屏幕缓冲），等它刷完再读，别直接报失败。 */
+async function requestFullPage(slot, offset) {
+  for (let attempt = 0; attempt < 6; attempt++) {
+    try {
+      const response = await request(TYPES.imageFull,
+        Uint8Array.of(slot, offset & 0xFF, (offset >> 8) & 0xFF), 15000);
+      if (response.length < 4 || response[0] !== slot)
+        throw new Error('原图响应错误');
+      if ((response[2] | (response[3] << 8)) !== offset)
+        throw new Error('原图分页错位');
+      return response;
+    } catch (error) {
+      if (attempt === 5 || !connected) throw error;
+      uploadState(`设备正忙，等它刷完这一屏再读…（第 ${attempt + 1} 次重试）`);
+      await new Promise(resolve => setTimeout(resolve, 700));
+    }
+  }
+}
+
+async function readFullImage(slot) {
+  if (!connected || uploading || readingPreviews) return;
+  readingPreviews = true; controls();
+  uploadState(`正在读取第 ${slot + 1} 张原图…`);
+  try {
+    const data = new Uint8Array(IMAGE_BYTES);
+    let valid = 0;
+    for (let offset = 0; offset < IMAGE_BYTES; offset += IMAGE_FULL_PAGE) {
+      const response = await requestFullPage(slot, offset);
+      valid = response[1];
+      const chunk = response.subarray(4, 4 + Math.min(IMAGE_FULL_PAGE, IMAGE_BYTES - offset));
+      data.set(chunk, offset);
+      setProgress((offset + chunk.length) * 100 / IMAGE_BYTES);
+    }
+    if (!valid) { uploadState(`第 ${slot + 1} 张还是空的。`); return; }
+    drawFullImage(element(`image-slot-canvas-${slot}`), data, slot);
+    uploadState(`已读取第 ${slot + 1} 张原图，卡片里就是设备上的完整画面。`);
+  } catch (error) {
+    uploadState(/忙|没法处理|等太久/.test(error.message)
+      ? '设备正忙，等它刷完这一屏再点一次「原图」。'
+      : '这次没读到原图：' + error.message);
+  } finally {
+    readingPreviews = false; controls();
+  }
+}
+
+async function readPreviews() {
+  if (!connected || uploading || readingPreviews) return;
+  readingPreviews = true; controls();
+  try {
+    for (let slot = 0; slot < SLOT_COUNT; slot++) {
+      const data = await requestPreview(slot);
+      /* 空槽只回全 0 且 valid=0，直接画占位。 */
+      drawSlotPreview(element(`image-slot-canvas-${slot}`), data, slot, !!data[1]);
+    }
+    uploadState('已读取三个槽位的缩略图。');
+  } catch (error) {
+    uploadState(/忙|没法处理|等太久/.test(error.message)
+      ? '设备正忙，等它刷完这一屏再读缩略图。'
+      : '这次没读到缩略图：' + error.message);
+  } finally {
+    readingPreviews = false; controls();
+  }
+}
+
 async function uploadImage() {
   if (!connected || !bits || uploading || importsPending) return;
   const token = ++uploadToken;
@@ -353,15 +616,27 @@ async function uploadImage() {
         uploadState('正在传输，等待设备报告接收进度…');
       },
       onCommit: () => { committing = true; controls(); },
-    });
+    }, selectedSlot);
     if (token !== uploadToken) return;
     imageEnabled = true;
     element('image-image-enabled').checked = true;
     element('image-image-state').textContent = '壁纸页已开启';
     setProgress(100);
     uploadState('上传成功：' + stored.length + ' 字节；传输 ' + (result.transferMs / 1000).toFixed(2) + ' 秒，' + (stored.length / Math.max(1, result.transferMs) * 1000 / 1024).toFixed(2) + ' KiB/s；含擦除和校验共 ' + (result.totalMs / 1000).toFixed(2) + ' 秒。设备已切到图片页。');
+    /* 刚写入的槽用本地位图刷新预览，既准确又不用和设备的整屏刷新抢时间。 */
+    const preview = new Uint8Array(2 + PREVIEW_BYTES);
+    preview[0] = selectedSlot; preview[1] = 1;
+    preview.set(downsampledPreview(bits), 2);
+    drawSlotPreview(element(`image-slot-canvas-${selectedSlot}`), preview, selectedSlot, true);
   } catch (error) {
-    if (token === uploadToken) uploadState(uploadCancelled ? '已取消；重新上传即可。' : '上传失败：' + error.message + '。直接重新上传即可。');
+    if (token === uploadToken) {
+      /* 提交后设备要校验 CRC 再整屏刷新，确认响应偶尔会晚到；这时数据其实已经写进去了，
+         不能按"上传失败"提示，否则用户会重复上传。 */
+      const timedOut = /超时/.test(error.message);
+      uploadState(uploadCancelled ? '已取消；重新上传即可。'
+        : timedOut ? '设备已收到全部数据，但确认响应超时（多半是在刷新屏幕）。等几秒点「读取设备缩略图」确认，不要重复上传。'
+        : '上传失败：' + error.message + '。直接重新上传即可。');
+    }
   } finally {
     if (token === uploadToken) {
       uploading = false;
@@ -395,8 +670,10 @@ async function toggleImage() {
 }
 
 function bind() {
+  /* 先把初始状态落一遍，后面某个控件取不到时也不会让整页停在错误状态。 */
+  controls();
   editor=new CanvasEditor(element('image-editor'),{
-    onChange:()=>{++loadSequence;schedulePreview();if(typeof saveProject==='function')saveProject();},onSelection:()=>syncEditorControls(),
+    onChange:()=>{++loadSequence;schedulePreview();if(!suppressSave&&typeof saveProject==='function')saveProject();},onSelection:()=>syncEditorControls(),
   });
   editor.bindGestures(element('image-preview'),true);
   document.addEventListener('keydown', event => {
@@ -480,7 +757,7 @@ function bind() {
       renderPreview();
     });
 
-  element('image-project-export').addEventListener('click',async()=>{const blob=new Blob([JSON.stringify(await editor.exportProject(),null,2)],{type:'application/json'});const link=document.createElement('a');link.href=URL.createObjectURL(blob);link.download='thplot-canvas-project.json';link.click();setTimeout(()=>URL.revokeObjectURL(link.href),0);});
+  element('image-project-export').addEventListener('click',async()=>{const blob=new Blob([JSON.stringify(await editor.exportProject(),null,2)],{type:'application/json'});const link=document.createElement('a');link.href=URL.createObjectURL(blob);link.download=`thplot-canvas-${selectedSlot+1}.json`;link.click();setTimeout(()=>URL.revokeObjectURL(link.href),0);});
   element('image-project-import').addEventListener('change',async()=>{const file=element('image-project-import').files?.[0];if(!file)return;try{await editor.importProject(JSON.parse(await file.text()));await saveProject();status('工程已导入。');}catch(error){status('导入工程失败：'+error.message);}element('image-project-import').value='';});
   element('image-clear').addEventListener('click',()=>{++loadSequence;editor.clear();});
   element('image-layers').addEventListener('change',()=>editor.select(editor.objects[Number(element('image-layers').value)]));
@@ -560,10 +837,28 @@ function bind() {
   element('image-rotate-right').addEventListener('click',()=>editor.transformSelected(1,90));
   element('image-upload').addEventListener('click', uploadImage);
   element('image-cancel').addEventListener('click', cancelUpload);
+  element('image-read-previews').addEventListener('click', readPreviews);
+  /* 直接点缩略图选槽位，边框高亮就是选中态，不再另设下拉框。 */
+  for (let slot = 0; slot < SLOT_COUNT; slot++) {
+    const card = element(`image-slot-card-${slot}`);
+    card.addEventListener('click', () => selectSlot(slot));
+    card.addEventListener('keydown', event => {
+      if (event.key === 'Enter' || event.key === ' ') { event.preventDefault(); selectSlot(slot); }
+    });
+    /* 点"原图"只下载这一张，不能顺带把卡片选中事件也触发了。 */
+    const fullButton = element(`image-slot-full-${slot}`);
+    if (fullButton) fullButton.addEventListener('click', event => {
+      event.stopPropagation();
+      readFullImage(slot).catch(() => {});
+    });
+    drawSlotPreview(element(`image-slot-canvas-${slot}`), null, slot, false);
+  }
+  selectSlot(selectedSlot);
   element('image-image-enabled').addEventListener('change', toggleImage);
   renderPreview();
   controls();
-  try { const saved=localStorage.getItem('thplot.canvas.project'); if(saved) restoreProjectPromise=editor.importProject(JSON.parse(saved)).then(()=>status('已恢复上次画布工程。')).catch(()=>localStorage.removeItem('thplot.canvas.project')); } catch {}
+  /* 先搬旧工程，再读第 1 张；之后每个槽位各存各的。 */
+  restoreProjectPromise = migrateLegacyProjects().catch(() => {}).then(() => loadSlotProject(selectedSlot));
 }
 
 window.addEventListener('thplot:device-ready', event => { rx=event.detail.rx; tx=event.detail.tx; device=event.detail.device; tx.addEventListener('characteristicvaluechanged', event => parser.accept(new Uint8Array(event.target.value.buffer, event.target.value.byteOffset, event.target.value.byteLength))); setConnected(true); readActivation().then(()=>readImageEnabled()).catch(()=>{}); });

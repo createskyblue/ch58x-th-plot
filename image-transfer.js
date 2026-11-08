@@ -6,12 +6,13 @@ export function clipboardImage(items) {
   return null;
 }
 
-export async function uploadImageBytes(stored, request, send, callbacks) {
+export async function uploadImageBytes(stored, request, send, callbacks, slot = 0) {
   const started = performance.now();
   const checksum = crc32(stored);
-  const begin = new Uint8Array(12), view = new DataView(begin.buffer);
+  const begin = new Uint8Array(13), view = new DataView(begin.buffer);
   view.setUint16(0, IMAGE_WIDTH, true); view.setUint16(2, IMAGE_HEIGHT, true);
   view.setUint32(4, stored.length, true); view.setUint32(8, checksum, true);
+  view.setUint8(12, slot);
   const checkCancelled = () => { if (callbacks.isCancelled()) throw new Error('上传已取消'); };
   const checkReply = data => { if (data.length !== 1 || data[0] !== 0) throw new Error('设备上传响应错误'); };
   try {
@@ -27,7 +28,7 @@ export async function uploadImageBytes(stored, request, send, callbacks) {
     }
     checkCancelled(); callbacks.onCommit?.();
     const commit = new Uint8Array(4); new DataView(commit.buffer).setUint32(0, checksum, true);
-    checkReply(await request(TYPES.imageCommit, commit, 10000));
+    checkReply(await request(TYPES.imageCommit, commit, 30000));
     return {transferMs:performance.now() - transferStarted, totalMs:performance.now() - started};
   } catch (error) {
     try { await request(TYPES.imageCancel); } catch { /* A disconnected device cancels locally. */ }

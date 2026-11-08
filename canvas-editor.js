@@ -49,10 +49,13 @@ export class CanvasEditor {
 
   setBackground(color) { this.canvas.backgroundColor=color; this.canvas.renderAll(); this.changed(); }
 
+  /* 工程存 IndexedDB，图片原样保留，不做任何降采样或重编码：
+     压缩会改像素尺寸，刷新后图和选框对不齐，而且画质有损。 */
   async exportProject() {
     /* fabric v7 的 toJSON() 不再接受 propertiesToInclude，必须用 toObject(props)，
        否则 monoParams / isQr / qrText 会被静默丢弃（v7.4.0 升级后引入的回归）。 */
-    return {version:1, canvas:this.canvas.toObject(['textBackground','monoParams','isQr','qrText']), monoParams:this.objects.map(object=>object.monoParams||null)};
+    const canvas = this.canvas.toObject(['textBackground','monoParams','isQr','qrText']);
+    return {version:1, canvas, monoParams:this.objects.map(object=>object.monoParams||null)};
   }
 
   async importProject(project) {

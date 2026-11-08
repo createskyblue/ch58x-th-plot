@@ -1,4 +1,4 @@
-export const TYPES = Object.freeze({info:1, readUser:2, writeUser:3, latest:4, reboot:5, activation:6, settingsRead:7, settingsWrite:8, windowRead:9, windowWrite:10, timeSync:11, importBegin:0x20, importData:0x21, importCommit:0x22, importCancel:0x23, imageBegin:0x40, imageData:0x41, imageCommit:0x42, imageCancel:0x43, imageSettingsRead:0x44, imageSettingsWrite:0x45, imageProgress:0xc6, history:0x10, cancel:0x11, complete:0x12, begin:0x90, data:0x91, end:0x92, error:0xff});
+export const TYPES = Object.freeze({info:1, readUser:2, writeUser:3, latest:4, reboot:5, activation:6, settingsRead:7, settingsWrite:8, windowRead:9, windowWrite:10, timeSync:11, importBegin:0x20, importData:0x21, importCommit:0x22, importCancel:0x23, imageBegin:0x40, imageData:0x41, imageCommit:0x42, imageCancel:0x43, imageSettingsRead:0x44, imageSettingsWrite:0x45, imagePreview:0x47, imageSelect:0x48, imageFull:0x49, imageProgress:0xc6, history:0x10, cancel:0x11, complete:0x12, begin:0x90, data:0x91, end:0x92, error:0xff});
 
 export function formatBuildStamp(bytes) {
     const match = /^([A-Z][a-z]{2})\s+(\d{1,2})\s+(\d{4})\s+(\d{2}:\d{2}:\d{2})$/.exec(String.fromCharCode(...bytes).trim());
@@ -60,7 +60,7 @@ export class FrameParser {
             const head = Uint8Array.from(this.buffer.slice(0, 8));
             const view = new DataView(head.buffer);
             const length = view.getUint16(3);
-            if (crc16(head.subarray(0, 6)) !== view.getUint16(6) || length > 246) {
+            if (crc16(head.subarray(0, 6)) !== view.getUint16(6) || length > 4096) {
                 this.reset(); this.onError(new Error('Invalid TinyFrame header')); continue;
             }
             const total = length ? length + 10 : 8;
