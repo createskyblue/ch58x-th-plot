@@ -1854,6 +1854,7 @@ if (typeof window.addEventListener === 'function') {
     import * as THREE from 'three';
     import {FBXLoader} from 'three/addons/loaders/FBXLoader.js';
     import {OrbitControls} from 'three/addons/controls/OrbitControls.js';
+    import {loadEpaperSequenceZip} from './epaper-unzip.js';
 
     const modelHost = document.getElementById('model-preview');
     const scene = new THREE.Scene();
@@ -1899,8 +1900,10 @@ if (typeof window.addEventListener === 'function') {
     let displayMaterial = null;
     let screenFrameIndex = 0;
     const screenFrameCache = new Map();
+    let epaperFrames = null; // Map<帧索引, objectURL>，由 loadEpaperSequenceZip 解包填充
     function loadScreenFrame(frameIndex) {
         if (!screenFrameCache.has(frameIndex)) {
+            const url = epaperFrames?.get(frameIndex);
             screenFrameCache.set(frameIndex, new Promise((resolve, reject) => {
                 const frame = new Image();
                 frame.onload = () => resolve(frame);
@@ -1908,7 +1911,8 @@ if (typeof window.addEventListener === 'function') {
                     screenFrameCache.delete(frameIndex);
                     reject(new Error('screen frame failed to load'));
                 };
-                frame.src = `assets/epaper-sequence/f${String(frameIndex + 1).padStart(4, '0')}.png`;
+                // 优先用解包后的单文件资源；解包未完成或缺失时回退到逐帧请求。
+                frame.src = url || `assets/epaper-sequence/f${String(frameIndex + 1).padStart(4, '0')}.png`;
             }));
         }
         return screenFrameCache.get(frameIndex);
@@ -1926,7 +1930,13 @@ if (typeof window.addEventListener === 'function') {
             window.setTimeout(() => playScreenFrame(frameIndex), 1000);
         }
     }
-    playScreenFrame(0);
+    // 一次性拉取并解包 100 帧（100 个请求 -> 1 个），解包失败则回退到逐帧请求。
+    loadEpaperSequenceZip('assets/epaper-sequence.zip')
+        .then(frames => { epaperFrames = frames; playScreenFrame(0); })
+        .catch(error => {
+            console.warn('epaper 序列 zip 解包失败，回退到逐帧请求：', error);
+            playScreenFrame(0);
+        });
     function createDisplayGeometry(screenMesh) {
         const sourceGeometry = screenMesh.geometry;
         const bounds = sourceGeometry.boundingBox;
