@@ -1,0 +1,4 @@
+<!doctype html><meta charset="utf-8"><script type="importmap">{"imports":{"three":"https://cdn.jsdelivr.net/npm/three@0.186.1/build/three.module.js","three/addons/":"https://cdn.jsdelivr.net/npm/three@0.186.1/examples/jsm/"}}</script><script type="module">
+import * as THREE from 'three'; import {FBXLoader} from 'three/addons/loaders/FBXLoader.js';
+new FBXLoader().load('assets/ink-display.fbx', object=>{const rows=[];object.traverse(c=>{if(!c.isMesh)return;const box=new THREE.Box3().setFromObject(c);rows.push({name:c.name,position:c.position.toArray(),rotation:c.rotation.toArray(),scale:c.scale.toArray(),min:box.min.toArray(),max:box.max.toArray(),size:box.getSize(new THREE.Vector3()).toArray()});});document.body.textContent=JSON.stringify(rows,null,2);console.log(rows);});
+</script>
