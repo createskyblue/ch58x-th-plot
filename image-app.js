@@ -2,7 +2,7 @@ import {TYPES, encodeFrame, FrameParser, writeRxFrame, setRxWriteSize} from './p
 import {IMAGE_WIDTH, IMAGE_HEIGHT, IMAGE_BYTES, ditherPixels, monoToRgba, prepareMonochromeRgba} from './image-dither.js?v=transparent-alpha-preset-fix';
 import {lz4CompressBlock} from './lz4.js';
 import {uploadImageBytes} from './image-transfer.js';
-import {CanvasEditor} from './canvas-editor.js?v=simsun-contrast300-v2';
+import {CanvasEditor} from './canvas-editor.js?v=system-fonts-mobile-sans1';
 import localforage from './vendor/localforage.js?v=project-idb5';
 
 const element = id => document.getElementById(id);
@@ -23,7 +23,6 @@ let mobileMode = mobileDevice || !!mobileViewport?.matches;
 let simpleContentMode = 'text';
 let layoutChanging = false;
 let projectLoading = false;
-let fontLoading = true;
 let mobileNoticeShown = false;
 const projectKey = (slot, mobile = mobileMode) => (mobile ? 'mobile-project.' : 'project.') + slot;
 let suppressSave = false;
@@ -102,7 +101,7 @@ function syncSimpleControls() {
   }
   if (object?.isQr) setValue('image-simple-qr-content', object.qrText || '');
   for (const id of ['image-simple-mode','image-simple-text','image-simple-font-size','image-simple-file','image-simple-qr-content'])
-    element(id).disabled = uploading || layoutChanging || projectLoading || fontLoading;
+    element(id).disabled = uploading || layoutChanging || projectLoading;
 }
 
 function showMobileNotice() {
@@ -151,7 +150,7 @@ let readingPreviews = false;
 let renderingPreview = false;
 let previewScheduled = false;
 let invert = false;
-const commonBrowserFonts=['Wallpaper Song','sans-serif','serif','monospace','Arial','Georgia','Times New Roman','Courier New'];
+const commonBrowserFonts=['sans-serif','serif','monospace','Arial','Georgia','Times New Roman','Courier New'];
 const pending = new Map();
 
 const parser = new FrameParser(message => {
@@ -230,13 +229,13 @@ function setConnected(value) {
 }
 
 function controls() {
-  const canImage = connected && !uploading && !fontLoading;
-  element('image-image-enabled').disabled = !connected || uploading || fontLoading;
+  const canImage = connected && !uploading;
+  element('image-image-enabled').disabled = !connected || uploading;
   element('image-upload').disabled = !canImage || !bits || importsPending > 0 || layoutChanging || projectLoading;
   element('image-cancel').disabled = !uploading || uploadCancelled || committing;
   /* 进度条只在上传时出现，空闲时不占位置。 */
   element('image-progress').hidden = !uploading;
-  element('image-read-previews').disabled = !connected || uploading || readingPreviews || fontLoading;
+  element('image-read-previews').disabled = !connected || uploading || readingPreviews;
   /* 按钮灰着必须告诉用户为什么，否则只会以为功能坏了 */
   const readHint = element('image-read-hint');
   if (readHint) readHint.textContent = !connected ? '未连接设备，点顶部「连接设备」'
@@ -246,16 +245,16 @@ function controls() {
     : '请先点顶部「连接设备」';
   for (let slot = 0; slot < SLOT_COUNT; slot++) {
     const full = element(`image-slot-full-${slot}`);
-    if (full) full.disabled = !connected || uploading || readingPreviews || fontLoading;
+    if (full) full.disabled = !connected || uploading || readingPreviews;
   }
   if (editor && editor.locked !== uploading) editor.setLocked(uploading);
   for (const id of ['image-file','image-add-text','image-add-qr','image-clear','image-invert','image-preset'])
-    element(id).disabled = uploading || layoutChanging || projectLoading || fontLoading;
+    element(id).disabled = uploading || layoutChanging || projectLoading;
   syncEditorControls();
   syncSimpleControls();
   for (const id of ['image-dither-mode', 'image-threshold', 'image-contrast', 'image-brightness', 'image-gamma', 'image-sharpness'])
-    element(id).disabled = uploading || layoutChanging || projectLoading || fontLoading;
-  element('custom-image').classList.toggle('wallpaper-loading', layoutChanging || projectLoading || fontLoading);
+    element(id).disabled = uploading || layoutChanging || projectLoading;
+  element('custom-image').classList.toggle('wallpaper-loading', layoutChanging || projectLoading);
   // A viewport change can arrive during an upload or an asynchronous project restore.
   if (editor && !uploading && !layoutChanging && !projectLoading && mobileMode !== (mobileDevice || !!mobileViewport?.matches))
     void updateLayoutMode();
@@ -382,7 +381,7 @@ function setValue(id, value) {
 function syncEditorControls() {
   if (!editor) return;
   syncSimpleControls();
-  const editingBlocked = uploading || layoutChanging || projectLoading || fontLoading;
+  const editingBlocked = uploading || layoutChanging || projectLoading;
   const object=editor.selected, text=object?.type==='textbox', qr=object?.isQr===true;
   const layers=element('image-layers');
   const options=editor.objects.map((item,index)=>{
@@ -743,7 +742,6 @@ async function toggleImage() {
 }
 
 function bind() {
-  // The viewport may change while the bundled font is still downloading.
   mobileMode = mobileDevice || !!mobileViewport?.matches;
   /* 先把初始状态落一遍，后面某个控件取不到时也不会让整页停在错误状态。 */
   controls();
@@ -988,15 +986,9 @@ function bind() {
 window.addEventListener('thplot:device-ready', event => { rx=event.detail.rx; tx=event.detail.tx; device=event.detail.device; tx.addEventListener('characteristicvaluechanged', event => parser.accept(new Uint8Array(event.target.value.buffer, event.target.value.byteOffset, event.target.value.byteLength))); setConnected(true); readActivation().then(()=>readImageEnabled()).catch(()=>{}); });
 window.addEventListener('thplot:device-lost', () => disconnected());
 
-status('正在加载内置宋体…');
-controls();
-CanvasEditor.loadDefaultFont().then(() => {
-  fontLoading=false;
-  status('');
-  bind();
-  if (new URLSearchParams(location.search).get('demo') === '1') restoreProjectPromise.then(loadDemo);
-  else fetch('./assets/default-wallpaper.png').then(response => { if (!response.ok) throw new Error('默认图片加载失败'); return response.blob(); }).then(file => restoreProjectPromise.then(() => { if (!editor.objects.length && !uploading) return loadFiles([file],{defaultImage:true}); })).catch(error => { if (!editor.objects.length) status(error.message); });
-}).catch(error => status('内置宋体加载失败，请刷新页面重试：' + error.message));
+bind();
+if (new URLSearchParams(location.search).get('demo') === '1') restoreProjectPromise.then(loadDemo);
+else fetch('./assets/default-wallpaper.png').then(response => { if (!response.ok) throw new Error('默认图片加载失败'); return response.blob(); }).then(file => restoreProjectPromise.then(() => { if (!editor.objects.length && !uploading) return loadFiles([file],{defaultImage:true}); })).catch(error => { if (!editor.objects.length) status(error.message); });
 
 /* 预览调试：?demo=1 时自动载入一张渐变测试图，不写设备。 */
 async function loadDemo() {

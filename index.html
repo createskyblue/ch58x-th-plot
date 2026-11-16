@@ -188,8 +188,7 @@ dialog p{margin:0 0 18px}
 .font-advanced summary{cursor:pointer;color:var(--green);font-weight:600;padding:6px 0}
 .font-advanced[open]>summary{margin-bottom:10px}
 </style>
-<link rel="stylesheet" href="./canvas-editor.css?v=simsun-natural-text1">
-<link rel="preload" href="./assets/fonts/simsun.ttf" as="font" type="font/ttf" crossorigin>
+<link rel="stylesheet" href="./canvas-editor.css?v=system-fonts-mobile-sans1">
 <script type="importmap">
 {
   "imports": {
@@ -369,10 +368,10 @@ body:has(>#landing:not([hidden])),body:has(>#intro-view:not([hidden])){overflow:
             <label class="custom-field">字号（像素）<input id="image-font-size" type="number" min="8" max="200" step="1" value="16"></label>
 
             <details class="font-advanced"><summary>更多字体选项</summary>
-            <label class="custom-field">字体<select id="image-browser-font"><option value="Wallpaper Song" selected>内置宋体（SimSun）</option><option value="sans-serif">系统无衬线</option><option value="serif">系统衬线</option><option value="monospace">等宽字体</option><option value="Arial">Arial</option><option value="Georgia">Georgia</option><option value="Times New Roman">Times New Roman</option><option value="Courier New">Courier New</option></select></label>
+            <label class="custom-field">字体<select id="image-browser-font"><option value="sans-serif">系统无衬线</option><option value="serif" selected>系统衬线</option><option value="monospace">等宽字体</option><option value="Arial">Arial</option><option value="Georgia">Georgia</option><option value="Times New Roman">Times New Roman</option><option value="Courier New">Courier New</option></select></label>
             <label class="custom-field">本机字体搜索<input id="image-local-font-search" type="search" placeholder="输入字体名称过滤"></label>
             <label class="custom-field">本机字体<select id="image-local-font" size="5"><option value="">尚未读取本机字体</option></select><button type="button" id="image-load-fonts" style="margin-top:6px">读取本机字体</button></label>
-            <label class="custom-field">自定义字体名称<input id="image-font-family" value="Wallpaper Song" placeholder="例如 Microsoft YaHei"></label>
+            <label class="custom-field">自定义字体名称<input id="image-font-family" value="serif" placeholder="例如 Microsoft YaHei"></label>
             </details>
             <label class="custom-field">对齐<select id="image-text-align"><option value="left">左对齐</option><option value="center">居中</option><option value="right">右对齐</option></select></label>
             <label class="custom-field">文字颜色<input id="image-text-color" type="color" value="#000000"></label><label class="custom-field">背景颜色<input id="image-text-background" type="color" value="#ffffff"></label><button type="button" id="image-swap-text-colors">交换颜色</button><label class="custom-row"><input id="image-text-bg-transparent" type="checkbox">背景透明</label>
@@ -2173,7 +2172,7 @@ if (typeof window.addEventListener === 'function') {
   if (fontAdvanced && window.matchMedia('(min-width:721px)').matches) fontAdvanced.open = true;
 })();
 </script>
-<script type="module" src="./image-app.js?v=simsun-contrast300-v2"></script>
+<script type="module" src="./image-app.js?v=system-fonts-mobile-sans1"></script>
 
 </body>
 </html>

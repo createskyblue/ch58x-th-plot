@@ -3,17 +3,8 @@ import {qrcode} from './vendor/qrcode.js';
 qrcode.stringToBytes = qrcode.stringToBytesFuncs['UTF-8'];
 
 export class CanvasEditor {
-  static fontFamily = 'Wallpaper Song';
-
-  static loadDefaultFont() {
-    let face=[...document.fonts].find(font=>font.family.replace(/^['"]|['"]$/g,'')===CanvasEditor.fontFamily);
-    if (!face) {
-      face=new FontFace(CanvasEditor.fontFamily,'url("./assets/fonts/simsun.ttf")',
-        {style:'normal',weight:'400'});
-      document.fonts.add(face);
-    }
-    return face.load();
-  }
+  static fontFamily = 'serif';
+  static mobileFontFamily = 'sans-serif';
 
   constructor(element, {onChange = () => {}, onSelection = () => {}} = {}) {
     this.onChange = onChange;
@@ -93,11 +84,11 @@ export class CanvasEditor {
     object.set({originX:'left', originY:'top', angle:0, skewX:0, skewY:0,
       flipX:false, flipY:false, strokeWidth:0, selectable:false, evented:false});
     if (object.type === 'textbox') {
-      if(object.fontFamily!==CanvasEditor.fontFamily)
+      if(object.fontFamily!==CanvasEditor.mobileFontFamily)
         object.monoParams={...object.monoParams,contrast:300};
       object.set({left:0, top:0, width:400, scaleX:1, scaleY:1,
         fontSize:[12,16,24].includes(object.fontSize) ? object.fontSize : 16,
-        fontFamily:CanvasEditor.fontFamily, fontWeight:'normal', fontStyle:'normal', textAlign:'left',
+        fontFamily:CanvasEditor.mobileFontFamily, fontWeight:'normal', fontStyle:'normal', textAlign:'left',
         fill:'#000000', backgroundColor:'#ffffff', textBackground:'#ffffff', styles:{}});
       // Fabric recalculates text height when content changes; keep the full-screen box.
       object.set({height:300, editable:false});
@@ -145,8 +136,10 @@ export class CanvasEditor {
     if (!project || project.version !== 1 || !project.canvas) throw new Error('工程文件版本不支持');
     await this.canvas.loadFromJSON(project.canvas);
     if(Array.isArray(project.monoParams)) this.objects.forEach((object,index)=>{if(project.monoParams[index]) object.monoParams={...project.monoParams[index]};});
-    for (const object of this.objects) if (object.type==='textbox' && object.fontFamily===CanvasEditor.fontFamily)
+    for (const object of this.objects) if (object.type==='textbox' && object.fontFamily==='Wallpaper Song') {
+      object.set({fontFamily:CanvasEditor.fontFamily});
       object.monoParams={...object.monoParams,contrast:300};
+    }
     for (const object of this.objects) if (object.isQr) {
       const width=object.getScaledWidth();
       object.setElement(CanvasEditor.renderQrCanvas(object.qrText));
@@ -184,7 +177,8 @@ export class CanvasEditor {
     if (this.locked) return null;
     if (this.simpleMode) this.clear();
     const object = new Textbox(text, {
-      left:40, top:40, width:250, fontSize:16, fontFamily:CanvasEditor.fontFamily,
+      left:40, top:40, width:250, fontSize:16,
+      fontFamily:this.simpleMode ? CanvasEditor.mobileFontFamily : CanvasEditor.fontFamily,
       fill:'#000000', lineHeight:1.2, splitByGrapheme:true,
       originX:'left', originY:'top', padding:4, backgroundColor:'#ffffff', textBackground:'#ffffff',
     });
