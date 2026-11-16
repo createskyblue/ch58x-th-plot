@@ -2,7 +2,7 @@ import {TYPES, encodeFrame, FrameParser, writeRxFrame, setRxWriteSize} from './p
 import {IMAGE_WIDTH, IMAGE_HEIGHT, IMAGE_BYTES, ditherPixels, monoToRgba, prepareMonochromeRgba} from './image-dither.js?v=transparent-alpha-preset-fix';
 import {lz4CompressBlock} from './lz4.js';
 import {uploadImageBytes} from './image-transfer.js';
-import {CanvasEditor} from './canvas-editor.js?v=project-idb5';
+import {CanvasEditor} from './canvas-editor.js?v=mobile-fit-image1';
 import localforage from './vendor/localforage.js?v=project-idb5';
 
 const element = id => document.getElementById(id);
@@ -16,17 +16,29 @@ const syncParameterLabels = () => {
 /* 工程里带着图片数据，localStorage 只有 5 MB，一张手机照片就能顶满。
    所以工程一律存 IndexedDB（localForage 默认驱动），localStorage 只留旧版本迁移。 */
 const projectStore = localforage.createInstance({name:'thplot', storeName:'projects'});
-const projectKey = slot => 'project.' + slot;
+const mobileViewport = window.matchMedia?.('(max-width:720px)');
+const mobileDevice = /Android|iPhone|iPod|Windows Phone|Mobile/i.test(navigator.userAgent || '') ||
+  (/Macintosh/i.test(navigator.userAgent || '') && navigator.maxTouchPoints > 1);
+let mobileMode = mobileDevice || !!mobileViewport?.matches;
+let simpleContentMode = 'text';
+let layoutChanging = false;
+let projectLoading = false;
+let mobileNoticeShown = false;
+const projectKey = (slot, mobile = mobileMode) => (mobile ? 'mobile-project.' : 'project.') + slot;
 let suppressSave = false;
 
 /* 编辑时 onChange 触发得很密，保存按顺序排队，避免旧快照晚到把新快照盖掉。 */
 let saveQueue = Promise.resolve();
 function saveProject(slot = selectedSlot) {
   /* 先固定槽位号：await 期间如果用户切了槽，不能把旧画布写进新槽。 */
-  const target = slot;
+  if (!editor) return saveQueue;
+  const target = projectKey(slot);
+  const snapshot = editor.exportProject();
+  const contentMode = mobileMode ? simpleContentMode : undefined;
   saveQueue = saveQueue.then(async () => {
-    if (!editor) return;
-    await projectStore.setItem(projectKey(target), await editor.exportProject());
+    const project = await snapshot;
+    if (contentMode) project.contentMode = contentMode;
+    await projectStore.setItem(target, project);
   }).catch(error => { status('保存工程失败：' + error.message); });
   return saveQueue;
 }
@@ -44,8 +56,8 @@ async function migrateLegacyProjects() {
     if (!raw) continue;
     try {
       const project = JSON.parse(raw);
-      if (!(await projectStore.getItem(projectKey(slot))))
-        await projectStore.setItem(projectKey(slot), project);
+      if (!(await projectStore.getItem(projectKey(slot, false))))
+        await projectStore.setItem(projectKey(slot, false), project);
     } catch {}
     try { localStorage.removeItem(key); } catch {}
   }
@@ -55,16 +67,65 @@ async function loadSlotProject(slot) {
   /* 加载期间 editor.clear()/import 会触发 onChange，必须先压住自动保存，
      否则空画布会把刚切过去的那份工程覆盖掉。 */
   suppressSave = true;
+  projectLoading = true;
+  controls();
   try {
     const saved = await projectStore.getItem(projectKey(slot));
+    if (mobileMode) simpleContentMode = saved?.contentMode || 'text';
     editor.clear();
     if (saved) {
       try { await editor.importProject(saved); }
       catch { await projectStore.removeItem(projectKey(slot)); }
     }
-  } finally { suppressSave = false; }
+    if (mobileMode && simpleContentMode === 'text' && !editor.objects.length) editor.addText('');
+  } finally { suppressSave = false; projectLoading = false; }
   renderPreview();
   controls();
+}
+
+function syncSimpleControls() {
+  element('image-simple-controls').hidden = !mobileMode;
+  element('custom-image').classList.toggle('mobile-wallpaper', mobileMode);
+  element('image-editor-description').textContent = mobileMode
+    ? '选择一种内容，预览 400 × 300 显示效果。'
+    : '自由组合图片和文字，输出 400 × 300 单色画面。';
+  if (!mobileMode) return;
+  setValue('image-simple-mode', simpleContentMode);
+  for (const mode of ['text','image','qr']) element(`image-simple-${mode}-panel`).hidden = mode !== simpleContentMode;
+  const object = editor?.selected;
+  if (object?.type === 'textbox') {
+    setValue('image-simple-text', object.text);
+    setValue('image-simple-font-size', object.fontSize);
+  }
+  if (object?.isQr) setValue('image-simple-qr-content', object.qrText || '');
+  for (const id of ['image-simple-mode','image-simple-text','image-simple-font-size','image-simple-file','image-simple-qr-content'])
+    element(id).disabled = uploading || layoutChanging || projectLoading;
+}
+
+function showMobileNotice() {
+  if (!mobileMode || mobileNoticeShown || element('custom-image').closest?.('[data-page]')?.hidden) return;
+  const dialog = element('image-mobile-notice');
+  if (dialog.open) return;
+  dialog.showModal();
+  mobileNoticeShown = true;
+}
+
+async function updateLayoutMode() {
+  const next = mobileDevice || !!mobileViewport?.matches;
+  if (next === mobileMode || uploading || layoutChanging || projectLoading) return;
+  layoutChanging = true;
+  controls();
+  ++loadSequence;
+  try {
+    await restoreProjectPromise;
+    await saveProject();
+    suppressSave = true;
+    mobileMode = next;
+    editor.setSimpleMode(mobileMode);
+    await loadSlotProject(selectedSlot);
+    if (mobileMode) showMobileNotice();
+  } catch (error) { status('切换壁纸模式失败：' + error.message); }
+  finally { suppressSave = false; layoutChanging = false; controls(); }
 }
 
 let device, rx, tx;
@@ -168,7 +229,7 @@ function setConnected(value) {
 function controls() {
   const canImage = connected && !uploading;
   element('image-image-enabled').disabled = !connected || uploading;
-  element('image-upload').disabled = !canImage || !bits || importsPending > 0;
+  element('image-upload').disabled = !canImage || !bits || importsPending > 0 || layoutChanging || projectLoading;
   element('image-cancel').disabled = !uploading || uploadCancelled || committing;
   /* 进度条只在上传时出现，空闲时不占位置。 */
   element('image-progress').hidden = !uploading;
@@ -186,10 +247,15 @@ function controls() {
   }
   if (editor && editor.locked !== uploading) editor.setLocked(uploading);
   for (const id of ['image-file','image-add-text','image-add-qr','image-clear','image-invert','image-preset'])
-    element(id).disabled = uploading;
+    element(id).disabled = uploading || layoutChanging || projectLoading;
   syncEditorControls();
+  syncSimpleControls();
   for (const id of ['image-dither-mode', 'image-threshold', 'image-contrast', 'image-brightness', 'image-gamma', 'image-sharpness'])
-    element(id).disabled = uploading;
+    element(id).disabled = uploading || layoutChanging || projectLoading;
+  element('custom-image').classList.toggle('wallpaper-loading', layoutChanging || projectLoading);
+  // A viewport change can arrive during an upload or an asynchronous project restore.
+  if (editor && !uploading && !layoutChanging && !projectLoading && mobileMode !== (mobileDevice || !!mobileViewport?.matches))
+    void updateLayoutMode();
 }
 
 async function readActivation() {
@@ -312,6 +378,8 @@ function setValue(id, value) {
 
 function syncEditorControls() {
   if (!editor) return;
+  syncSimpleControls();
+  const editingBlocked = uploading || layoutChanging || projectLoading;
   const object=editor.selected, text=object?.type==='textbox', qr=object?.isQr===true;
   const layers=element('image-layers');
   const options=editor.objects.map((item,index)=>{
@@ -324,24 +392,24 @@ function syncEditorControls() {
   }).reverse();
   layers.replaceChildren(...options);
   if (!object) layers.selectedIndex=-1;
-  layers.disabled=uploading;
+  layers.disabled=editingBlocked;
   element('image-object-panel').hidden=!object;
   element('image-text-panel').hidden=!text;
   element('image-qr-panel').hidden=!qr;
   for (const id of ['image-layer-delete','image-layer-duplicate','image-layer-up','image-layer-down',
     'image-flip-x','image-flip-y','image-zoom-in','image-zoom-out','image-zoom-reset','image-rotate-left','image-rotate-right',
     'image-object-x','image-object-y','image-object-width','image-object-height','image-object-angle'])
-    element(id).disabled=uploading || !object;
-  element('image-layer-up').disabled=uploading || !object || editor.objects.at(-1)===object;
-  element('image-layer-down').disabled=uploading || !object || editor.objects[0]===object;
+    element(id).disabled=editingBlocked || !object;
+  element('image-layer-up').disabled=editingBlocked || !object || editor.objects.at(-1)===object;
+  element('image-layer-down').disabled=editingBlocked || !object || editor.objects[0]===object;
   for (const id of ['image-text','image-font-size','image-browser-font','image-local-font-search','image-local-font','image-font-family','image-text-color','image-text-align','image-text-bold'])
-    element(id).disabled=uploading || !text;
+    element(id).disabled=editingBlocked || !text;
   if (!object) return;
   const mono=object.monoParams||{mode:'color',threshold:50,contrast:100,brightness:0,gamma:100,sharpness:100,invert:false};
   setValue('image-dither-mode',mono.mode);setValue('image-threshold',mono.threshold);setValue('image-contrast',mono.contrast);setValue('image-brightness',mono.brightness);setValue('image-gamma',mono.gamma);setValue('image-sharpness',mono.sharpness);syncParameterLabels();
   for (const [id,value] of Object.entries({x:object.left,y:object.top,width:object.getScaledWidth(),height:object.getScaledHeight(),angle:object.angle}))
-    setValue('image-object-'+id,Math.round(value*10)/10);
-  element('image-object-height').disabled=uploading || text;
+    setValue('image-object-'+id,id === 'x' || id === 'y' ? Math.round(value) : Math.round(value*10)/10);
+  element('image-object-height').disabled=editingBlocked || text;
   if(text) {
     setValue('image-text',object.text);setValue('image-font-size',object.fontSize);
     setValue('image-font-family',object.fontFamily);setValue('image-browser-font',commonBrowserFonts.includes(object.fontFamily)?object.fontFamily:'');setValue('image-text-color',object.fill);const textBg=object.backgroundColor||object.textBackground||'rgba(255,255,255,0)';setValue('image-text-background',typeof textBg==='string'&&textBg.startsWith('#')?textBg:'#ffffff');element('image-text-bg-transparent').checked=textBg==='rgba(255,255,255,0)'||!textBg;
@@ -352,7 +420,8 @@ function syncEditorControls() {
 
 function loadFiles(files, {defaultImage=false}={}) {
   files=Array.from(files).filter(file=>file.type.startsWith('image/'));
-  if (!files.length || uploading) return Promise.resolve();
+  if (!files.length || uploading || layoutChanging || projectLoading || (defaultImage && mobileMode)) return Promise.resolve();
+  if (mobileMode) files = files.slice(0,1);
   if (!defaultImage) ++loadSequence;
   const revision=loadSequence;
   importsPending++;
@@ -370,10 +439,11 @@ function loadFiles(files, {defaultImage=false}={}) {
       if (uploading || revision!==loadSequence || (defaultImage && editor.objects.length)) {
         loaded.close?.();return;
       }
+      if (mobileMode) simpleContentMode = 'image';
       editor.addImage(loaded);
       loaded.close?.();
     }
-    status('图片已添加；点击选择图层，拖动或使用控制点调整。');
+    status(mobileMode ? '壁纸已等比例自适应、居中显示，可调整单色输出。' : '图片已添加；点击选择图层，拖动或使用控制点调整。');
   });
   importQueue=job.catch(()=>{});
   return job.finally(()=>{importsPending--;controls();});
@@ -414,7 +484,7 @@ function drawSlotPreview(canvas, data, slot, valid) {
 /* 点缩略图即为选中：既选上传目标，也切到这一张自己的工程。 */
 let slotSwitchToken = 0;
 async function selectSlot(slot) {
-  if (slot < 0 || slot >= SLOT_COUNT || uploading) return;
+  if (slot < 0 || slot >= SLOT_COUNT || uploading || layoutChanging || projectLoading || importsPending) return;
   const token = ++slotSwitchToken;
   if (slot !== selectedSlot) {
     const previous = selectedSlot;
@@ -582,7 +652,7 @@ async function readPreviews() {
 }
 
 async function uploadImage() {
-  if (!connected || !bits || uploading || importsPending) return;
+  if (!connected || !bits || uploading || importsPending || layoutChanging || projectLoading) return;
   const token = ++uploadToken;
   const link = rx;
   uploadCancelled = committing = false;
@@ -675,7 +745,52 @@ function bind() {
   editor=new CanvasEditor(element('image-editor'),{
     onChange:()=>{++loadSequence;schedulePreview();if(!suppressSave&&typeof saveProject==='function')saveProject();},onSelection:()=>syncEditorControls(),
   });
+  editor.setSimpleMode(mobileMode);
   editor.bindGestures(element('image-preview'),true);
+  mobileViewport?.addEventListener('change', () => updateLayoutMode());
+  window.addEventListener('thplot:tab-changed', event => { if (event.detail === 'wallpaper') showMobileNotice(); });
+  element('image-mobile-notice-ok').addEventListener('click', () => element('image-mobile-notice').close());
+  element('image-simple-mode').addEventListener('change', () => {
+    if (uploading || layoutChanging || projectLoading || !mobileMode) return;
+    ++loadSequence;
+    simpleContentMode = element('image-simple-mode').value;
+    element('image-simple-text').value = '';
+    element('image-simple-qr-content').value = '';
+    editor.clear();
+    if (simpleContentMode === 'text') editor.addText('');
+    syncSimpleControls();
+  });
+  element('image-simple-text').addEventListener('input', () => {
+    if (mobileMode && simpleContentMode === 'text') editor.updateSelected({text:element('image-simple-text').value});
+  });
+  element('image-simple-font-size').addEventListener('change', () => {
+    const fontSize = Number(element('image-simple-font-size').value);
+    if (mobileMode && simpleContentMode === 'text' && [12,16,24].includes(fontSize)) editor.updateSelected({fontSize});
+  });
+  element('image-simple-file').addEventListener('change', () => {
+    loadFiles(element('image-simple-file').files || []).catch(error => status(error.message));
+    element('image-simple-file').value = '';
+  });
+  const updateSimpleQr = event => {
+    if (event.isComposing || !mobileMode || simpleContentMode !== 'qr' || uploading || layoutChanging || projectLoading) return;
+    const content = element('image-simple-qr-content').value;
+    if (!content.trim()) {
+      editor.clear();
+      status('输入内容即可实时预览二维码。');
+      return;
+    }
+    if (editor.selected?.isQr && editor.selected.qrText === content) return;
+    try {
+      if (editor.selected?.isQr) editor.updateQr(editor.selected,content);
+      else editor.addQr(content);
+      status('二维码预览已更新，可调整单色输出。');
+    } catch (error) {
+      editor.clear();
+      status('二维码生成失败：' + error.message);
+    }
+  };
+  element('image-simple-qr-content').addEventListener('input', updateSimpleQr);
+  element('image-simple-qr-content').addEventListener('compositionend', updateSimpleQr);
   document.addEventListener('keydown', event => {
     if (event.key !== 'Delete' && event.key !== 'Backspace') return;
     const target = event.target;
@@ -683,7 +798,7 @@ function bind() {
     /* 输入框里按删除键是编辑文字，不能抢；图层下拉框里按删除才允许删图层。 */
     if (target?.isContentEditable || tag === 'INPUT' || tag === 'TEXTAREA' ||
         (tag === 'SELECT' && target.id !== 'image-layers')) return;
-    if (uploading || !editor?.selected || editor.locked) return;
+    if (uploading || layoutChanging || projectLoading || mobileMode || !editor?.selected || editor.locked) return;
     event.preventDefault();
     editor.removeSelected();
   });
@@ -799,7 +914,10 @@ function bind() {
   element('image-text-bold').addEventListener('change',()=>editor.updateSelected({fontWeight:element('image-text-bold').checked?'bold':'normal'}));
   for(const [id,key] of [['x','left'],['y','top'],['angle','angle']]) element('image-object-'+id).addEventListener('change',()=>{
     const input=element('image-object-'+id);
-    if(input.checkValidity())editor.updateSelected({[key]:Number(input.value)});
+    const value=Number(input.value);
+    if (id === 'angle') {
+      if(input.checkValidity())editor.updateSelected({[key]:value});
+    } else if(Number.isFinite(value)) editor.updateSelected({[key]:Math.round(value)});
   });
   for(const dimension of ['width','height']) element('image-object-'+dimension).addEventListener('change',()=>{
     const input=element('image-object-'+dimension),object=editor.selected;
