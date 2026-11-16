@@ -165,22 +165,14 @@ dialog p{margin:0 0 18px}
   .tab-long{display:none}
   .tab-short{display:inline}
 }
-/* ===== 壁纸编辑器：桌面三栏布局；手机端画布吸附顶部，两段切换下方工具区 ===== */
+/* ===== 壁纸编辑器：预览列与工具列；手机端使用简化布局 ===== */
 .editor-tabs{display:none}
-.custom-grid>.add-buttons{grid-area:addbtn}
-.custom-grid>.canvas-pin{grid-area:pin}
-.custom-grid>.editor-pane-canvas{grid-area:canvaspane}
+.custom-grid>.editor-preview-column{grid-area:preview;align-self:start}
 .custom-grid>.editor-pane-layers{grid-area:layers}
 .custom-grid>.editor-pane-output{grid-area:output}
+.custom-grid>.custom-notice{grid-area:notice}
 @media(min-width:721px){
-  .custom-grid{grid-template-areas:"addbtn layers output" "pin layers output" "canvaspane layers output"}
-  .custom-grid>.editor-pane-layers,.custom-grid>.editor-pane-output{grid-row:1/span 3}
-}
-/* 三列全展开至少要 1168px，中等宽度改成两列，避免整页横滚和左侧按钮被裁 */
-@media(min-width:721px) and (max-width:1168px){
-  .custom-grid{grid-template-columns:minmax(0,1fr) minmax(0,360px);grid-template-areas:"addbtn layers" "pin layers" "canvaspane output"}
-  .custom-grid>.editor-pane-layers{grid-row:1/span 2}
-  .custom-grid>.editor-pane-output{grid-row:3}
+  .custom-grid{grid-template-columns:minmax(0,1fr) minmax(0,360px);grid-template-areas:"preview layers" "preview output" "notice notice"}
 }
 @media(max-width:720px){
   .custom-grid{display:block;margin-top:12px}
@@ -188,7 +180,7 @@ dialog p{margin:0 0 18px}
 .font-advanced summary{cursor:pointer;color:var(--green);font-weight:600;padding:6px 0}
 .font-advanced[open]>summary{margin-bottom:10px}
 </style>
-<link rel="stylesheet" href="./canvas-editor.css?v=system-fonts-mobile-sans1">
+<link rel="stylesheet" href="./canvas-editor.css?v=physical-preview-upload-compress1">
 <script type="importmap">
 {
   "imports": {
@@ -332,6 +324,7 @@ body:has(>#landing:not([hidden])),body:has(>#intro-view:not([hidden])){overflow:
       </div>
     </div>
     <div class="custom-grid">
+      <div class="editor-preview-column">
       <div id="image-simple-controls" class="editor-panel" hidden>
         <label class="custom-field">内容模式<select id="image-simple-mode"><option value="text">文本框</option><option value="image">壁纸图片</option><option value="qr">二维码</option></select></label>
         <div id="image-simple-text-panel">
@@ -344,15 +337,16 @@ body:has(>#landing:not([hidden])),body:has(>#intro-view:not([hidden])){overflow:
       </div>
       <div class="custom-row add-buttons" style="margin-bottom:12px"><button id="image-add-text">＋ 文本框</button><button id="image-add-qr">＋ 二维码</button><button id="image-clear">清空壁纸</button><button id="image-project-export">导出工程</button><label class="button-like">导入工程<input id="image-project-import" type="file" accept="application/json" hidden></label></div>
       <div class="canvas-pin">
-        <div class="custom-canvas-wrap"><canvas id="image-editor" width="400" height="300" aria-label="壁纸编辑区，可选择、移动和缩放图层"></canvas></div>
+        <div class="custom-canvas-viewport" id="image-editor-viewport"><div class="custom-canvas-wrap"><canvas id="image-editor" width="400" height="300" aria-label="壁纸编辑区，可选择、移动和缩放图层"></canvas></div></div>
       </div>
       <div class="editor-pane editor-pane-canvas">
         <p class="custom-hint desktop-editor-hint">点击选择，拖动移动，控制点缩放 / 旋转，双击文字编辑。滚轮或双指缩放，Shift+滚轮或双指旋转。可多次粘贴、拖入图片。</p>
-        <div class="custom-output-row"><span class="custom-hint">设备输出预览 · 400 × 300</span>
-          <div class="custom-canvas-wrap"><canvas id="image-preview" width="400" height="300" aria-label="单色输出预览，拖动可调整选中图层"></canvas></div>
+        <div class="custom-output-row"><span class="custom-hint">设备输出 · 400 × 300 · <span id="image-preview-display-size">1× 像素预览</span></span>
+          <div class="custom-canvas-viewport" id="image-preview-viewport"><div class="custom-canvas-wrap"><canvas id="image-preview" width="400" height="300" aria-label="单色输出预览，拖动可调整选中图层"></canvas></div></div>
         </div>
         <p id="image-compression-state" class="custom-hint"></p>
         <p class="custom-hint">文字使用浏览器字体合成图片；自动换行，壁纸外的内容会被裁切。</p>
+      </div>
       </div>
       <div class="custom-controls editor-pane editor-pane-layers">
         <label class="custom-field">添加图片（可多选）<input type="file" id="image-file" accept="image/*" multiple></label>
@@ -2172,7 +2166,7 @@ if (typeof window.addEventListener === 'function') {
   if (fontAdvanced && window.matchMedia('(min-width:721px)').matches) fontAdvanced.open = true;
 })();
 </script>
-<script type="module" src="./image-app.js?v=system-fonts-mobile-sans1"></script>
+<script type="module" src="./image-app.js?v=physical-preview-upload-compress1"></script>
 
 </body>
 </html>

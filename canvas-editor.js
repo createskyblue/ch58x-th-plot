@@ -1,6 +1,17 @@
-import {Canvas, FabricImage, Textbox, Point} from './vendor/fabric.js';
+import {Canvas, FabricImage, Textbox, Point, classRegistry} from './vendor/fabric.js';
 import {qrcode} from './vendor/qrcode.js';
 qrcode.stringToBytes = qrcode.stringToBytesFuncs['UTF-8'];
+
+const imageSources=new WeakMap();
+class EditorImage extends FabricImage {
+  getSrc(filtered=false) {
+    const source=this._originalElement;
+    if(filtered || typeof source?.toDataURL!=='function')return super.getSrc(filtered);
+    if(!imageSources.has(source))imageSources.set(source,super.getSrc(false));
+    return imageSources.get(source);
+  }
+}
+classRegistry.setClass(EditorImage);
 
 export class CanvasEditor {
   static fontFamily = 'serif';
@@ -13,11 +24,11 @@ export class CanvasEditor {
     this.simpleMode = false;
     this.textZoomSizes = new WeakMap();
     this.canvas = new Canvas(element, {
-      width:400, height:300, backgroundColor:'#ffffff',
+      width:400, height:300, backgroundColor:'#ffffff',enableRetinaScaling:false,
       preserveObjectStacking:true, selection:true, enablePointerEvents:true,
     });
     for (const event of ['object:modified','object:moving','object:scaling','object:resizing','object:rotating','text:changed'])
-      this.canvas.on(event, () => this.changed());
+      this.canvas.on(event, () => this.changed({transient:event!=='object:modified' && event!=='text:changed'}));
     for (const event of ['selection:created','selection:updated','selection:cleared'])
       this.canvas.on(event, () => { this.configureSelection(); this.snapToPixels(); this.onSelection(this.selected); });
     /* 编辑画布本体也要支持滚轮缩放：滚轮缩放选中对象，Shift+滚轮旋转。 */
@@ -154,14 +165,14 @@ export class CanvasEditor {
     this.canvas.requestRenderAll(); this.changed();
   }
 
-  changed() {
+  changed({transient=false}={}) {
     this.objects.forEach(object=>{if(object.type==='textbox')this.normalizeText(object);});
     if (this.simpleMode) this.objects.forEach(object => {
       if (object.type === 'textbox' || object.isQr) this.fitSimpleObject(object);
     });
     this.snapToPixels();
     this.canvas.requestRenderAll();
-    this.onChange();
+    this.onChange({transient});
     this.onSelection(this.selected);
   }
 
@@ -198,7 +209,7 @@ export class CanvasEditor {
     const source=document.createElement('canvas');
     source.width=image.width;source.height=image.height;
     source.getContext('2d').drawImage(image,0,0);
-    const object = new FabricImage(source, {
+    const object = new EditorImage(source, {
       left:(400-image.width*scale)/2, top:(300-image.height*scale)/2,
       scaleX:scale, scaleY:scale, originX:'left', originY:'top',
     });
@@ -247,14 +258,14 @@ export class CanvasEditor {
     return true;
   }
 
-  updateSelected(properties) {
+  updateSelected(properties, {transient=false}={}) {
     if (this.locked || !this.selected) return;
     if (Object.hasOwn(properties,'fontSize')) this.textZoomSizes.delete(this.selected);
     if (properties.fontFamily===CanvasEditor.fontFamily && this.selected.type==='textbox')
       this.selected.monoParams={...this.selected.monoParams,contrast:300};
     this.selected.set(properties);
     this.selected.setCoords();
-    this.changed();
+    this.changed({transient});
   }
 
   removeSelected() {
@@ -309,7 +320,7 @@ export class CanvasEditor {
     return output;
   }
 
-  transformSelected(factor=1, delta=0, anchor={x:200,y:150}) {
+  transformSelected(factor=1, delta=0, anchor={x:200,y:150}, {transient=false}={}) {
     const object=this.selected;
     if(!this.canTransformSelected || !Number.isFinite(factor) || factor<=0) return;
     if (this.simpleMode) delta = 0;
@@ -331,7 +342,7 @@ export class CanvasEditor {
     const x=(center.x-anchor.x)*factor,y=(center.y-anchor.y)*factor;
     object.setPositionByOrigin(new Point(anchor.x+x*Math.cos(radians)-y*Math.sin(radians),
       anchor.y+x*Math.sin(radians)+y*Math.cos(radians)),'center','center');
-    object.setCoords();this.changed();
+    object.setCoords();this.changed({transient});
   }
 
   bindGestures(element, preview) {
@@ -372,26 +383,24 @@ export class CanvasEditor {
       if(gesture && pointers.size>=2) {
         event.preventDefault();event.stopImmediatePropagation();
         const next=shape();
-        this.transformSelected(next.distance/gesture.distance,next.angle-gesture.angle,gesture);
-        this.updateSelected({left:this.selected.left+next.x-gesture.x,top:this.selected.top+next.y-gesture.y});
+        this.transformSelected(next.distance/gesture.distance,next.angle-gesture.angle,gesture,{transient:true});
+        this.updateSelected({left:this.selected.left+next.x-gesture.x,top:this.selected.top+next.y-gesture.y},{transient:true});
         gesture=next;
       } else if(drag && this.selected && !suppress) {
         event.preventDefault();
-        this.updateSelected({left:drag.left+at.x-drag.x,top:drag.top+at.y-drag.y});
+        this.updateSelected({left:drag.left+at.x-drag.x,top:drag.top+at.y-drag.y},{transient:true});
       }
     },true);
     const end=event=>{
       if(!pointers.has(event.pointerId)) return;
       if(!this.canTransformSelected || sessionObject!==this.selected) { reset();return; }
-      const wasDragging=!!drag;
       pointers.delete(event.pointerId);gesture=null;drag=null;
       if(pointers.size===1) {
         const at=[...pointers.values()][0];
         drag={x:at.x,y:at.y,left:this.selected.left,top:this.selected.top};
         suppress=false;
       }
-      if(wasDragging) this.changed();
-      if(!pointers.size)reset();
+      if(!pointers.size){reset();this.changed();}
     };
     for(const type of ['pointerup','pointercancel','lostpointercapture'])element.addEventListener(type,end,true);
     element.addEventListener('wheel',event=>{

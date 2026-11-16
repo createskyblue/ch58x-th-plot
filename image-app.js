@@ -2,7 +2,7 @@ import {TYPES, encodeFrame, FrameParser, writeRxFrame, setRxWriteSize} from './p
 import {IMAGE_WIDTH, IMAGE_HEIGHT, IMAGE_BYTES, ditherPixels, monoToRgba, prepareMonochromeRgba} from './image-dither.js?v=transparent-alpha-preset-fix';
 import {lz4CompressBlock} from './lz4.js';
 import {uploadImageBytes} from './image-transfer.js';
-import {CanvasEditor} from './canvas-editor.js?v=system-fonts-mobile-sans1';
+import {CanvasEditor} from './canvas-editor.js?v=physical-preview-upload-compress1';
 import localforage from './vendor/localforage.js?v=project-idb5';
 
 const element = id => document.getElementById(id);
@@ -355,10 +355,7 @@ function renderPreview() {
   for(let i=0;i<IMAGE_WIDTH*IMAGE_HEIGHT;i++) if(rgba[i*4]<128) bits[i>>3]|=0x80>>(i&7);
   const preview = element('image-preview').getContext('2d');
   preview.putImageData(new ImageData(monoToRgba(bits), IMAGE_WIDTH, IMAGE_HEIGHT), 0, 0);
-  const packed = lz4CompressBlock(bits);
-  element('image-compression-state').textContent = packed.length > 16384
-    ? `压缩后 ${packed.length} 字节，超过 16 KB，请换传统 Bayer 抖动`
-    : `LZ4 压缩后 ${packed.length} / ${bits.length} 字节（${Math.round(packed.length * 100 / bits.length)}%），上传更快`;
+  element('image-compression-state').textContent = '400 × 300 单色输出 · 上传时自动压缩';
   controls();
   renderingPreview = false;
 }
@@ -368,6 +365,7 @@ function schedulePreview() {
   previewScheduled = true;
   const schedule = globalThis.requestAnimationFrame || (callback => setTimeout(callback, 0));
   schedule(() => {
+    if(!previewScheduled)return;
     previewScheduled = false;
     renderPreview();
   });
@@ -376,6 +374,19 @@ function schedulePreview() {
 function setValue(id, value) {
   const input=element(id);
   if (String(input.value) !== String(value)) input.value=value;
+}
+
+function updatePreviewSizes() {
+  const dpr=window.devicePixelRatio || 1;
+  for(const id of ['image-editor-viewport','image-preview-viewport']) {
+    const viewport=element(id);
+    const scale=(viewport.clientWidth-16)*dpr>=800 ? 2 : 1;
+    viewport.style.setProperty('--preview-width',`${IMAGE_WIDTH*scale/dpr}px`);
+    viewport.style.setProperty('--preview-height',`${IMAGE_HEIGHT*scale/dpr}px`);
+    viewport.dataset.previewScale=String(scale);
+  }
+  const scale=Number(element('image-preview-viewport').dataset.previewScale);
+  element('image-preview-display-size').textContent=`${scale}× 像素预览（${IMAGE_WIDTH*scale} × ${IMAGE_HEIGHT*scale}）`;
 }
 
 function syncEditorControls() {
@@ -654,7 +665,10 @@ async function readPreviews() {
 }
 
 async function uploadImage() {
-  if (!connected || !bits || uploading || importsPending || layoutChanging || projectLoading) return;
+  if (!connected || uploading || importsPending || layoutChanging || projectLoading) return;
+  if(previewScheduled){previewScheduled=false;renderPreview();}
+  if(!bits)return;
+  saveProject();
   const token = ++uploadToken;
   const link = rx;
   uploadCancelled = committing = false;
@@ -694,7 +708,9 @@ async function uploadImage() {
     element('image-image-enabled').checked = true;
     element('image-image-state').textContent = '壁纸页已开启';
     setProgress(100);
-    uploadState('上传成功：' + stored.length + ' 字节；传输 ' + (result.transferMs / 1000).toFixed(2) + ' 秒，' + (stored.length / Math.max(1, result.transferMs) * 1000 / 1024).toFixed(2) + ' KiB/s；含擦除和校验共 ' + (result.totalMs / 1000).toFixed(2) + ' 秒。设备已切到图片页。');
+    const savedBytes=bits.length-stored.length;
+    const compression=`压缩 ${bits.length} → ${stored.length} 字节，${savedBytes>=0?'节省':'增加'} ${Math.abs(savedBytes)} 字节（${(Math.abs(savedBytes)*100/bits.length).toFixed(1)}%）`;
+    uploadState('上传成功：' + compression + '；传输 ' + (result.transferMs / 1000).toFixed(2) + ' 秒，' + (stored.length / Math.max(1, result.transferMs) * 1000 / 1024).toFixed(2) + ' KiB/s；含擦除和校验共 ' + (result.totalMs / 1000).toFixed(2) + ' 秒。设备已切到图片页。');
     /* 刚写入的槽用本地位图刷新预览，既准确又不用和设备的整屏刷新抢时间。 */
     const preview = new Uint8Array(2 + PREVIEW_BYTES);
     preview[0] = selectedSlot; preview[1] = 1;
@@ -746,10 +762,14 @@ function bind() {
   /* 先把初始状态落一遍，后面某个控件取不到时也不会让整页停在错误状态。 */
   controls();
   editor=new CanvasEditor(element('image-editor'),{
-    onChange:()=>{++loadSequence;schedulePreview();if(!suppressSave&&typeof saveProject==='function')saveProject();},onSelection:()=>syncEditorControls(),
+    onChange:({transient=false}={})=>{++loadSequence;schedulePreview();if(!suppressSave&&!transient)saveProject();},onSelection:()=>syncEditorControls(),
   });
   editor.setSimpleMode(mobileMode);
   editor.bindGestures(element('image-preview'),true);
+  const previewObserver=new ResizeObserver(updatePreviewSizes);
+  for(const id of ['image-editor-viewport','image-preview-viewport'])previewObserver.observe(element(id));
+  window.addEventListener('resize',updatePreviewSizes);
+  updatePreviewSizes();
   mobileViewport?.addEventListener('change', () => updateLayoutMode());
   window.addEventListener('thplot:tab-changed', event => { if (event.detail === 'wallpaper') showMobileNotice(); });
   element('image-mobile-notice-ok').addEventListener('click', () => element('image-mobile-notice').close());
