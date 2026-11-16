@@ -93,6 +93,8 @@ export class CanvasEditor {
     object.set({originX:'left', originY:'top', angle:0, skewX:0, skewY:0,
       flipX:false, flipY:false, strokeWidth:0, selectable:false, evented:false});
     if (object.type === 'textbox') {
+      if(object.fontFamily!==CanvasEditor.fontFamily)
+        object.monoParams={...object.monoParams,contrast:300};
       object.set({left:0, top:0, width:400, scaleX:1, scaleY:1,
         fontSize:[12,16,24].includes(object.fontSize) ? object.fontSize : 16,
         fontFamily:CanvasEditor.fontFamily, fontWeight:'normal', fontStyle:'normal', textAlign:'left',
@@ -143,6 +145,8 @@ export class CanvasEditor {
     if (!project || project.version !== 1 || !project.canvas) throw new Error('工程文件版本不支持');
     await this.canvas.loadFromJSON(project.canvas);
     if(Array.isArray(project.monoParams)) this.objects.forEach((object,index)=>{if(project.monoParams[index]) object.monoParams={...project.monoParams[index]};});
+    for (const object of this.objects) if (object.type==='textbox' && object.fontFamily===CanvasEditor.fontFamily)
+      object.monoParams={...object.monoParams,contrast:300};
     for (const object of this.objects) if (object.isQr) {
       const width=object.getScaledWidth();
       object.setElement(CanvasEditor.renderQrCanvas(object.qrText));
@@ -185,7 +189,7 @@ export class CanvasEditor {
       originX:'left', originY:'top', padding:4, backgroundColor:'#ffffff', textBackground:'#ffffff',
     });
     // 文本框默认走固定阈值二值化，避免抖动把文字边缘啃出麻点。
-    object.monoParams={mode:'binary',threshold:100,contrast:100,brightness:0,gamma:100,sharpness:100,invert:false};
+    object.monoParams={mode:'binary',threshold:100,contrast:300,brightness:0,gamma:100,sharpness:100,invert:false};
     this.canvas.add(object);this.select(object);this.changed();
     return object;
   }
@@ -252,6 +256,8 @@ export class CanvasEditor {
   updateSelected(properties) {
     if (this.locked || !this.selected) return;
     if (Object.hasOwn(properties,'fontSize')) this.textZoomSizes.delete(this.selected);
+    if (properties.fontFamily===CanvasEditor.fontFamily && this.selected.type==='textbox')
+      this.selected.monoParams={...this.selected.monoParams,contrast:300};
     this.selected.set(properties);
     this.selected.setCoords();
     this.changed();
