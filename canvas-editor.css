@@ -17,8 +17,10 @@
 .mobile-wallpaper .editor-pane-output{margin-top:16px}
 .mobile-wallpaper #image-simple-controls{margin-bottom:16px}
 .mobile-wallpaper #image-preview{cursor:default;touch-action:pan-y}
+.mobile-wallpaper.mobile-image-gestures #image-preview{cursor:grab;touch-action:none}
 .mobile-wallpaper .custom-canvas-wrap{margin:0 auto}
 .mobile-wallpaper .custom-field textarea{font-size:16px}
+.mobile-wallpaper #image-simple-text{font-family:'Wallpaper Song'}
 .custom-image .custom-notice{padding:12px 14px;border-radius:8px;line-height:1.7}
 .mobile-wallpaper .custom-notice{margin-top:16px}
 .wallpaper-loading .custom-grid{pointer-events:none}

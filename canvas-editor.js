@@ -1,20 +1,34 @@
 import {Canvas, FabricImage, Textbox, Point} from './vendor/fabric.js';
 import {qrcode} from './vendor/qrcode.js';
+qrcode.stringToBytes = qrcode.stringToBytesFuncs['UTF-8'];
 
 export class CanvasEditor {
+  static fontFamily = 'Wallpaper Song';
+
+  static loadDefaultFont() {
+    let face=[...document.fonts].find(font=>font.family.replace(/^['"]|['"]$/g,'')===CanvasEditor.fontFamily);
+    if (!face) {
+      face=new FontFace(CanvasEditor.fontFamily,'url("./assets/fonts/simsun.ttf")',
+        {style:'normal',weight:'400'});
+      document.fonts.add(face);
+    }
+    return face.load();
+  }
+
   constructor(element, {onChange = () => {}, onSelection = () => {}} = {}) {
     this.onChange = onChange;
     this.onSelection = onSelection;
     this.locked = false;
     this.simpleMode = false;
+    this.textZoomSizes = new WeakMap();
     this.canvas = new Canvas(element, {
       width:400, height:300, backgroundColor:'#ffffff',
       preserveObjectStacking:true, selection:true, enablePointerEvents:true,
     });
-    for (const event of ['object:modified','object:moving','object:scaling','object:rotating','text:changed'])
+    for (const event of ['object:modified','object:moving','object:scaling','object:resizing','object:rotating','text:changed'])
       this.canvas.on(event, () => this.changed());
     for (const event of ['selection:created','selection:updated','selection:cleared'])
-      this.canvas.on(event, () => { this.snapToPixels(); this.onSelection(this.selected); });
+      this.canvas.on(event, () => { this.configureSelection(); this.snapToPixels(); this.onSelection(this.selected); });
     /* 编辑画布本体也要支持滚轮缩放：滚轮缩放选中对象，Shift+滚轮旋转。 */
     const surface = this.canvas.upperCanvasEl;
     surface.addEventListener('wheel', event => {
@@ -30,6 +44,27 @@ export class CanvasEditor {
 
   get objects() { return this.canvas.getObjects(); }
   get selected() { return this.canvas.getActiveObject() || null; }
+  get canTransformSelected() {
+    const object = this.selected;
+    return !this.locked && !!object && (!this.simpleMode || (object.type === 'image' && !object.isQr));
+  }
+
+  configureSelection() {
+    const selected=this.selected;
+    if (selected?.type !== 'activeselection') return;
+    const hasText=selected.getObjects().some(object=>object.type==='textbox');
+    selected.set({lockScalingX:hasText,lockScalingY:hasText,lockSkewingX:hasText,lockSkewingY:hasText});
+    selected.setControlsVisibility(Object.fromEntries(['tl','tr','bl','br','mt','mb','ml','mr'].map(key=>[key,!hasText])));
+  }
+
+  normalizeText(object) {
+    object.set({scaleX:1,scaleY:1,skewX:0,skewY:0,
+      lockScalingX:true,lockScalingY:true,lockSkewingX:true,lockSkewingY:true});
+    object.setControlsVisibility({tl:false,tr:false,bl:false,br:false,mt:false,mb:false,ml:true,mr:true,mtr:true});
+    object.initDimensions();
+    object.dirty=true;
+    object.setCoords();
+  }
 
   snapToPixels() {
     const active = this.selected;
@@ -60,13 +95,14 @@ export class CanvasEditor {
     if (object.type === 'textbox') {
       object.set({left:0, top:0, width:400, scaleX:1, scaleY:1,
         fontSize:[12,16,24].includes(object.fontSize) ? object.fontSize : 16,
-        fontFamily:'serif', fontWeight:'normal', fontStyle:'normal', textAlign:'left',
+        fontFamily:CanvasEditor.fontFamily, fontWeight:'normal', fontStyle:'normal', textAlign:'left',
         fill:'#000000', backgroundColor:'#ffffff', textBackground:'#ffffff', styles:{}});
       // Fabric recalculates text height when content changes; keep the full-screen box.
       object.set({height:300, editable:false});
     } else {
       // Fit the complete image or QR inside the screen without stretching or cropping.
-      const scale = Math.min(400/object.width, 300/object.height);
+      const scale = object.isQr ? Math.max(1,Math.floor(300/(object.width/4)))/4 :
+        Math.min(400/object.width, 300/object.height);
       object.set({scaleX:scale, scaleY:scale,
         left:Math.round((400-object.width*scale)/2), top:Math.round((300-object.height*scale)/2)});
     }
@@ -107,6 +143,12 @@ export class CanvasEditor {
     if (!project || project.version !== 1 || !project.canvas) throw new Error('工程文件版本不支持');
     await this.canvas.loadFromJSON(project.canvas);
     if(Array.isArray(project.monoParams)) this.objects.forEach((object,index)=>{if(project.monoParams[index]) object.monoParams={...project.monoParams[index]};});
+    for (const object of this.objects) if (object.isQr) {
+      const width=object.getScaledWidth();
+      object.setElement(CanvasEditor.renderQrCanvas(object.qrText));
+      object.set({imageSmoothing:false,scaleX:width/object.width,scaleY:width/object.width});
+      object.monoParams={...object.monoParams,brightness:0,sharpness:0};
+    }
     if (this.simpleMode) {
       if (this.objects.length > 1) this.canvas.remove(...this.objects.slice(0,-1));
       if (this.objects[0]) this.select(this.objects[0]);
@@ -116,7 +158,10 @@ export class CanvasEditor {
   }
 
   changed() {
-    if (this.simpleMode) this.objects.forEach(object => this.fitSimpleObject(object));
+    this.objects.forEach(object=>{if(object.type==='textbox')this.normalizeText(object);});
+    if (this.simpleMode) this.objects.forEach(object => {
+      if (object.type === 'textbox' || object.isQr) this.fitSimpleObject(object);
+    });
     this.snapToPixels();
     this.canvas.requestRenderAll();
     this.onChange();
@@ -135,7 +180,7 @@ export class CanvasEditor {
     if (this.locked) return null;
     if (this.simpleMode) this.clear();
     const object = new Textbox(text, {
-      left:40, top:40, width:250, fontSize:16, fontFamily:'serif',
+      left:40, top:40, width:250, fontSize:16, fontFamily:CanvasEditor.fontFamily,
       fill:'#000000', lineHeight:1.2, splitByGrapheme:true,
       originX:'left', originY:'top', padding:4, backgroundColor:'#ffffff', textBackground:'#ffffff',
     });
@@ -149,7 +194,7 @@ export class CanvasEditor {
     if (this.locked) return null;
     if (this.simpleMode) this.clear();
     const first = this.objects.length === 0;
-    const scale = first ? Math.max(400 / image.width, 300 / image.height) :
+    const scale = isQr ? Math.max(1,Math.floor(300/(image.width/4)))/4 : first ? Math.max(400 / image.width, 300 / image.height) :
       Math.min(200 / image.width, 150 / image.height, 1);
     // Keep an owned canvas source so clones retain pixels after blob URLs or bitmaps expire.
     const source=document.createElement('canvas');
@@ -162,8 +207,10 @@ export class CanvasEditor {
     object.monoParams={mode:'color',threshold:50,contrast:100,brightness:0,gamma:100,sharpness:100,invert:false};
     if (isQr) {
       object.isQr = true; object.qrText = qrText;
-      object.monoParams={mode:'binary',threshold:100,contrast:100,brightness:0,gamma:100,sharpness:100,invert:false};
+      object.set({imageSmoothing:false});
+      object.monoParams={mode:'binary',threshold:100,contrast:100,brightness:0,gamma:100,sharpness:0,invert:false};
     }
+    if (this.simpleMode) this.fitSimpleObject(object);
     this.canvas.add(object);this.select(object);this.changed();
     return object;
   }
@@ -173,7 +220,7 @@ export class CanvasEditor {
     const qr = qrcode(0, 'M');
     qr.addData(text);
     qr.make();
-    const modules = qr.getModuleCount(), quiet = 2, moduleSize = 4;
+    const modules = qr.getModuleCount(), quiet = 4, moduleSize = 4;
     const size = (modules + quiet * 2) * moduleSize;
     const source = document.createElement('canvas');
     source.width = size; source.height = size;
@@ -204,6 +251,7 @@ export class CanvasEditor {
 
   updateSelected(properties) {
     if (this.locked || !this.selected) return;
+    if (Object.hasOwn(properties,'fontSize')) this.textZoomSizes.delete(this.selected);
     this.selected.set(properties);
     this.selected.setCoords();
     this.changed();
@@ -263,18 +311,32 @@ export class CanvasEditor {
 
   transformSelected(factor=1, delta=0, anchor={x:200,y:150}) {
     const object=this.selected;
-    if(this.locked || this.simpleMode || !object || !Number.isFinite(factor) || factor<=0) return;
+    if(!this.canTransformSelected || !Number.isFinite(factor) || factor<=0) return;
+    if (this.simpleMode) delta = 0;
     const radians=delta*Math.PI/180,center=object.getCenterPoint();
+    if (object.type==='textbox') {
+      const previous=this.textZoomSizes.get(object);
+      const start=previous?.rendered===object.fontSize ? previous.desired : object.fontSize;
+      const desired=Math.max(8,Math.min(200,start*factor));
+      const fontSize=Math.round(desired);
+      this.textZoomSizes.set(object,{desired,rendered:fontSize});
+      if(fontSize===object.fontSize && delta===0)return;
+      factor=fontSize/object.fontSize;
+      object.set({fontSize,angle:object.angle+delta});
+    } else {
+      if(object.type==='activeselection' && object.getObjects().some(item=>item.type==='textbox'))factor=1;
+      object.set({scaleX:Math.max(.01,Math.min(40,object.scaleX*factor)),
+        scaleY:Math.max(.01,Math.min(40,object.scaleY*factor)),angle:object.angle+delta});
+    }
     const x=(center.x-anchor.x)*factor,y=(center.y-anchor.y)*factor;
-    object.set({scaleX:Math.max(.01,Math.min(40,object.scaleX*factor)),
-      scaleY:Math.max(.01,Math.min(40,object.scaleY*factor)),angle:object.angle+delta});
     object.setPositionByOrigin(new Point(anchor.x+x*Math.cos(radians)-y*Math.sin(radians),
       anchor.y+x*Math.sin(radians)+y*Math.cos(radians)),'center','center');
     object.setCoords();this.changed();
   }
 
   bindGestures(element, preview) {
-    const pointers=new Map();let gesture=null,drag=null,suppress=false;
+    const pointers=new Map();let gesture=null,drag=null,suppress=false,sessionObject=null;
+    const reset=()=>{pointers.clear();gesture=drag=null;suppress=false;sessionObject=null;};
     const point=event=>{
       const rect=element.getBoundingClientRect();
       return {x:(event.clientX-rect.left)*400/rect.width,y:(event.clientY-rect.top)*300/rect.height};
@@ -285,24 +347,27 @@ export class CanvasEditor {
         angle:Math.atan2(b.y-a.y,b.x-a.x)*180/Math.PI};
     };
     element.addEventListener('pointerdown',event=>{
-      if(this.locked || this.simpleMode) return;
+      if(this.locked || (this.simpleMode && !this.canTransformSelected)) return;
+      if(sessionObject && sessionObject!==this.selected) reset();
       const at=point(event);pointers.set(event.pointerId,at);
       if(!this.selected && !preview) {
         const target=this.canvas.findTarget(event, true);
         if(target) this.select(target);
       }
+      sessionObject=this.selected;
       if(this.selected && (preview || event.pointerType !== 'touch')) {
         event.preventDefault();element.setPointerCapture(event.pointerId);
         drag={x:at.x,y:at.y,left:this.selected.left,top:this.selected.top};
       }
       if(pointers.size===2 && this.selected) {
-        this.canvas.endCurrentTransform(event);
+        if (this.canvas._currentTransform) this.canvas.endCurrentTransform(event);
         event.preventDefault();event.stopImmediatePropagation();
         gesture=shape();drag=null;suppress=true;
       }
     },true);
     element.addEventListener('pointermove',event=>{
-      if(this.locked || this.simpleMode || !pointers.has(event.pointerId)) return;
+      if(!pointers.has(event.pointerId)) return;
+      if(!this.canTransformSelected || sessionObject!==this.selected) { reset();return; }
       const at=point(event);pointers.set(event.pointerId,at);
       if(gesture && pointers.size>=2) {
         event.preventDefault();event.stopImmediatePropagation();
@@ -316,16 +381,24 @@ export class CanvasEditor {
       }
     },true);
     const end=event=>{
+      if(!pointers.has(event.pointerId)) return;
+      if(!this.canTransformSelected || sessionObject!==this.selected) { reset();return; }
       const wasDragging=!!drag;
       pointers.delete(event.pointerId);gesture=null;drag=null;
+      if(pointers.size===1) {
+        const at=[...pointers.values()][0];
+        drag={x:at.x,y:at.y,left:this.selected.left,top:this.selected.top};
+        suppress=false;
+      }
       if(wasDragging) this.changed();
-      if(!pointers.size)suppress=false;
+      if(!pointers.size)reset();
     };
     for(const type of ['pointerup','pointercancel','lostpointercapture'])element.addEventListener(type,end,true);
     element.addEventListener('wheel',event=>{
-      if(this.locked || this.simpleMode || !this.selected) return;
+      if(!this.canTransformSelected) return;
       event.preventDefault();
-      this.transformSelected(event.shiftKey?1:Math.exp(-event.deltaY*.0015),event.shiftKey?event.deltaY*.1:0,point(event));
+      const rotate=event.shiftKey && !this.simpleMode;
+      this.transformSelected(rotate?1:Math.exp(-event.deltaY*.0015),rotate?event.deltaY*.1:0,point(event));
     },{passive:false});
   }
 }

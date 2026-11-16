@@ -188,7 +188,8 @@ dialog p{margin:0 0 18px}
 .font-advanced summary{cursor:pointer;color:var(--green);font-weight:600;padding:6px 0}
 .font-advanced[open]>summary{margin-bottom:10px}
 </style>
-<link rel="stylesheet" href="./canvas-editor.css?v=mobile-live-qr-spacing1">
+<link rel="stylesheet" href="./canvas-editor.css?v=simsun-natural-text1">
+<link rel="preload" href="./assets/fonts/simsun.ttf" as="font" type="font/ttf" crossorigin>
 <script type="importmap">
 {
   "imports": {
@@ -339,8 +340,8 @@ body:has(>#landing:not([hidden])),body:has(>#intro-view:not([hidden])){overflow:
           <label class="custom-field">字号（像素）<select id="image-simple-font-size"><option value="12">12</option><option value="16" selected>16</option><option value="24">24</option></select></label>
           <p class="custom-hint">文本区域为 400 × 300，自动换行。</p>
         </div>
-        <div id="image-simple-image-panel" hidden><label class="custom-field">选择壁纸<input id="image-simple-file" type="file" accept="image/*"></label><p class="custom-hint">等比例自适应、完整居中显示，空余区域留白。</p></div>
-        <div id="image-simple-qr-panel" hidden><label class="custom-field">二维码内容<textarea id="image-simple-qr-content" rows="3" placeholder="链接或文字"></textarea></label><p class="custom-hint">输入时自动更新预览；二维码完整居中，铺满显示区域高度。</p></div>
+        <div id="image-simple-image-panel" hidden><label class="custom-field">选择壁纸<input id="image-simple-file" type="file" accept="image/*"></label><p class="custom-hint">默认等比例自适应、完整居中显示。可在下方预览中单指拖动、双指缩放。</p></div>
+        <div id="image-simple-qr-panel" hidden><label class="custom-field">二维码内容<textarea id="image-simple-qr-content" rows="3" placeholder="链接或文字"></textarea></label><p class="custom-hint">输入时自动更新预览；二维码按整数像素排布，完整居中显示。</p></div>
       </div>
       <div class="custom-row add-buttons" style="margin-bottom:12px"><button id="image-add-text">＋ 文本框</button><button id="image-add-qr">＋ 二维码</button><button id="image-clear">清空壁纸</button><button id="image-project-export">导出工程</button><label class="button-like">导入工程<input id="image-project-import" type="file" accept="application/json" hidden></label></div>
       <div class="canvas-pin">
@@ -368,10 +369,10 @@ body:has(>#landing:not([hidden])),body:has(>#intro-view:not([hidden])){overflow:
             <label class="custom-field">字号（像素）<input id="image-font-size" type="number" min="8" max="200" step="1" value="16"></label>
 
             <details class="font-advanced"><summary>更多字体选项</summary>
-            <label class="custom-field">浏览器字体<select id="image-browser-font"><option value="sans-serif">系统无衬线</option><option value="serif" selected>系统衬线</option><option value="monospace">等宽字体</option><option value="Arial">Arial</option><option value="Georgia">Georgia</option><option value="Times New Roman">Times New Roman</option><option value="Courier New">Courier New</option></select></label>
+            <label class="custom-field">字体<select id="image-browser-font"><option value="Wallpaper Song" selected>内置宋体（SimSun）</option><option value="sans-serif">系统无衬线</option><option value="serif">系统衬线</option><option value="monospace">等宽字体</option><option value="Arial">Arial</option><option value="Georgia">Georgia</option><option value="Times New Roman">Times New Roman</option><option value="Courier New">Courier New</option></select></label>
             <label class="custom-field">本机字体搜索<input id="image-local-font-search" type="search" placeholder="输入字体名称过滤"></label>
             <label class="custom-field">本机字体<select id="image-local-font" size="5"><option value="">尚未读取本机字体</option></select><button type="button" id="image-load-fonts" style="margin-top:6px">读取本机字体</button></label>
-            <label class="custom-field">自定义字体名称<input id="image-font-family" value="serif" placeholder="例如 Microsoft YaHei"></label>
+            <label class="custom-field">自定义字体名称<input id="image-font-family" value="Wallpaper Song" placeholder="例如 Microsoft YaHei"></label>
             </details>
             <label class="custom-field">对齐<select id="image-text-align"><option value="left">左对齐</option><option value="center">居中</option><option value="right">右对齐</option></select></label>
             <label class="custom-field">文字颜色<input id="image-text-color" type="color" value="#000000"></label><label class="custom-field">背景颜色<input id="image-text-background" type="color" value="#ffffff"></label><button type="button" id="image-swap-text-colors">交换颜色</button><label class="custom-row"><input id="image-text-bg-transparent" type="checkbox">背景透明</label>
@@ -457,7 +458,7 @@ body:has(>#landing:not([hidden])),body:has(>#intro-view:not([hidden])){overflow:
 <dialog id="alert-dialog" aria-labelledby="alert-title"><div class="dialog-body"><h2 id="alert-title"></h2><p id="alert-message" class="muted"></p><div class="actions"><button id="alert-close" class="primary">知道了</button></div></div></dialog>
 <dialog id="reboot-dialog" aria-labelledby="reboot-title"><div class="dialog-body"><h2 id="reboot-title">重启设备？</h2><p id="reboot-message" class="muted">设备会立刻软件复位。重启后蓝牙会关闭，需要长按设备按键重新打开蓝牙窗口才能再次连接。</p><div class="actions"><button id="reboot-cancel">取消</button><button id="reboot-confirm" class="primary">确认重启</button></div></div></dialog>
 <dialog id="image-qr-dialog" aria-labelledby="image-qr-title"><div class="dialog-body"><h2 id="image-qr-title">插入二维码</h2><label class="custom-field" for="image-qr-text">内容（链接或文字）<textarea id="image-qr-text" rows="4" placeholder="https://example.com"></textarea></label><p class="hint">按内容自动选择最小的 QR 版本，纠错级别 M。插入后可拖动、缩放，黑白输出不做抖动。</p><div class="actions"><button id="image-qr-cancel">取消</button><button id="image-qr-confirm" class="primary">插入</button></div></div></dialog>
-<dialog id="image-mobile-notice" aria-labelledby="image-mobile-notice-title"><div class="dialog-body"><h2 id="image-mobile-notice-title">手机模式已精简功能</h2><p>可选择槽位，并使用文本框、壁纸图片或二维码三种模式。图片等比例自适应、完整居中显示，输出为 400 × 300；仅保留最终预览和单色输出调整，图层编辑请使用电脑端。</p><div class="actions"><button id="image-mobile-notice-ok" class="primary">知道了</button></div></div></dialog>
+<dialog id="image-mobile-notice" aria-labelledby="image-mobile-notice-title"><div class="dialog-body"><h2 id="image-mobile-notice-title">手机模式已精简功能</h2><p>可选择槽位，并使用文本框、壁纸图片或二维码三种模式。图片默认完整居中显示，支持单指拖动、双指缩放，输出为 400 × 300；仅保留最终预览和单色输出调整，图层编辑请使用电脑端。</p><div class="actions"><button id="image-mobile-notice-ok" class="primary">知道了</button></div></div></dialog>
 <script>
 'use strict';
 function historyImportChecksum(bytes) {
@@ -2172,7 +2173,7 @@ if (typeof window.addEventListener === 'function') {
   if (fontAdvanced && window.matchMedia('(min-width:721px)').matches) fontAdvanced.open = true;
 })();
 </script>
-<script type="module" src="./image-app.js?v=mobile-fit-image1"></script>
+<script type="module" src="./image-app.js?v=simsun-natural-text1"></script>
 
 </body>
 </html>
