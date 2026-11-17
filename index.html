@@ -8,7 +8,7 @@
 <title>TH-Plot · 设备工作台</title>
 
 <link href="./canvas-editor.css?v=ui-redesign1" rel="stylesheet"/>
-<link href="./ui.css?v=ui-redesign5" rel="stylesheet"/>
+<link href="./ui.css?v=ui-redesign6" rel="stylesheet"/>
 <script type="importmap">
 {
   "imports": {
@@ -761,7 +761,6 @@
 </div>
 </div>
 <div class="settings-group settings-maintenance">
-<div class="settings-group-title"><h3>设备维护</h3><p>管理设备运行状态。</p></div>
 <div class="settings-group-fields"><div class="setting-field"><div><label for="reboot">重新启动</label><p class="hint" id="reboot-hint">重启后蓝牙会关闭，需长按设备按键重新连接。</p></div><button disabled="" id="reboot" aria-describedby="reboot-hint">重启设备</button></div></div>
 </div>
 <div class="settings-footer">
@@ -1899,9 +1898,9 @@ action('connect', async () => {
         try { await refreshLatest(); } catch (error) { latestError = error.message; }
         if (rx !== latestLink || !server.connected) return;
         window.dispatchEvent(new CustomEvent('thplot:device-ready', {detail:{rx, tx, device}}));
-        status((latestError ? '已连接，但读取当前温湿度失败：' + latestError
-            : /^[0-9a-fA-F]{64}$/.test(keyText()) ? '已连接，已读取当前温湿度'
-            : '已连接，已读取当前温湿度；请先填入激活码') + (settingsError ? '；设备设置读取失败：' + settingsError : ''));
+        const warnings = [latestError ? '读取当前温湿度失败：' + latestError : '',
+            settingsError ? '设备设置读取失败：' + settingsError : ''].filter(Boolean).join('；');
+        status(warnings ? '已连接，但' + warnings : '');
     } catch (error) {
         device.removeEventListener('gattserverdisconnected', disconnected);
         device.gatt.disconnect();
@@ -1956,9 +1955,9 @@ async function refreshLatest() {
     element('measured').textContent = '更新于 ' + new Date().toLocaleTimeString('zh-CN', {hour12:false});
 }
 action('latest', async () => {
-    status('正在读取当前温湿度…');
+    status('正在读取当前温湿度…', 'overview');
     await refreshLatest();
-    status('已读到最新的温湿度');
+    status('已读到最新的温湿度', 'overview');
 });
 action('activation', async () => {
     if (importJob) return;
@@ -1990,7 +1989,7 @@ async function readDeviceRange() {
 }
 action('read-device-range', async () => {
     if (!rx || rangeBusy || settingsBusy || importJob || exportId !== null) return;
-    await readDeviceRange(); status('已读取设备当前时间范围');
+    await readDeviceRange(); status('已读取设备当前时间范围', 'settings');
 });
 action('device-range', async () => {
     if (!rx || !rangeReady || rangeBusy || settingsBusy || importJob || exportId !== null) return;
@@ -2001,7 +2000,7 @@ action('device-range', async () => {
         const ack = await request(TYPES.windowWrite, Uint8Array.of(index));
         if (ack.length !== 1 || ack[0] !== 0) throw new Error('时间范围设置响应错误');
         await readDeviceRange();
-        status('设备已切换时间范围，屏幕将刷新');
+        status('设备已切换时间范围，屏幕将刷新', 'settings');
     } catch (error) {
         rangeReady = false;
         element('range-state').textContent = rx ? '切换未确认，请重新读取当前范围。' : '连接设备后可读取。';
@@ -2022,14 +2021,19 @@ async function applySettings(changed) {
           week = Number(element('week-start').value);
     if (changed === 'history-mode' && mode !== savedSettings[0] && !confirm('切换历史颗粒度会清空设备已有历史，建议先导出。继续切换？')) { revertSettings(); return; }
     if (changed === 'refresh-on-change' && immediate && !savedSettings[1] && !confirm('开启温湿度变化立即刷新会降低续航时间，尤其空调造成的周期性温度变化可能导致频繁刷新。仍然开启？')) { revertSettings(); return; }
+    const link = rx;
     settingsBusy = true; settingsControls();
     try {
         await request(TYPES.settingsWrite, Uint8Array.of(mode, immediate, dew, grid, week));
+        if (rx !== link) return;
         await readSettings();
-        status('设置已生效，设备屏幕已刷新');
+        if (rx !== link) return;
+        status('设置已生效，设备屏幕已刷新', 'settings');
     } catch (error) {
+        if (rx !== link) return;
         await readSettings().catch(() => {});
-        status('设置未生效：' + error.message);
+        if (rx !== link) return;
+        status('设置未生效：' + error.message, 'settings');
     } finally { settingsBusy = false; settingsControls(); }
 }
 for (const id of ['history-mode', 'refresh-on-change', 'dew-point', 'day-grid', 'week-start'])
@@ -2345,6 +2349,6 @@ loadDemoHistory();
 
 
 
-<script src="./ui-shell.js?v=ui-redesign3" type="module"></script><script src="./image-app.js?v=ui-redesign3" type="module"></script>
+<script src="./ui-shell.js?v=ui-redesign6" type="module"></script><script src="./image-app.js?v=ui-redesign6" type="module"></script>
 </body>
 </html>

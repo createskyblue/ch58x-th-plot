@@ -298,9 +298,9 @@ action('connect', async () => {
         status('已连接，正在读取当前温湿度…');
         let latestError = '';
         try { await refreshLatest(); } catch (error) { latestError = error.message; }
-        const derivation = '';
-        status((latestError ? '已连接，但读取当前温湿度失败：' + latestError
-            : '已连接，已读取当前温湿度' + derivation) + (settingsError ? '；设备设置读取失败：' + settingsError : ''));
+        const warnings = [latestError ? '读取当前温湿度失败：' + latestError : '',
+            settingsError ? '设备设置读取失败：' + settingsError : ''].filter(Boolean).join('；');
+        status(warnings ? '已连接，但' + warnings : '');
     } catch (error) {
         device.removeEventListener('gattserverdisconnected', disconnected);
         device.gatt.disconnect();
@@ -347,9 +347,9 @@ async function refreshLatest() {
     element('measured').textContent = '设备运行 ' + (view.getUint32(5, true) / 1000).toFixed(1) + ' 秒时测量，不是墙钟时间';
 }
 action('latest', async () => {
-    status('正在进行即时传感器测量…');
+    status('正在进行即时传感器测量…', 'overview');
     await refreshLatest();
-    status('即时测量已更新');
+    status('即时测量已更新', 'overview');
 });
 action('read-user', async () => { await readUser(); status('已原样读取寄存值'); });
 action('save-user', async () => {
@@ -380,7 +380,7 @@ async function readDeviceRange() {
 }
 action('read-device-range', async () => {
     if (!rx || rangeBusy || settingsBusy || importJob || exportId !== null) return;
-    await readDeviceRange(); status('已读取设备当前时间范围');
+    await readDeviceRange(); status('已读取设备当前时间范围', 'settings');
 });
 action('device-range', async () => {
     if (!rx || !rangeReady || rangeBusy || settingsBusy || importJob || exportId !== null) return;
@@ -391,7 +391,7 @@ action('device-range', async () => {
         const ack = await request(TYPES.windowWrite, Uint8Array.of(index));
         if (ack.length !== 1 || ack[0] !== 0) throw new Error('时间范围设置响应错误');
         await readDeviceRange();
-        status('设备已切换时间范围，屏幕将刷新');
+        status('设备已切换时间范围，屏幕将刷新', 'settings');
     } catch (error) {
         rangeReady = false;
         element('range-state').textContent = rx ? '切换未确认，请重新读取当前范围。' : '连接设备后可读取。';
@@ -412,14 +412,19 @@ async function applySettings(changed) {
           week = Number(element('week-start').value);
     if (changed === 'history-mode' && mode !== savedSettings[0] && !confirm('切换历史颗粒度会清空设备已有历史，建议先导出。继续切换？')) { revertSettings(); return; }
     if (changed === 'refresh-on-change' && immediate && !savedSettings[1] && !confirm('开启温湿度变化立即刷新会降低续航时间，尤其空调造成的周期性温度变化可能导致频繁刷新。仍然开启？')) { revertSettings(); return; }
+    const link = rx;
     settingsBusy = true; settingsControls();
     try {
         await request(TYPES.settingsWrite, Uint8Array.of(mode, immediate, dew, grid, week));
+        if (rx !== link) return;
         await readSettings();
-        status('设置已生效，设备屏幕已刷新');
+        if (rx !== link) return;
+        status('设置已生效，设备屏幕已刷新', 'settings');
     } catch (error) {
+        if (rx !== link) return;
         await readSettings().catch(() => {});
-        status('设置未生效：' + error.message);
+        if (rx !== link) return;
+        status('设置未生效：' + error.message, 'settings');
     } finally { settingsBusy = false; settingsControls(); }
 }
 for (const id of ['history-mode', 'refresh-on-change', 'dew-point', 'day-grid', 'week-start'])

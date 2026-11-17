@@ -50,7 +50,7 @@ function syncConnection() {
   if(historyAction)historyAction.textContent=connected?'查看历史数据 →':'先看看示例数据 →';
   const status=byId('status').textContent.trim();
   const scope=byId('status').dataset.scope;
-  byId('connection-message').hidden=!!scope&&scope!==currentPage||!connected&&(!status||status==='尚未连接设备');
+  byId('connection-message').hidden=!status||status==='尚未连接设备'||!!scope&&scope!==currentPage;
 }
 const connectionObserver=new MutationObserver(syncConnection);
 for(const id of ['connection','status','connect'])connectionObserver.observe(byId(id),{childList:true,subtree:true,attributes:true,attributeFilter:['disabled','data-scope']});

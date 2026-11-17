@@ -147,6 +147,8 @@ let importQueue = Promise.resolve(), importsPending = 0;
 let bits = null;
 let selectedSlot = 0;
 let readingPreviews = false;
+let previewSyncController = null;
+let previewSyncSlot = 0;
 let wallpaperPageActive = location.hash === '#wallpaper';
 let previewSyncPending = wallpaperPageActive;
 let renderingPreview = false;
@@ -194,32 +196,38 @@ function settlePending(error) {
   pending.clear();
 }
 
-function sendBytes(frame) {
+function sendBytes(frame, isCurrent = () => true) {
   const characteristic = rx;
   const job = sending.then(async () => {
-    if (!characteristic || characteristic !== rx) throw new Error('设备未连接');
-    await writeRxFrame(characteristic, frame, () => characteristic === rx);
+    if (!characteristic || characteristic !== rx || !isCurrent()) throw new Error('操作已取消或连接已变化');
+    await writeRxFrame(characteristic, frame, () => characteristic === rx && isCurrent());
   });
   sending = job.catch(() => {});
   return job;
 }
 
-function request(type, payload = new Uint8Array(), timeout = 6000) {
+function request(type, payload = new Uint8Array(), timeout = 6000, signal) {
   if (!connected || !rx || !tx) return Promise.reject(new Error('请先连接设备'));
+  if (signal?.aborted) return Promise.reject(signal.reason);
   const id = 0x8000 | nextId;
   nextId = (nextId + 1) & 0x7fff;
   if (type === TYPES.imageBegin && deviceProgress) deviceProgress.id = id;
   return new Promise((resolve, reject) => {
-    const timer = setTimeout(() => {
-      pending.delete(id);
-      reject(new Error('设备响应超时'));
-    }, timeout);
-    pending.set(id, {resolve, reject, timer, type});
-    sendBytes(encodeFrame(id, type, payload)).catch(error => {
+    let settled = false;
+    const finish = (callback, value) => {
+      if (settled) return;
+      settled = true;
       pending.delete(id);
       clearTimeout(timer);
-      reject(error);
-    });
+      signal?.removeEventListener('abort', abort);
+      callback(value);
+    };
+    const abort = () => finish(reject, signal.reason);
+    const timer = setTimeout(() => finish(reject, new Error('设备响应超时')), timeout);
+    pending.set(id, {resolve:value => finish(resolve, value), reject:error => finish(reject, error), timer, type});
+    signal?.addEventListener('abort', abort, {once:true});
+    sendBytes(encodeFrame(id, type, payload), () => !signal?.aborted)
+      .catch(error => finish(reject, error));
   });
 }
 
@@ -238,14 +246,16 @@ function controls() {
   element('image-cancel').disabled = !uploading || uploadCancelled || committing;
   /* 进度条只在上传时出现，空闲时不占位置。 */
   element('image-progress').hidden = !uploading;
-  element('image-read-previews').disabled = !connected || uploading || readingPreviews;
+  element('image-read-previews').disabled = !connected || uploading || (readingPreviews && !previewSyncController);
+  element('image-read-previews').textContent = previewSyncController ? '停止同步' : '同步设备缩略图 ↻';
   element('custom-image').dataset.readingPreviews = String(readingPreviews);
   /* 按钮灰着必须告诉用户为什么，否则只会以为功能坏了 */
   const readHint = element('image-read-hint');
   if (readHint) readHint.textContent = !connected ? '连接设备后将自动同步三个槽位的缩略图。'
-    : readingPreviews ? '正在读取三个槽位…'
+    : previewSyncController ? `正在同步第 ${previewSyncSlot + 1} / 3 张，可停止后重试。`
+    : readingPreviews ? '正在读取原图…'
     : uploading ? '上传中，暂不可读取' : '进入此页面会自动同步；查看原图可读取完整画面。';
-  element('image-read-previews').title = connected ? '读取设备上三个槽位的缩略图'
+  element('image-read-previews').title = previewSyncController ? '停止本次同步，保留已读取的缩略图' : connected ? '读取设备上三个槽位的缩略图'
     : '请先点顶部「连接设备」';
   for (let slot = 0; slot < SLOT_COUNT; slot++) {
     element(`image-slot-card-${slot}`).disabled = uploading || layoutChanging || projectLoading || readingPreviews;
@@ -313,6 +323,7 @@ async function connect() {
 }
 
 function disconnected() {
+  previewSyncController?.abort(new Error('蓝牙连接已断开'));
   device?.removeEventListener('gattserverdisconnected', disconnected);
   device = null;
   rx = tx = null;
@@ -544,15 +555,17 @@ async function selectSlot(slot) {
 
 /* 设备正在刷屏时读不了缩略图（解码要借屏幕缓冲），等一下重试即可。 */
 /* 缩略图 2400 字节分 3 页拉，每页 960，拼成一份带头信息的结果交给 drawSlotPreview。 */
-async function requestPreview(slot, link = rx) {
+async function requestPreview(slot, link = rx, signal) {
   for (let attempt = 0; attempt < 3; attempt++) {
     try {
       const packed = new Uint8Array(2 + PREVIEW_BYTES);
       packed[0] = slot;
       for (let offset = 0; offset < PREVIEW_BYTES; offset += PREVIEW_PAGE) {
+        if (signal?.aborted) throw signal.reason;
         if (!connected || rx !== link) throw new Error('蓝牙连接已变化');
         const response = await request(TYPES.imagePreview,
-          Uint8Array.of(slot, offset & 0xFF, (offset >> 8) & 0xFF));
+          Uint8Array.of(slot, offset & 0xFF, (offset >> 8) & 0xFF), 6000, signal);
+        if (signal?.aborted) throw signal.reason;
         if (!connected || rx !== link) throw new Error('蓝牙连接已变化');
         if (response.length < 4 || response[0] !== slot)
           throw new Error('缩略图响应错误');
@@ -564,8 +577,18 @@ async function requestPreview(slot, link = rx) {
       }
       return packed;
     } catch (error) {
-      if (attempt === 2 || !connected || rx !== link) throw error;
-      await new Promise(resolve => setTimeout(resolve, 500));
+      if (attempt === 2 || !connected || rx !== link || signal?.aborted) throw error;
+      await new Promise((resolve, reject) => {
+        const abort = () => {
+          clearTimeout(timer);
+          reject(signal.reason);
+        };
+        const timer = setTimeout(() => {
+          signal?.removeEventListener('abort', abort);
+          resolve();
+        }, 500);
+        signal?.addEventListener('abort', abort, {once:true});
+      });
     }
   }
 }
@@ -662,21 +685,38 @@ async function readFullImage(slot) {
 async function readPreviews() {
   if (!connected || uploading || readingPreviews) return;
   const link = rx;
-  readingPreviews = true; controls();
+  const controller = new AbortController();
+  previewSyncController = controller;
+  previewSyncSlot = 0;
+  readingPreviews = true;
+  const timer = setTimeout(() => {
+    previewSyncPending = false;
+    controller.abort(new Error('缩略图同步超时，已停止；可点击「同步设备缩略图」重新同步。'));
+  }, 20000);
   try {
+    controls();
     for (let slot = 0; slot < SLOT_COUNT; slot++) {
-      const data = await requestPreview(slot, link);
-      /* 空槽只回全 0 且 valid=0，直接画占位。 */
+      previewSyncSlot = slot;
+      controls();
+      const data = await requestPreview(slot, link, controller.signal);
+      if (controller.signal.aborted) throw controller.signal.reason;
       drawSlotPreview(element(`image-slot-canvas-${slot}`), data, slot, !!data[1]);
     }
     uploadState('已读取三个槽位的缩略图。');
   } catch (error) {
     if (!connected || rx !== link) return;
-    uploadState(/忙|没法处理|等太久/.test(error.message)
-      ? '设备正忙，等它刷完这一屏再读缩略图。'
-      : '这次没读到缩略图：' + error.message);
+    previewSyncPending = false;
+    uploadState(controller.signal.aborted ? controller.signal.reason.message
+      : /忙|没法处理|等太久/.test(error.message) ? '设备正忙，本次同步已停止，稍后可点击重新同步。'
+      : '本次缩略图同步未完成，可点击重新同步：' + error.message);
   } finally {
-    readingPreviews = false; controls();
+    clearTimeout(timer);
+    controller.abort(new Error('本次同步已结束'));
+    if (previewSyncController === controller) {
+      previewSyncController = null;
+      readingPreviews = false;
+      controls();
+    }
   }
 }
 
@@ -999,7 +1039,12 @@ function bind() {
   element('image-rotate-right').addEventListener('click',()=>editor.transformSelected(1,90));
   element('image-upload').addEventListener('click', uploadImage);
   element('image-cancel').addEventListener('click', cancelUpload);
-  element('image-read-previews').addEventListener('click', readPreviews);
+  element('image-read-previews').addEventListener('click', () => {
+    if (previewSyncController) {
+      previewSyncPending = false;
+      previewSyncController.abort(new Error('已停止同步，可点击「同步设备缩略图」重新同步。'));
+    } else return readPreviews();
+  });
   /* 直接点缩略图选槽位，边框高亮就是选中态，不再另设下拉框。 */
   for (let slot = 0; slot < SLOT_COUNT; slot++) {
     const card = element(`image-slot-card-${slot}`);
