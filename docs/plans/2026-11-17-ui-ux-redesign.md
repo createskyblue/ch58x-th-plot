@@ -59,3 +59,11 @@
 - JavaScript syntax, inline scripts, unique IDs and diff whitespace checked.
 
 No deployment or remote push. Physical Bluetooth hardware still needs a final device acceptance check.
+
+## Showcase follow-up
+
+The homepage connection card now presents the real interactive 3D device directly. It loads automatically when Overview is entered, pauses when Overview or the document is hidden, and resumes when revisited. The retired static illustration and collapsed About viewer were removed.
+
+Real device photos now immediately follow the About introduction. Mobile uses a vertical gallery with four captions and full-width images; desktop keeps a four-column grid. The example-data action has 12px vertical / 16px horizontal padding and a 44px minimum height.
+
+Verified real model loading, homepage visibility, gallery order and mobile bounds, action padding, lifecycle pause/resume, UI journeys, all five pages at nine widths, JavaScript syntax and unique HTML IDs. No deployment.

@@ -215,7 +215,7 @@ export function mountDeviceModel(modelHost) {
         animationFrame = requestAnimationFrame(renderModel);
     }
     function syncVisibility() {
-        const visible = !document.hidden && modelHost.closest('details').open && !modelHost.closest('.tab-page').hidden;
+        const visible = !document.hidden && !modelHost.closest('.tab-page').hidden;
         if (visible === active) return;
         active = visible;
         lifecycle++;
@@ -229,7 +229,6 @@ export function mountDeviceModel(modelHost) {
             clearTimeout(frameTimer);
         }
     }
-    modelHost.closest('details').addEventListener('toggle', syncVisibility);
     document.addEventListener('visibilitychange', syncVisibility);
     window.addEventListener('thplot:tab-changed', syncVisibility);
     syncVisibility();

@@ -112,15 +112,17 @@ document.addEventListener('click',event=>{
 document.addEventListener('click',event=>{if(!event.target.closest('.project-tools'))for(const details of document.querySelectorAll('.project-tools[open]'))details.open=false;});
 
 let modelPromise=null;
-const details=byId('model-details'),modelHost=byId('model-preview');
-details.addEventListener('toggle',()=>{
-  if(!details.open||modelPromise)return;
-  text('model-load-state','正在加载交互式模型…');
-  modelPromise=import('./device-model.js?v=ui-redesign1').then(module=>module.mountDeviceModel(modelHost)).catch(()=>{
-    text('model-load-state','模型暂时无法加载，请稍后重新展开。');modelPromise=null;
+const modelHost=byId('model-preview');
+function loadDeviceModel() {
+  if(currentPage!=='overview'||modelPromise)return;
+  text('model-load-state','正在加载 3D 设备预览…');
+  modelPromise=import('./device-model.js?v=ui-redesign2').then(module=>module.mountDeviceModel(modelHost)).catch(()=>{
+    text('model-load-state','3D 预览暂时无法加载，请刷新重试。');modelPromise=null;
   });
-});
+}
+window.addEventListener('thplot:tab-changed',loadDeviceModel);
+loadDeviceModel();
 new MutationObserver(()=>{
-  if(modelHost.dataset.ready==='true')text('model-load-state','拖动旋转，滚轮或双指缩放。');
-  if(modelHost.dataset.error==='true')text('model-load-state','模型加载失败，可以稍后刷新重试。');
+  if(modelHost.dataset.ready==='true')text('model-load-state','拖动旋转 · 双指或滚轮缩放');
+  if(modelHost.dataset.error==='true')text('model-load-state','3D 预览加载失败，请刷新重试。');
 }).observe(modelHost,{attributes:true,attributeFilter:['data-ready','data-error']});

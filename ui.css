@@ -361,59 +361,6 @@ button.text-button:disabled{
   font-size:13px}
 .guide-actions .primary{
   min-height:39px}
-.device-illustration{
-  width:202px;
-  height:164px;
-  border:1px solid #dadfe6;
-  border-radius:17px;
-  background:linear-gradient(130deg,#fff,#f1f2f4);
-  box-shadow:8px 14px 20px #293a4e0b,inset 0 0 0 2px #fff;
-  transform:rotate(-7deg);
-  padding:13px 13px 17px;
-  position:relative;
-  flex:0 0 auto;
-  margin-right:18px;
-  margin-left:20px}
-.device-screen{
-  height:100%;
-  border:1.5px solid #6a7078;
-  background:#f8f8f4;
-  border-radius:5px;
-  padding:10px 13px;
-  color:#52565b;
-  overflow:hidden;
-  box-shadow:inset 0 0 0 3px #e8e9e3}
-.device-screen>span{
-  font-size:7px;
-  letter-spacing:2px}
-.device-screen>div{
-  margin-top:8px;
-  display:flex;
-  align-items:center;
-  gap:10px}
-.device-screen b{
-  font:44px Georgia,serif;
-  font-weight:400;
-  letter-spacing:-4px}
-.device-screen small{
-  font:15px Georgia,serif}
-.device-screen p{
-  font-size:5px;
-  letter-spacing:1px;
-  margin:7px 0}
-.device-screen i{
-  display:block;
-  width:100%;
-  height:13px;
-  border-bottom:1px dashed #adb2ad}
-.device-key{
-  position:absolute;
-  left:50%;
-  bottom:6px;
-  width:14px;
-  height:4px;
-  border-radius:3px;
-  background:#d3d7dc}
 .section-heading{
   display:flex;
   align-items:center;
@@ -1512,34 +1459,6 @@ progress{
 .about-link span{
   font-size:11px;
   color:#596579}
-.optional-model>summary{
-  display:flex;
-  align-items:center;
-  justify-content:space-between;
-  cursor:pointer;
-  list-style:none;
-  gap:15px;
-  min-height:35px}
-.optional-model summary b{
-  font-size:14px;
-  font-weight:600;
-  color:#606e85}
-.optional-model summary small{
-  display:block;
-  font-size:12px;
-  color:#596579;
-  margin-top:7px}
-.detail-action{
-  font-size:12px;
-  color:#596579;
-  white-space:nowrap}
-.model-card{
-  margin:18px 0 0;
-  border:0;
-  border-radius:10px;
-  padding:0;
-  overflow:hidden;
-  background:#f4f6fa}
 .model-preview{
   width:100%;
   height:420px;
@@ -1566,7 +1485,7 @@ progress{
   width:100%;
   height:auto;
   aspect-ratio:4/3;
-  object-fit:cover}
+  object-fit:contain}
 .photo-card .badge{
   font-size:11px}
 details.card>summary{
@@ -1658,15 +1577,9 @@ summary::-webkit-details-marker{
   padding:28px 27px}
 .connection-guide{
   padding:28px}
-.device-illustration{
-  width:153px;
-  height:132px;
-  margin-right:0;
-  padding:10px}
-.device-screen{
-  padding:8px}
-.device-screen b{
-  font-size:33px}
+
+
+
 .guide-copy h2{
   font-size:21px}
 .metric-card{
@@ -1822,8 +1735,7 @@ summary::-webkit-details-marker{
   min-height:0;
   padding:25px 22px;
   align-items:flex-start}
-.device-illustration{
-  display:none}
+
 .section-kicker{
   font-size:11px;
   margin-bottom:15px}
@@ -2258,23 +2170,14 @@ summary::-webkit-details-marker{
   font-size:13px}
 .about-link span{
   font-size:11px}
-.optional-model summary b{
-  font-size:13px}
-.optional-model summary small{
-  font-size:11px}
-.detail-action{
-  font-size:11px}
+
+
+
 .model-preview{
   height:300px}
 .photo-strip{
-  display:flex;
-  overflow-x:auto;
-  scroll-snap-type:x mandatory;
-  gap:10px;
-  padding-bottom:5px}
-.photo-strip figure{
-  flex:0 0 85%;
-  scroll-snap-align:start}
+  grid-template-columns:minmax(0,1fr);
+  gap:18px}
 .photo-card .section-head h2{
   font-size:14px}
 .photo-card .badge{
@@ -2458,3 +2361,14 @@ body[data-page=wallpaper] .wallpaper-intro{display:none}
 @media(max-width:720px){.metric-card strong{font-size:clamp(22px,6.9vw,27px);letter-spacing:-1.3px}.metric-card{padding-left:10px;padding-right:10px}}
 
 @media(max-width:720px){#image-mono-panel input[type=range]{height:44px;margin:5px 0}}
+
+.hero-model{flex:0 0 280px;width:280px;min-width:0;margin:0 0 0 26px;align-self:center}
+.hero-model .model-preview{height:220px}
+.hero-model figcaption{min-height:20px;margin-top:7px;color:var(--muted);text-align:center;font-size:12px;line-height:1.7}
+.guide-actions{gap:12px}
+.guide-actions .text-button{min-height:44px;padding:12px 16px;line-height:1.5;border-radius:8px;background:#f5f7fb;border:1px solid #e2e6ef}
+.guide-actions .primary{min-height:44px;padding:12px 16px}
+.photo-strip figcaption{padding:12px 14px;color:var(--ink);font-size:14px;line-height:1.6;border-top:1px solid var(--line);background:#fff}
+@media(min-width:721px) and (max-width:1140px){.hero-model{flex-basis:210px;width:210px;margin-left:12px}.hero-model .model-preview{height:195px}}
+@media(max-width:850px){.connection-guide{flex-direction:column;align-items:stretch;gap:22px}.hero-model{width:100%;flex:0 0 auto;margin:0}.hero-model .model-preview{height:220px}}
+@media(max-width:720px){.guide-copy{max-width:none}.guide-copy h2{max-width:none}.guide-actions{justify-content:flex-start;gap:12px}.guide-actions .text-button,.guide-actions .primary{font-size:13px;padding:12px 16px}.hero-model{padding-top:10px;border-top:1px solid var(--line)}.photo-card .badge{font-size:12px}}

@@ -8,7 +8,7 @@
 <title>TH-Plot · 设备工作台</title>
 
 <link href="./canvas-editor.css?v=ui-redesign1" rel="stylesheet"/>
-<link href="./ui.css?v=ui-redesign1" rel="stylesheet"/>
+<link href="./ui.css?v=ui-redesign2" rel="stylesheet"/>
 <script type="importmap">
 {
   "imports": {
@@ -158,18 +158,7 @@
 </button>
 </div>
 </div>
-<div aria-hidden="true" class="device-illustration">
-<div class="device-screen">
-<span>TH-PLOT</span>
-<div>
-<b>—</b>
-<small>°C</small>
-</div>
-<p>YOUR SPACE, AT A GLANCE</p>
-<i></i>
-</div>
-<span class="device-key"></span>
-</div>
+<figure class="hero-model" aria-label="设备 3D 预览"><div class="model-preview" id="model-preview" aria-label="温湿度计 3D 模型"></div><figcaption id="model-load-state" role="status">正在加载 3D 设备预览…</figcaption></figure>
 </section>
 <section aria-labelledby="readings-title" class="metrics-section">
 <div class="section-heading">
@@ -794,6 +783,38 @@
 </svg>
 </a>
 </section>
+<section class="card photo-card" id="photo-card">
+<div class="section-head">
+<h2>设备实拍</h2>
+<span class="badge">真实设备 · 点击查看大图</span>
+</div>
+<div class="photo-strip">
+<figure>
+<a href="assets/photos/device-1.jpg" rel="noopener noreferrer" target="_blank" title="点击查看原图">
+<img alt="墨水屏显示自定义壁纸图案" height="1279" loading="lazy" src="assets/photos/device-1.jpg" width="1706"/>
+</a>
+<figcaption>自定义壁纸</figcaption>
+</figure>
+<figure>
+<a href="assets/photos/device-2.jpg" rel="noopener noreferrer" target="_blank" title="点击查看原图">
+<img alt="墨水屏显示三天温湿度曲线" height="1440" loading="lazy" src="assets/photos/device-2.jpg" width="1920"/>
+</a>
+<figcaption>温湿度曲线</figcaption>
+</figure>
+<figure>
+<a href="assets/photos/device-3.jpg" rel="noopener noreferrer" target="_blank" title="点击查看原图">
+<img alt="墨水屏显示月历与农历" height="1440" loading="lazy" src="assets/photos/device-3.jpg" width="1920"/>
+</a>
+<figcaption>月历与农历</figcaption>
+</figure>
+<figure>
+<a href="assets/photos/device-4.jpg" rel="noopener noreferrer" target="_blank" title="点击查看原图">
+<img alt="墨水屏显示大字号日期" height="1279" loading="lazy" src="assets/photos/device-4.jpg" width="1706"/>
+</a>
+<figcaption>大字号日期</figcaption>
+</figure>
+</div>
+</section>
 <details class="card" id="activation-card">
 <summary>
 <span>激活码</span>
@@ -874,47 +895,8 @@
 </div>
 </div>
 </section>
-<details class="optional-model panel" id="model-details">
-<summary>
-<span>
-<b>360° 设备预览</b>
-<small>按需加载，拖动查看设备外观</small>
-</span>
-<span class="detail-action">打开预览 ＋</span>
-</summary>
-<p class="context-hint" id="model-load-state">展开后加载交互式模型。</p>
-<section class="card model-card">
-<div aria-label="温湿度计 3D 模型" class="model-preview" id="model-preview"></div>
-</section>
-</details>
-<section class="card photo-card" id="photo-card">
-<div class="section-head">
-<h2>设备实拍</h2>
-<span class="badge">真实设备 · 点击查看大图</span>
-</div>
-<div class="photo-strip">
-<figure>
-<a href="assets/photos/device-1.jpg" rel="noopener noreferrer" target="_blank" title="点击查看原图">
-<img alt="墨水屏显示自定义壁纸图案" height="1279" loading="lazy" src="assets/photos/device-1.jpg" width="1706"/>
-</a>
-</figure>
-<figure>
-<a href="assets/photos/device-2.jpg" rel="noopener noreferrer" target="_blank" title="点击查看原图">
-<img alt="墨水屏显示三天温湿度曲线" height="1440" loading="lazy" src="assets/photos/device-2.jpg" width="1920"/>
-</a>
-</figure>
-<figure>
-<a href="assets/photos/device-3.jpg" rel="noopener noreferrer" target="_blank" title="点击查看原图">
-<img alt="墨水屏显示月历与农历" height="1440" loading="lazy" src="assets/photos/device-3.jpg" width="1920"/>
-</a>
-</figure>
-<figure>
-<a href="assets/photos/device-4.jpg" rel="noopener noreferrer" target="_blank" title="点击查看原图">
-<img alt="墨水屏显示大字号日期" height="1279" loading="lazy" src="assets/photos/device-4.jpg" width="1706"/>
-</a>
-</figure>
-</div>
-</section>
+
+
 </div>
 <footer class="site-footer">
 <a href="https://github.com/createskyblue/ch58x-th-plot/" rel="noopener noreferrer" target="_blank">GitHub · createskyblue/ch58x-th-plot</a> · <a href="mailto:createskyblue@outlook.com">createskyblue@outlook.com</a>
@@ -2339,6 +2321,6 @@ loadDemoHistory();
 
 
 
-<script src="./ui-shell.js?v=ui-redesign1" type="module"></script><script src="./image-app.js?v=ui-redesign1" type="module"></script>
+<script src="./ui-shell.js?v=ui-redesign2" type="module"></script><script src="./image-app.js?v=ui-redesign1" type="module"></script>
 </body>
 </html>
