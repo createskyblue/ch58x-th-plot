@@ -238,12 +238,13 @@ function controls() {
   element('image-read-previews').disabled = !connected || uploading || readingPreviews;
   /* 按钮灰着必须告诉用户为什么，否则只会以为功能坏了 */
   const readHint = element('image-read-hint');
-  if (readHint) readHint.textContent = !connected ? '未连接设备，点顶部「连接设备」'
+  if (readHint) readHint.textContent = !connected ? '连接设备后，可同步三个槽位的壁纸。'
     : readingPreviews ? '正在读取三个槽位…'
-    : uploading ? '上传中，暂不可读取' : '回传 80×60 缩略图';
+    : uploading ? '上传中，暂不可读取' : '同步缩略图可查看设备当前保存的壁纸。';
   element('image-read-previews').title = connected ? '读取设备上三个槽位的缩略图'
     : '请先点顶部「连接设备」';
   for (let slot = 0; slot < SLOT_COUNT; slot++) {
+    element(`image-slot-card-${slot}`).disabled = uploading || layoutChanging || projectLoading;
     const full = element(`image-slot-full-${slot}`);
     if (full) full.disabled = !connected || uploading || readingPreviews;
   }
@@ -983,9 +984,6 @@ function bind() {
   for (let slot = 0; slot < SLOT_COUNT; slot++) {
     const card = element(`image-slot-card-${slot}`);
     card.addEventListener('click', () => selectSlot(slot));
-    card.addEventListener('keydown', event => {
-      if (event.key === 'Enter' || event.key === ' ') { event.preventDefault(); selectSlot(slot); }
-    });
     /* 点"原图"只下载这一张，不能顺带把卡片选中事件也触发了。 */
     const fullButton = element(`image-slot-full-${slot}`);
     if (fullButton) fullButton.addEventListener('click', event => {

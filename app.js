@@ -58,7 +58,7 @@ function settingsControls() {
     for (const id of ['save-user', 'clear-user']) element(id).disabled = !rx || !!importJob || rangeBusy;
     element('history').disabled = !rx || exportId !== null || !!importJob || rangeBusy;
     element('reboot').disabled = !rx || exportId !== null || !!importJob || rangeBusy;
-    element('settings-state').textContent = settingsError ? '设置读取失败：' + settingsError
+    element('settings-state').textContent = !rx ? '连接设备后读取' : settingsError ? '设置读取失败：' + settingsError
         : settingsReady ? '设置已读取' : '正在读取设置';
 }
 async function verifyActivation() {
@@ -334,8 +334,8 @@ async function refreshLatest() {
     const data = await request(TYPES.latest);
     if (data.length !== 9 || data[0]) throw new Error('即时测量失败，原显示未更新');
     const view = new DataView(data.buffer, data.byteOffset, data.byteLength);
-    element('temperature').textContent = (view.getInt16(1, true) / 10).toFixed(1) + ' °C';
-    element('humidity').textContent = (view.getInt16(3, true) / 10).toFixed(1) + ' %';
+    element('temperature').innerHTML = (view.getInt16(1, true) / 10).toFixed(1) + '<small> °C</small>';
+    element('humidity').innerHTML = (view.getInt16(3, true) / 10).toFixed(1) + '<small> %</small>';
     element('measured').textContent = '设备运行 ' + (view.getUint32(5, true) / 1000).toFixed(1) + ' 秒时测量，不是墙钟时间';
 }
 action('latest', async () => {
