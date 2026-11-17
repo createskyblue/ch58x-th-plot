@@ -2,7 +2,7 @@ import {readHistoryCsv, prepareHistoryImport, uploadHistoryImport} from './histo
 import {TYPES, encodeFrame, FrameParser, HistoryReceiver, formatBuildStamp, writeRxFrame, setRxWriteSize} from './protocol.js';
 
 const element = id => document.getElementById(id);
-const status = text => { element('status').textContent = text; };
+const status = (text, scope = '') => { element('status').dataset.scope = scope; element('status').textContent = text; };
 let firmwareInfo = null;
 async function loadFirmwareInfo() {
     try {
@@ -163,7 +163,7 @@ function onFrame(message) {
         if (message.type === TYPES.streamBegin) { receiver.begin(message.id, message.data); lastProgress = Date.now(); element('transfer-status').textContent = receiver.metadata.simulated ? '正在接收全部历史（含模拟预填数据）' : '正在接收全部历史'; }
         else if (message.type === TYPES.streamData) { const before = receiver.received; receiver.data(message.id, message.data); if (receiver.received !== before) lastProgress = Date.now(); }
         else if (message.type === TYPES.streamEnd) {
-            receiver.end(message.id, message.data); ending = true; renderProgress(); finishHistory().catch(error => abortHistory(error.message));
+            receiver.end(message.id, message.data); ending = true; renderProgress(); finishHistory().catch(error => abortHistory(error.message, message.id));
         } else throw new Error('意外的历史响应类型');
         renderProgress();
     } catch (error) { abortHistory(error.message); }
@@ -176,9 +176,10 @@ async function finishHistory() {
     ending = false; exportId = null; element('cancel').disabled = true; element('history').disabled = !rx;
     settingsControls();
     renderProgress(); element('transfer-status').textContent = receiver.metadata.simulated ? '传输完整，设备已恢复历史写入（含模拟预填数据）' : '传输完整，设备已恢复历史写入';
-    try { decodeHistory(); } catch (error) { status('传输已完成；' + error.message); }
+    try { decodeHistory(); } catch (error) { status('传输已完成；' + error.message, 'history'); }
 }
-function abortHistory(reason) {
+function abortHistory(reason, expectedId = exportId) {
+    if (expectedId === null || expectedId !== exportId) return;
     const oldId = exportId;
     exportId = null; ending = false; receiver.abort(); points = []; drawChart(); renderProgress();
     chartOrigin = null; element('chart-source').textContent = '尚无历史数据';
@@ -186,7 +187,7 @@ function abortHistory(reason) {
     element('transfer-status').textContent = '传输未完成'; element('transfer-detail').textContent = reason;
     element('cancel').disabled = true; element('history').disabled = !rx;
     if (oldId !== null && rx) request(TYPES.cancel, Uint8Array.of(oldId & 255, oldId >>> 8)).catch(() => {});
-    status(reason);
+    status(reason, 'history');
 }
 function rawEditor() {
     const text = element('user-data').value;
@@ -207,7 +208,7 @@ function decodeHistory() {
     const decoded = receiver.decode();
     points = decoded; chartOrigin = 'device'; plottedSimulated = receiver.metadata.simulated;
     element('chart-source').textContent = '设备历史 · ' + points.length + ' 个点'; drawChart(); element('csv').disabled = false;
-    status('已获取 ' + points.length + ' 个历史点');
+    status('已获取 ' + points.length + ' 个历史点', 'history');
 }
 function download(name, data, type) {
     const blob = new Blob([data], {type}); const url = URL.createObjectURL(blob);
@@ -242,7 +243,14 @@ function drawChart() {
         }); context.stroke();
     }
 }
-function action(id, handler, event = 'click') { element(id).addEventListener(event, async () => { try { await handler(); } catch (error) { status(error.message); } }); }
+function action(id, handler, event = 'click') {
+    element(id).addEventListener(event, async () => {
+        const link = rx;
+        const scope = ['history','cancel','csv','import-history','cancel-import'].includes(id) ? 'history' : '';
+        try { await handler(); }
+        catch (error) { if (!scope || rx === link) status(error.message, scope); }
+    });
+}
 async function syncDeviceTime() {
     const now = new Date();
     /* 设备显示本地墙钟；把浏览器时区偏移加进秒数，不依赖设备知道时区。 */
@@ -477,7 +485,7 @@ action('import-history', async () => {
             onCommit:() => { job.committing = true; settingsControls(); element('import-status').textContent = '正在确认导入结果…'; }
         });
         element('import-status').textContent = '已导入 ' + prepared.total + ' 个点，设备将刷新当前时间范围';
-        status('历史导入完成');
+        status('历史导入完成', 'history');
     } catch (error) { element('import-status').textContent = error.message; throw error; }
     finally { if (importJob === job) { importJob = null; settingsControls(); } }
 });
@@ -488,7 +496,8 @@ action('history', async () => {
     settingsControls();
     element('cancel').disabled = false; element('history').disabled = true;
     element('transfer-status').textContent = '等待设备冻结历史并开始导出'; renderProgress();
-    try { await write(exportId, TYPES.historyStream); } catch (error) { abortHistory(error.message); }
+    const id = exportId;
+    try { await write(id, TYPES.historyStream); } catch (error) { abortHistory(error.message, id); }
 });
 action('cancel', () => abortHistory('用户取消，本次未完成结果已丢弃'));
 action('csv', () => download('th-plot-history.csv', '\ufeffseconds_ago,temperature_c,humidity_percent,density,contains_simulated_history\n' + points.map(point => [point.secondsAgo, point.temperature.toFixed(1), point.humidity.toFixed(1), point.density, plottedSimulated ? 1 : 0].join(',')).join('\n'), 'text/csv;charset=utf-8'));

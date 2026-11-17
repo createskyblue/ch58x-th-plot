@@ -8,7 +8,7 @@
 <title>TH-Plot · 设备工作台</title>
 
 <link href="./canvas-editor.css?v=ui-redesign1" rel="stylesheet"/>
-<link href="./ui.css?v=ui-redesign2" rel="stylesheet"/>
+<link href="./ui.css?v=ui-redesign3" rel="stylesheet"/>
 <script type="importmap">
 {
   "imports": {
@@ -99,8 +99,7 @@
 <div class="app-stage">
 <header class="workspace-topbar">
 <div class="workspace-breadcrumb">
-<span class="mobile-brand">TH-Plot<span>.</span>
-</span>
+<span class="mobile-brand"><b>4.2寸墨水屏温湿度计</b><small>一年续航，30天历史</small></span>
 <span class="desktop-breadcrumb">我的工作台 <i>/</i> <span id="page-breadcrumb">设备概览</span>
 </span>
 </div>
@@ -762,9 +761,13 @@
 </div>
 </div>
 </div>
+<div class="settings-group settings-maintenance">
+<div class="settings-group-title"><h3>设备维护</h3><p>管理设备运行状态。</p></div>
+<div class="settings-group-fields"><div class="setting-field"><div><label for="reboot">重新启动</label><p class="hint" id="reboot-hint">重启后蓝牙会关闭，需长按设备按键重新连接。</p></div><button disabled="" id="reboot" aria-describedby="reboot-hint">重启设备</button></div></div>
+</div>
 <div class="settings-footer">
 <p class="hint">拨动开关或切换选项后立即生效，设备屏幕会同步刷新。</p>
-<button class="text-button" disabled="" id="reboot" title="重启后需要重新开启蓝牙">重启设备</button>
+
 </div>
 </section>
 </div>
@@ -1196,7 +1199,7 @@ class HistoryReceiver {
 }
 
 const element = id => document.getElementById(id);
-const status = text => { element('status').textContent = text; };
+const status = (text, scope = '') => { element('status').dataset.scope = scope; element('status').textContent = text; };
 let firmwareInfo = null;
 async function loadFirmwareInfo() {
     try {
@@ -1377,7 +1380,7 @@ function onFrame(message) {
         if (message.type === TYPES.error) throw new Error(errors[message.data[0]] || '历史导出失败');
         if (message.type === TYPES.streamBegin) { receiver.begin(message.id, message.data); lastProgress = Date.now(); element('transfer-status').textContent = '正在接收历史数据'; }
         else if (message.type === TYPES.streamData) { const before = receiver.received; receiver.data(message.id, message.data); if (receiver.received !== before) lastProgress = Date.now(); }
-        else if (message.type === TYPES.streamEnd) { receiver.end(message.id, message.data); ending = true; renderProgress(); finishHistory().catch(error => abortHistory(error.message)); }
+        else if (message.type === TYPES.streamEnd) { receiver.end(message.id, message.data); ending = true; renderProgress(); finishHistory().catch(error => abortHistory(error.message, message.id)); }
         else throw new Error('设备返回了不符合预期的数据');
         renderProgress();
     } catch (error) { abortHistory(error.message); }
@@ -1392,7 +1395,8 @@ async function finishHistory() {
     capturedAt = Date.now();
     decodeHistoryOrReport();
 }
-function abortHistory(reason) {
+function abortHistory(reason, expectedId = exportId) {
+    if (expectedId === null || expectedId !== exportId) return;
     const oldId = exportId;
     exportId = null; ending = false; receiver.abort(); points = []; capturedAt = 0; element('csv').disabled = true;
     chartOrigin = null; element('chart-source').textContent = '尚无历史数据';
@@ -1401,7 +1405,7 @@ function abortHistory(reason) {
     element('transfer-status').textContent = '传输未完成'; element('transfer-detail').textContent = reason;
     element('cancel').disabled = true; element('history').disabled = !rx;
     if (oldId !== null && rx) request(TYPES.cancel, Uint8Array.of(oldId & 255, oldId >>> 8)).catch(() => {});
-    status(reason);
+    status(reason, 'history');
 }
 
 function keyText() { return element('activation-input').value.trim().replace(/\s+/g, ''); }
@@ -1437,14 +1441,14 @@ function decodeHistory() {
     element('chart-source').textContent = '设备历史 · ' + points.length + ' 个点';
     if (!capturedAt) capturedAt = Date.now();
     resetView(); drawCharts(); element('csv').disabled = false;
-    status('已获取 ' + points.length + ' 个历史点');
+    status('已获取 ' + points.length + ' 个历史点', 'history');
 }
 function decodeHistoryOrReport() {
     try { decodeHistory(); return true; }
     catch (error) {
         points = []; capturedAt = 0; element('csv').disabled = true; resetView(); drawCharts();
         chartOrigin = null; element('chart-source').textContent = '历史数据解析失败';
-        status(error.message);
+        status(error.message, 'history');
         return false;
     }
 }
@@ -1814,7 +1818,14 @@ function showTooltip(event) {
     tooltip.style.top = Math.max(6, Math.min(box.height - tipHeight - 6, (event.clientY - box.top) - 20)) + 'px';
 }
 
-function action(id, handler, event = 'click') { element(id).addEventListener(event, async () => { try { await handler(); } catch (error) { status(error.message); } }); }
+function action(id, handler, event = 'click') {
+    element(id).addEventListener(event, async () => {
+        const link = rx;
+        const scope = ['history','cancel','csv','import-history','cancel-import'].includes(id) ? 'history' : '';
+        try { await handler(); }
+        catch (error) { if (!scope || rx === link) status(error.message, scope); }
+    });
+}
 async function syncDeviceTime() {
     const now = new Date();
     /* 设备使用本地墙钟秒数；按浏览器当前时区换算，跨日也由秒数自然进位。 */
@@ -2067,7 +2078,7 @@ action('import-history', async () => {
             onCommit:() => { job.committing = true; settingsControls(); element('import-status').textContent = '正在确认导入结果…'; }
         });
         element('import-status').textContent = '已导入 ' + prepared.total + ' 个点，设备将刷新当前时间范围';
-        status('历史导入完成');
+        status('历史导入完成', 'history');
     } catch (error) { element('import-status').textContent = error.message; throw error; }
     finally { if (importJob === job) { importJob = null; settingsControls(); } }
 });
@@ -2096,7 +2107,8 @@ action('history', async () => {
     settingsControls();
     element('cancel').disabled = false; element('history').disabled = true;
     element('transfer-status').textContent = '等待设备响应'; renderProgress();
-    try { await write(exportId, TYPES.historyStream); } catch (error) { abortHistory(error.message); }
+    const id = exportId;
+    try { await write(id, TYPES.historyStream); } catch (error) { abortHistory(error.message, id); }
 });
 action('cancel', () => abortHistory('已取消'));
 action('csv', () => {
@@ -2321,6 +2333,6 @@ loadDemoHistory();
 
 
 
-<script src="./ui-shell.js?v=ui-redesign2" type="module"></script><script src="./image-app.js?v=ui-redesign1" type="module"></script>
+<script src="./ui-shell.js?v=ui-redesign3" type="module"></script><script src="./image-app.js?v=ui-redesign3" type="module"></script>
 </body>
 </html>

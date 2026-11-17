@@ -49,10 +49,12 @@ function syncConnection() {
   const historyAction=document.querySelector('.guide-actions [data-go="history"]');
   if(historyAction)historyAction.textContent=connected?'查看历史数据 →':'先看看示例数据 →';
   const status=byId('status').textContent.trim();
-  byId('connection-message').hidden=!connected&&(!status||status==='尚未连接设备');
+  const scope=byId('status').dataset.scope;
+  byId('connection-message').hidden=!!scope&&scope!==currentPage||!connected&&(!status||status==='尚未连接设备');
 }
 const connectionObserver=new MutationObserver(syncConnection);
-for(const id of ['connection','status','connect'])connectionObserver.observe(byId(id),{childList:true,subtree:true,attributes:true,attributeFilter:['disabled']});
+for(const id of ['connection','status','connect'])connectionObserver.observe(byId(id),{childList:true,subtree:true,attributes:true,attributeFilter:['disabled','data-scope']});
+window.addEventListener('thplot:tab-changed',syncConnection);
 syncConnection();
 
 const mobile=matchMedia('(max-width:720px)');
@@ -95,12 +97,14 @@ function syncUpload() {
   const busy=!byId('image-progress').hidden;
   const connected=byId('connection').textContent.trim()==='已连接';
   const target=byId('image-upload').textContent.match(/第\s*(\d+)\s*张/);
-  const available=busy?'正在发送，请保持设备在附近':message.startsWith('上传成功')?'上传成功，设备已显示新的画面':!connected?'连接设备后即可上传':byId('image-upload').disabled?'先准备好画面内容':`就绪，将发送到第 ${target?.[1]||1} 张`;
+  const syncing=byId('custom-image').dataset.readingPreviews==='true';
+  const available=busy?'正在发送，请保持设备在附近':syncing?'正在同步设备缩略图…':message.startsWith('上传成功')?'上传成功，设备已显示新的画面':!connected?'连接设备后即可上传':byId('image-upload').disabled?'先准备好画面内容':`就绪，将发送到第 ${target?.[1]||1} 张`;
   text('image-upload-availability',available);
   document.querySelector('.tab-btn[data-tab="wallpaper"]').dataset.busy=String(busy);
 }
 const uploadObserver=new MutationObserver(syncUpload);
 for(const id of ['image-upload','image-cancel','image-progress','image-upload-state'])uploadObserver.observe(byId(id),{childList:true,subtree:true,attributes:true,attributeFilter:['disabled','hidden']});
+uploadObserver.observe(byId('custom-image'),{attributes:true,attributeFilter:['data-reading-previews']});
 syncUpload();
 
 function syncTransfer(){document.querySelector('.history-card').dataset.transferBusy=String(!byId('cancel').disabled);}

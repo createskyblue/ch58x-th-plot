@@ -147,6 +147,8 @@ let importQueue = Promise.resolve(), importsPending = 0;
 let bits = null;
 let selectedSlot = 0;
 let readingPreviews = false;
+let wallpaperPageActive = location.hash === '#wallpaper';
+let previewSyncPending = wallpaperPageActive;
 let renderingPreview = false;
 let previewScheduled = false;
 let invert = false;
@@ -223,6 +225,7 @@ function request(type, payload = new Uint8Array(), timeout = 6000) {
 
 function setConnected(value) {
   connected = value;
+  if (value) previewSyncPending = true;
   element('image-connect').disabled = value;
   element('image-disconnect').disabled = !value;
   controls();
@@ -231,20 +234,21 @@ function setConnected(value) {
 function controls() {
   const canImage = connected && !uploading;
   element('image-image-enabled').disabled = !connected || uploading;
-  element('image-upload').disabled = !canImage || !bits || importsPending > 0 || layoutChanging || projectLoading;
+  element('image-upload').disabled = !canImage || !bits || importsPending > 0 || layoutChanging || projectLoading || readingPreviews;
   element('image-cancel').disabled = !uploading || uploadCancelled || committing;
   /* 进度条只在上传时出现，空闲时不占位置。 */
   element('image-progress').hidden = !uploading;
   element('image-read-previews').disabled = !connected || uploading || readingPreviews;
+  element('custom-image').dataset.readingPreviews = String(readingPreviews);
   /* 按钮灰着必须告诉用户为什么，否则只会以为功能坏了 */
   const readHint = element('image-read-hint');
-  if (readHint) readHint.textContent = !connected ? '连接设备后，可同步三个槽位的壁纸。'
+  if (readHint) readHint.textContent = !connected ? '连接设备后将自动同步三个槽位的缩略图。'
     : readingPreviews ? '正在读取三个槽位…'
-    : uploading ? '上传中，暂不可读取' : '同步缩略图可查看设备当前保存的壁纸。';
+    : uploading ? '上传中，暂不可读取' : '进入此页面会自动同步；查看原图可读取完整画面。';
   element('image-read-previews').title = connected ? '读取设备上三个槽位的缩略图'
     : '请先点顶部「连接设备」';
   for (let slot = 0; slot < SLOT_COUNT; slot++) {
-    element(`image-slot-card-${slot}`).disabled = uploading || layoutChanging || projectLoading;
+    element(`image-slot-card-${slot}`).disabled = uploading || layoutChanging || projectLoading || readingPreviews;
     const full = element(`image-slot-full-${slot}`);
     if (full) full.disabled = !connected || uploading || readingPreviews;
   }
@@ -259,6 +263,13 @@ function controls() {
   // A viewport change can arrive during an upload or an asynchronous project restore.
   if (editor && !uploading && !layoutChanging && !projectLoading && mobileMode !== (mobileDevice || !!mobileViewport?.matches))
     void updateLayoutMode();
+  syncPreviewsIfNeeded();
+}
+
+function syncPreviewsIfNeeded() {
+  if (!previewSyncPending || !wallpaperPageActive || !connected || uploading || readingPreviews) return;
+  previewSyncPending = false;
+  void readPreviews();
 }
 
 async function readActivation() {
@@ -533,14 +544,16 @@ async function selectSlot(slot) {
 
 /* 设备正在刷屏时读不了缩略图（解码要借屏幕缓冲），等一下重试即可。 */
 /* 缩略图 2400 字节分 3 页拉，每页 960，拼成一份带头信息的结果交给 drawSlotPreview。 */
-async function requestPreview(slot) {
+async function requestPreview(slot, link = rx) {
   for (let attempt = 0; attempt < 3; attempt++) {
     try {
       const packed = new Uint8Array(2 + PREVIEW_BYTES);
       packed[0] = slot;
       for (let offset = 0; offset < PREVIEW_BYTES; offset += PREVIEW_PAGE) {
+        if (!connected || rx !== link) throw new Error('蓝牙连接已变化');
         const response = await request(TYPES.imagePreview,
           Uint8Array.of(slot, offset & 0xFF, (offset >> 8) & 0xFF));
+        if (!connected || rx !== link) throw new Error('蓝牙连接已变化');
         if (response.length < 4 || response[0] !== slot)
           throw new Error('缩略图响应错误');
         if ((response[2] | (response[3] << 8)) !== offset)
@@ -551,7 +564,7 @@ async function requestPreview(slot) {
       }
       return packed;
     } catch (error) {
-      if (attempt === 2 || !connected) throw error;
+      if (attempt === 2 || !connected || rx !== link) throw error;
       await new Promise(resolve => setTimeout(resolve, 500));
     }
   }
@@ -648,15 +661,17 @@ async function readFullImage(slot) {
 
 async function readPreviews() {
   if (!connected || uploading || readingPreviews) return;
+  const link = rx;
   readingPreviews = true; controls();
   try {
     for (let slot = 0; slot < SLOT_COUNT; slot++) {
-      const data = await requestPreview(slot);
+      const data = await requestPreview(slot, link);
       /* 空槽只回全 0 且 valid=0，直接画占位。 */
       drawSlotPreview(element(`image-slot-canvas-${slot}`), data, slot, !!data[1]);
     }
     uploadState('已读取三个槽位的缩略图。');
   } catch (error) {
+    if (!connected || rx !== link) return;
     uploadState(/忙|没法处理|等太久/.test(error.message)
       ? '设备正忙，等它刷完这一屏再读缩略图。'
       : '这次没读到缩略图：' + error.message);
@@ -666,7 +681,7 @@ async function readPreviews() {
 }
 
 async function uploadImage() {
-  if (!connected || uploading || importsPending || layoutChanging || projectLoading) return;
+  if (!connected || uploading || readingPreviews || importsPending || layoutChanging || projectLoading) return;
   if(previewScheduled){previewScheduled=false;renderPreview();}
   if(!bits)return;
   saveProject();
@@ -772,7 +787,12 @@ function bind() {
   window.addEventListener('resize',updatePreviewSizes);
   updatePreviewSizes();
   mobileViewport?.addEventListener('change', () => updateLayoutMode());
-  window.addEventListener('thplot:tab-changed', event => { if (event.detail === 'wallpaper') showMobileNotice(); });
+  window.addEventListener('thplot:tab-changed', event => {
+    const entering = event.detail === 'wallpaper' && !wallpaperPageActive;
+    wallpaperPageActive = event.detail === 'wallpaper';
+    if (entering) previewSyncPending = true;
+    if (wallpaperPageActive) { showMobileNotice(); syncPreviewsIfNeeded(); }
+  });
   element('image-mobile-notice-ok').addEventListener('click', () => element('image-mobile-notice').close());
   element('image-simple-mode').addEventListener('change', () => {
     if (uploading || layoutChanging || projectLoading || !mobileMode) return;

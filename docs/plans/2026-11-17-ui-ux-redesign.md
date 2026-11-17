@@ -67,3 +67,14 @@ The homepage connection card now presents the real interactive 3D device directl
 Real device photos now immediately follow the About introduction. Mobile uses a vertical gallery with four captions and full-width images; desktop keeps a four-column grid. The example-data action has 12px vertical / 16px horizontal padding and a 44px minimum height.
 
 Verified real model loading, homepage visibility, gallery order and mobile bounds, action padding, lifecycle pause/resume, UI journeys, all five pages at nine widths, JavaScript syntax and unique HTML IDs. No deployment.
+
+## Interaction and spacing refinements
+
+- Native history/import progress and wallpaper upload now share explicit blue fill, a light track and an 8px height. Progress labels use the UI palette.
+- Slot thumbnails use the full card width; narrow phones use vertical rows. The sync action has 14px horizontal padding.
+- Entering Wallpaper and connecting/reconnecting while on Wallpaper automatically synchronize all three thumbnails. Duplicate reads are suppressed, reads wait for upload completion, and stale connection responses are discarded. Upload and slot switching are blocked while thumbnails are being read.
+- Restart is grouped with a description in Device Maintenance. The existing confirmation remains.
+- History operation messages are scoped to History. Old stream/complete errors are checked against their captured operation ID; scoped action errors are checked against the captured connection so they cannot hide global disconnect guidance.
+- Mobile heading uses the requested two-line product name and battery/history description. The 3D viewport has a square aspect ratio.
+
+All 26 targeted suites passed, including automatic sync on direct entry, reconnect, deferred sync during upload, scoped history messages with real asynchronous rejection, responsive layouts and the existing wallpaper/transfer regressions. Syntax, unique IDs and whitespace checks passed. Independent review passed after fixing the delayed history error case. No remote deployment.
