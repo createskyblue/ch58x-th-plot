@@ -124,8 +124,7 @@ button.text-button:disabled{
   letter-spacing:-.8px;
   font-weight:750;
   line-height:1.1}
-.brand-dot{
-  color:var(--accent)}
+
 .brand small{
   white-space:nowrap;
   display:block;
@@ -1392,7 +1391,7 @@ progress::-moz-progress-bar{
   align-items:center;
   justify-content:space-between;
   gap:22px}
-.help-intro>div>.ui-icon{
+.help-intro-summary>.ui-icon{
   color:#596579;
   width:27px;
   height:27px;
@@ -2396,3 +2395,21 @@ body[data-page=wallpaper] .wallpaper-intro{display:none}
 .project-intro-action>span{font-size:12px;line-height:1.6;color:var(--muted)}
 .project-intro-action .button-link:disabled{opacity:1;background:#f5f6f8;color:#7b8493;border-color:var(--line);box-shadow:none}
 @media(max-width:720px){.project-intro-action{align-items:flex-start;margin-top:20px}.help-intro .project-intro-action .button-link{margin-top:0}}
+
+.brand{padding:0 4px;gap:9px}
+.brand-symbol{flex:0 0 28px;width:28px;height:34px;border-radius:7px}
+.brand-symbol .ui-icon{width:20px;height:20px}
+.brand b{display:block;font-size:15px;line-height:1.4;letter-spacing:-.4px;white-space:nowrap;font-weight:700}
+.brand small{font-size:11px;letter-spacing:0;line-height:1.5;margin-top:5px}
+.help-intro{display:block}
+.help-intro-header{display:flex;align-items:center;justify-content:space-between;gap:28px}
+.help-intro-summary{min-width:0;max-width:700px}
+.replication-title{margin:26px 0 18px;padding-top:24px;border-top:1px solid var(--line);font-size:15px;font-weight:650}
+.replication-steps{margin:0;padding-left:25px;display:grid;gap:17px}
+.replication-steps li{padding-left:6px;line-height:1.75}
+.replication-steps li::marker{color:var(--accent);font-weight:650}
+.replication-steps strong{display:block;font-size:14px;font-weight:600;margin-bottom:4px}
+.replication-steps p{font-size:14px;line-height:1.8}
+.replication-steps a{text-underline-offset:3px;text-decoration-color:#b7c3ef}
+@media(min-width:721px) and (max-width:1140px){.brand{padding:0;gap:8px}.brand b{font-size:13px}.brand-symbol{flex-basis:26px;width:26px}.brand small{font-size:11px}}
+@media(max-width:720px){.help-intro-header{display:block}.replication-title{margin-top:23px;padding-top:21px;font-size:14px}.replication-steps{gap:18px;padding-left:22px}.replication-steps li{padding-left:4px}.replication-steps p{font-size:13px}}

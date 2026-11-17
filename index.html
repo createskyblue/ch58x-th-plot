@@ -8,7 +8,7 @@
 <title>TH-Plot · 设备工作台</title>
 
 <link href="./canvas-editor.css?v=ui-redesign1" rel="stylesheet"/>
-<link href="./ui.css?v=ui-redesign4" rel="stylesheet"/>
+<link href="./ui.css?v=ui-redesign5" rel="stylesheet"/>
 <script type="importmap">
 {
   "imports": {
@@ -22,7 +22,7 @@
 <body>
 <main class="app-shell" id="app">
 <aside aria-label="工作台导航" class="app-sidebar">
-<a aria-label="TH-Plot 设备概览" class="brand" data-go="overview" href="#overview">
+<a aria-label="4.2寸墨水屏温湿度计 · 设备概览" class="brand" data-go="overview" href="#overview">
 <span class="brand-symbol">
 <svg aria-hidden="true" class="ui-icon" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="1.7" viewbox="0 0 24 24">
 <rect height="18" rx="3" width="16" x="4" y="3"></rect>
@@ -30,9 +30,8 @@
 </svg>
 </span>
 <span>
-<b>TH-Plot<span class="brand-dot">.</span>
-</b>
-<small>环境 · 时间 · 生活</small>
+<b>4.2寸墨水屏温湿度计</b>
+<small>一年续航，30天历史</small>
 </span>
 </a>
 <span class="nav-caption">我的工作台</span>
@@ -773,13 +772,14 @@
 </div>
 <div aria-label="关于与帮助" class="tab-page" data-page="about" hidden="" id="page-about">
 <section class="help-intro panel">
-<div>
+<div class="help-intro-header">
+<div class="help-intro-summary">
 <svg aria-hidden="true" class="ui-icon" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="1.7" viewbox="0 0 24 24">
 <rect height="18" rx="3" width="16" x="4" y="3"></rect>
 <path d="M8 7h8M8 11h5M10 17h4"></path>
 </svg>
 <h2>一块墨水屏，记录你的日常</h2>
-<p>TH-Plot 将温湿度历史、日历与自定义壁纸放在同一块屏幕里。</p>
+<p>这是一台可以自己动手制作的温湿度计，支持历史记录、日历与自定义壁纸。硬件开源，软件免费使用。</p>
 </div>
 <div class="project-intro-action">
 <button class="button-link" type="button" disabled="" aria-describedby="project-intro-hint">阅读项目介绍 <svg aria-hidden="true" class="ui-icon" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="1.7" viewbox="0 0 24 24">
@@ -788,6 +788,15 @@
 </button>
 <span id="project-intro-hint">项目介绍尚未准备好</span>
 </div>
+</div>
+<h3 class="replication-title">如何复刻</h3>
+<ol class="replication-steps" aria-label="如何复刻">
+<li><strong>下单 PCB</strong><p>到<a href="https://oshwhub.com/createskyblue/project_itmmifuv" target="_blank" rel="noopener noreferrer">嘉立创开源平台</a>打开工程，下单制作 PCB。</p></li>
+<li><strong>采购物料</strong><p>按工程物料清单自行购买元器件。屏幕选用 SSD1619A 驱动的 4.2 寸墨水屏，可在闲鱼或拼多多搜索购买。</p></li>
+<li><strong>焊接组装</strong><p>新手建议使用低温锡膏，配合加热台完成焊接。</p></li>
+<li><strong>烧录固件</strong><p>下载本页提供的固件，按<a href="https://oshwhub.com/createskyblue/project_itmmifuv" target="_blank" rel="noopener noreferrer">嘉立创开源项目中的烧录步骤</a>操作。</p></li>
+<li><strong>制作外壳</strong><p>到<a href="https://makerworld.com.cn/zh/models/3096359-4-2cun-mo-shui-ping-wen-du-ji-yi-nian-xu-hang-30ti#profileId-3645676" target="_blank" rel="noopener noreferrer">拓竹 3D 打印开源社区</a>下载外壳模型，自行打印，或委托嘉立创打印。</p></li>
+</ol>
 </section>
 <section class="card photo-card" id="photo-card">
 <div class="section-head">
