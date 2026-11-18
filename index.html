@@ -274,10 +274,6 @@
 <i class="dot dew"></i>露点 °C</span>
 </div>
 <p class="hint" id="chart-source" role="status">尚无历史数据</p>
-<details class="demo-insight" id="demo-insight" hidden="">
-<summary>示例数据解读：干冷气团入侵过程（11/08 至 11/13）</summary>
-<img alt="干冷气团入侵解剖图，解读降温、除湿、二次反弹与气团接管四个阶段" loading="lazy" src="assets/cold-air-invasion.png" style="max-width:100%;height:auto;display:block">
-</details>
 <div class="chart-wrap">
 <canvas aria-hidden="true" class="chart-gl" id="chart-main-gl"></canvas>
 <canvas aria-label="温度、湿度与露点历史曲线，可滚轮缩放、双击恢复全量" id="chart-main"></canvas>
@@ -293,6 +289,10 @@
 <span id="mini-range">全量缩略图</span>
 <span>拖动选区查看局部；在主图上缩放或框选统计。</span>
 </div>
+<details class="demo-insight" id="demo-insight" hidden="" open="">
+<summary>示例数据解读：干冷气团入侵过程（11/08 至 11/13）</summary>
+<img alt="干冷气团入侵解剖图，解读降温、除湿、二次反弹与气团接管四个阶段" loading="lazy" src="assets/cold-air-invasion.png" style="max-width:100%;height:auto;display:block">
+</details>
 <p class="hint selection-info" hidden="" id="chart-selection-info" role="status"></p>
 <details class="history-import" id="history-tools">
 <summary>导入历史数据<span>CSV 预览与设备导入</span>
@@ -2116,7 +2116,7 @@ async function loadDemoHistory() {
         points = preview.points; capturedAt = preview.capturedAt; chartOrigin = 'demo';
         showSimulationNotice(false);
         element('chart-source').textContent = '演示数据，' + points.length + ' 个点（未连接设备），锯齿状波动是空调制冷波形';
-        element('demo-insight').hidden = false;
+        element('demo-insight').hidden = false; element('demo-insight').open = true;
         resetView(); drawCharts(); element('csv').disabled = false;
     } catch (error) {
         element('chart-source').textContent = '演示数据不可用：' + error.message;
