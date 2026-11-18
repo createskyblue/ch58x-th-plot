@@ -648,12 +648,6 @@ progress::-moz-progress-bar{
   margin:24px 0 6px;
   padding:18px 0 0;
   border-top:1px solid var(--line, #e6e9f0)}
-.demo-insight figcaption{
-  font-size:13px;
-  font-weight:600;
-  color:#3b4658;
-  line-height:1.6;
-  margin:0 0 12px}
 .demo-insight img{
   display:block;
   max-width:100%;
@@ -1892,8 +1886,6 @@ summary::-webkit-details-marker{
 .demo-insight{
   margin-top:20px;
   padding-top:16px}
-.demo-insight figcaption{
-  font-size:12px}
 .selection-info{
   flex-direction:column}
 .history-import{
