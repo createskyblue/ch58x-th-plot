@@ -644,6 +644,21 @@ progress::-moz-progress-bar{
   color:#596579;
   margin-top:10px;
   line-height:1.7}
+.demo-insight{
+  margin:24px 0 6px;
+  padding:18px 0 0;
+  border-top:1px solid var(--line, #e6e9f0)}
+.demo-insight figcaption{
+  font-size:13px;
+  font-weight:600;
+  color:#3b4658;
+  line-height:1.6;
+  margin:0 0 12px}
+.demo-insight img{
+  display:block;
+  max-width:100%;
+  height:auto;
+  border-radius:7px}
 .tooltip{
   position:absolute;
   pointer-events:none;
@@ -1874,6 +1889,11 @@ summary::-webkit-details-marker{
   gap:5px}
 .mini-summary>span:last-child{
   display:none}
+.demo-insight{
+  margin-top:20px;
+  padding-top:16px}
+.demo-insight figcaption{
+  font-size:12px}
 .selection-info{
   flex-direction:column}
 .history-import{

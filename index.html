@@ -289,10 +289,10 @@
 <span id="mini-range">全量缩略图</span>
 <span>拖动选区查看局部；在主图上缩放或框选统计。</span>
 </div>
-<details class="demo-insight" id="demo-insight" hidden="" open="">
-<summary>示例数据解读：干冷气团入侵过程（11/08 至 11/13）</summary>
-<img alt="干冷气团入侵解剖图，解读降温、除湿、二次反弹与气团接管四个阶段" loading="lazy" src="assets/cold-air-invasion.png" style="max-width:100%;height:auto;display:block">
-</details>
+<figure class="demo-insight" id="demo-insight" hidden="">
+<figcaption>示例数据解读：干冷气团入侵过程（11/08 至 11/13）</figcaption>
+<img alt="干冷气团入侵解剖图，解读降温、除湿、二次反弹与气团接管四个阶段" loading="lazy" src="assets/cold-air-invasion.png">
+</figure>
 <p class="hint selection-info" hidden="" id="chart-selection-info" role="status"></p>
 <details class="history-import" id="history-tools">
 <summary>导入历史数据<span>CSV 预览与设备导入</span>
@@ -1888,7 +1888,7 @@ action('connect', async () => {
         if (chartOrigin === 'demo') {
             points = []; capturedAt = 0; chartOrigin = null;
             element('csv').disabled = true; element('chart-source').textContent = '尚无历史数据';
-            element('demo-insight').hidden = true; element('demo-insight').open = false;
+            element('demo-insight').hidden = true;
             resetView(); drawCharts();
         }
         connected(true); element('connection').textContent = '已连接';
@@ -2047,7 +2047,7 @@ function showLocalPreview(preview, file) {
     points = preview.points; capturedAt = preview.capturedAt;
     chartOrigin = 'local'; showSimulationNotice(false);
     element('chart-source').textContent = '本地文件预览 · ' + (file.name || 'CSV') + ' · ' + points.length + ' 个点';
-    element('demo-insight').hidden = true; element('demo-insight').open = false;
+    element('demo-insight').hidden = true;
     resetView(); drawCharts();
     element('csv').disabled = false;
 }
@@ -2116,7 +2116,7 @@ async function loadDemoHistory() {
         points = preview.points; capturedAt = preview.capturedAt; chartOrigin = 'demo';
         showSimulationNotice(false);
         element('chart-source').textContent = '演示数据，' + points.length + ' 个点（未连接设备），锯齿状波动是空调制冷波形';
-        element('demo-insight').hidden = false; element('demo-insight').open = true;
+        element('demo-insight').hidden = false;
         resetView(); drawCharts(); element('csv').disabled = false;
     } catch (error) {
         element('chart-source').textContent = '演示数据不可用：' + error.message;
@@ -2125,7 +2125,7 @@ async function loadDemoHistory() {
 action('history', async () => {
     if (importJob) return;
     ++previewSequence; chartOrigin = null; element('chart-source').textContent = '正在获取设备历史…';
-    element('demo-insight').hidden = true; element('demo-insight').open = false;
+    element('demo-insight').hidden = true;
     receiver.abort(); points = []; capturedAt = 0; element('csv').disabled = true;
     resetView(); drawCharts(); exportId = allocateId(); lastProgress = Date.now(); ending = false;
     settingsControls();
