@@ -10,6 +10,10 @@
 | :---: | :---: |
 | ![设备显示自定义壁纸](assets/photos/device-1.jpg) | ![设备显示温湿度历史曲线](assets/photos/device-2.jpg) |
 
+| 月历与农历 | 大字号日期 |
+| :---: | :---: |
+| ![设备显示月历与农历](assets/photos/device-3.jpg) | ![设备显示大字号日期](assets/photos/device-4.jpg) |
+
 ## 从这里开始
 
 - **[打开在线上位机](https://ch58x-th-plot.cacherivulet.cn/)**：连接设备、查看历史、管理壁纸与设备设置。[备用访问地址](https://createskyblue.github.io/ch58x-th-plot/)。
