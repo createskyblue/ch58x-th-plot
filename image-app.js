@@ -956,7 +956,7 @@ function bind() {
       renderPreview();
     });
 
-  element('image-project-export').addEventListener('click',async()=>{const blob=new Blob([JSON.stringify(await editor.exportProject(),null,2)],{type:'application/json'});const link=document.createElement('a');link.href=URL.createObjectURL(blob);link.download=`thplot-canvas-${selectedSlot+1}.json`;link.click();setTimeout(()=>URL.revokeObjectURL(link.href),0);});
+  element('image-project-export').addEventListener('click',async()=>{const blob=new Blob([JSON.stringify(await editor.exportProject(),null,2)],{type:'application/json'});const link=document.createElement('a');link.href=URL.createObjectURL(blob);link.download=`墨水屏壁纸-${selectedSlot+1}.json`;link.click();setTimeout(()=>URL.revokeObjectURL(link.href),0);});
   element('image-project-import').addEventListener('change',async()=>{const file=element('image-project-import').files?.[0];if(!file)return;try{await editor.importProject(JSON.parse(await file.text()));await saveProject();status('工程已导入。');}catch(error){status('导入工程失败：'+error.message);}element('image-project-import').value='';});
   element('image-clear').addEventListener('click',()=>{++loadSequence;editor.clear();});
   element('image-layers').addEventListener('change',()=>editor.select(editor.objects[Number(element('image-layers').value)]));
@@ -1087,9 +1087,9 @@ async function loadDemo() {
   context.fillStyle = gradient;
   context.fillRect(0, 0, 800, 600);
   context.fillStyle = 'rgba(255,255,255,.9)';
-  context.font = 'bold 72px "Microsoft YaHei", sans-serif';
+  context.font = 'bold 48px "Microsoft YaHei", sans-serif';
   context.textAlign = 'center';
-  context.fillText('TH-Plot', 400, 300);
+  context.fillText('4.2 寸墨水屏温湿度计', 400, 300);
   context.font = '28px "Microsoft YaHei", sans-serif';
   context.fillText('400 × 300 自定义壁纸预览', 400, 360);
   editor.addImage(canvas);

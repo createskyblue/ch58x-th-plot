@@ -1660,7 +1660,7 @@ summary::-webkit-details-marker{
   display:none}
 .tabs{
   display:grid;
-  grid-template-columns:repeat(5,minmax(0,1fr));
+  grid-template-columns:repeat(6,minmax(0,1fr));
   gap:0;
   height:var(--nav-height);
   padding:6px 0}
@@ -2407,6 +2407,15 @@ body[data-page=wallpaper] .wallpaper-intro{display:none}
 .project-intro-action{display:flex;flex-direction:column;align-items:flex-end;gap:9px;flex-shrink:0}
 .project-intro-action>span{font-size:12px;line-height:1.6;color:var(--muted)}
 .project-intro-action .button-link:disabled{opacity:1;background:#f5f6f8;color:#7b8493;border-color:var(--line);box-shadow:none}
+.showcase-empty{display:flex;flex-direction:column;align-items:center;text-align:center;padding:64px 28px}
+#page-eyebrow:empty,#page-description:empty,body[data-page=showcase] .display-spec{display:none}
+.showcase-empty h2{margin:0;font-size:22px;line-height:1.5}
+.showcase-empty p{max-width:100%;margin:16px 0 0;color:var(--muted);font-size:14px;line-height:1.9}
+.showcase-empty .showcase-requirements{margin-top:10px}
+.showcase-empty .button-link{margin-top:28px}
+.showcase-empty .button-link:hover{background:#354fc2;border-color:#354fc2}
+.showcase-email{margin-top:16px;max-width:100%;font-size:13px;overflow-wrap:anywhere;text-underline-offset:3px}
+@media(max-width:720px){.showcase-empty{padding:40px 20px}.showcase-empty h2{font-size:18px}.showcase-empty p{font-size:13px}}
 @media(max-width:720px){.project-intro-action{align-items:flex-start;margin-top:20px}.help-intro .project-intro-action .button-link{margin-top:0}}
 
 .brand{padding:0 4px;gap:9px}

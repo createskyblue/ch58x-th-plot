@@ -4,7 +4,8 @@ const pages={
   history:{title:'历史数据',eyebrow:'环境记录',description:'把短暂的变化，放进更长的时间里看。'},
   wallpaper:{title:'自定义壁纸',eyebrow:'屏幕创作',description:'选一个槽位，做一张属于你的设备画面。'},
   settings:{title:'设备设置',eyebrow:'设备偏好',description:'调整屏幕显示、记录方式与日历习惯。'},
-  about:{title:'关于与帮助',eyebrow:'TH-Plot',description:'固件、设备预览，以及你可能需要的信息。'},
+  showcase:{title:'复刻作品墙',eyebrow:'',description:''},
+  about:{title:'关于与帮助',eyebrow:'4.2 寸墨水屏温湿度计',description:'固件、设备预览，以及你可能需要的信息。'},
 };
 const navButtons=[...document.querySelectorAll('.tab-btn')];
 const scrollPositions=new Map();
@@ -18,7 +19,7 @@ function selectPage(name,{push=false,restore=false}={}) {
   for(const page of document.querySelectorAll('.tab-page'))page.hidden=page.dataset.page!==name;
   document.body.dataset.page=name;
   text('page-title',pages[name].title);text('page-breadcrumb',pages[name].title);text('page-eyebrow',pages[name].eyebrow);text('page-description',pages[name].description);
-  document.title=pages[name].title+' · TH-Plot';
+  document.title=pages[name].title+' · 4.2 寸墨水屏温湿度计';
   if(push&&location.hash!=='#'+name)history.pushState({page:name},'','#'+name);
   window.dispatchEvent(new CustomEvent('thplot:tab-changed',{detail:name}));
   window.dispatchEvent(new Event('resize'));

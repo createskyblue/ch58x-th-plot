@@ -292,7 +292,7 @@ action('connect', async () => {
         stage = '读取寄存值';
         await readUser();
         stage = '校验设备激活状态'; await verifyActivation();
-        connected(true); element('connection').textContent = '已连接'; element('device-name').textContent = device.name || 'TH-Plot';
+        connected(true); element('connection').textContent = '已连接'; element('device-name').textContent = device.name || '4.2 寸墨水屏温湿度计';
         /* 连上就自动读一次当前温湿度，省得用户再点一下。
            温湿度读不出来不算连接失败：链路是好的，不该因为一次采样把连接断掉。 */
         status('已连接，正在读取当前温湿度…');
@@ -505,7 +505,7 @@ action('history', async () => {
     try { await write(id, TYPES.historyStream); } catch (error) { abortHistory(error.message, id); }
 });
 action('cancel', () => abortHistory('用户取消，本次未完成结果已丢弃'));
-action('csv', () => download('th-plot-history.csv', '\ufeffseconds_ago,temperature_c,humidity_percent,density,contains_simulated_history\n' + points.map(point => [point.secondsAgo, point.temperature.toFixed(1), point.humidity.toFixed(1), point.density, plottedSimulated ? 1 : 0].join(',')).join('\n'), 'text/csv;charset=utf-8'));
+action('csv', () => download('墨水屏温湿度历史.csv', '\ufeffseconds_ago,temperature_c,humidity_percent,density,contains_simulated_history\n' + points.map(point => [point.secondsAgo, point.temperature.toFixed(1), point.humidity.toFixed(1), point.density, plottedSimulated ? 1 : 0].join(',')).join('\n'), 'text/csv;charset=utf-8'));
 /* 帧间超时：连续 3 秒没有“成功进账一帧”才判卡死，每帧重置，不设整体时长上限。
    与固件 HISTORY_STALL_TIMEOUT_MS 和 web/index.html 保持一致。 */
 setInterval(() => { if (exportId !== null && Date.now() - lastProgress >= 3000) abortHistory('传输超时，本次结果已丢弃；请从头获取'); }, 250);
