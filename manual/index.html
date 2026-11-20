@@ -1,0 +1,212 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>4.2 寸墨水屏温湿度记录仪（30 天 蓝牙款）</title>
+<style>
+/* ---------- 版式基准：行距 1.52 / 项距 11 / 段距 13 / 节距 22 ---------- */
+:root{
+  color-scheme:light;
+  --ink:#161616; --muted:#4a4a4a; --rule:#c2c2c2; --dot:#9a9a9a;
+  --sec:28px;
+}
+*{box-sizing:border-box}
+body{margin:0;background:#fff;color:var(--ink);font:14px/1.50 "Microsoft YaHei","PingFang SC",sans-serif}
+.sheet{width:100%;max-width:794px;min-height:1122px;margin:auto;padding:26px 34px 16px;display:flex;flex-direction:column}
+
+header{padding:11px 0;border-block:2px solid var(--ink);display:flex;align-items:center;justify-content:space-between;gap:20px}
+header>div{min-width:0}
+.qr{width:52px;height:52px;flex:none;border-radius:0;margin-right:16px}
+h1{font-size:28px;line-height:1.2;margin:0 0 8px}
+h2{font-size:17px;line-height:1.3;margin:0 0 10px}
+p,figure,ul{margin:0}
+ul{padding:0;list-style:none}
+img{display:block;width:100%;height:auto;border-radius:5px}
+
+/* 两栏各自顺排：左栏 图 + 屏幕实拍，右栏 1 + 2 + 4 */
+.columns{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));column-gap:28px;align-items:start;margin-top:var(--sec)}
+.col{min-width:0}
+.col:first-child{order:2}
+.col:last-child{order:1}
+.col>*+*{margin-top:var(--sec)}
+/* 右栏样机实拍：右栏底部有余量，用更大的上边距换呼吸感 */
+.col>section.photo-section{margin-top:64px}
+
+/* 图注：小一号字，整组统一浅色，靠加粗和层级区分，不靠色差 */
+figcaption{margin-top:11px;color:var(--muted);font-size:13px;line-height:1.5}
+
+/* 列表：图注、特点、规格、量产共用同一套项目符号 + 悬挂缩进 */
+.features li{position:relative;padding-left:15px;text-wrap:pretty}
+.features li+li{margin-top:8px}
+.features li::before{content:"";position:absolute;left:2px;top:.62em;width:4px;height:4px;border-radius:50%;background:var(--dot)}
+.features strong{margin-right:.6em;font-weight:700}
+
+/* 二级列表：空心点，只缩进一级，行距更紧 */
+.features ul{margin-top:6px}
+.features ul>li{padding-left:14px}
+.features ul>li+li{margin-top:4px}
+.features ul>li::before{background:transparent;border:1px solid var(--dot)}
+
+/* 三级列表：短横线，再缩进一小级 */
+.features ul ul{margin-top:4px}
+.features ul ul>li{padding-left:13px}
+.features ul ul>li+li{margin-top:4px}
+.features ul ul>li::before{width:6px;height:1px;border:0;border-radius:0;background:var(--dot);top:.8em}
+
+/* 图注：本身是一级列表，二级项折行时均分两行，不留单字孤行 */
+figcaption .features>li+li{margin-top:9px}
+figcaption .features>li{padding-left:13px}
+figcaption .features>ul>li{padding-left:12px;text-wrap:balance}
+figcaption .features strong{margin-right:.15em}
+
+.photos{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:16px}
+.photos img{aspect-ratio:1.18;object-fit:cover}
+.photos figcaption{margin-top:7px}
+
+/* 页脚：邮箱与版本号，贴住下方那条封口线 */
+/* 页脚：间隔块吃掉余量，保证“正文—横线—页脚文字”两侧留白一致 */
+.sheet-gap{flex:1 0 auto;min-height:14px}
+footer{display:flex;justify-content:space-between;align-items:baseline;padding-top:14px;border-top:2px solid var(--ink);font-size:13px;color:var(--muted)}
+
+@media screen and (max-width:620px){
+  .sheet{min-height:0;padding:17px 18px 24px}
+  .columns{grid-template-columns:1fr;row-gap:20px}
+}
+@page{size:A4;margin:0}
+@media print{.sheet{max-width:none;width:210mm;min-height:297mm;padding:7.4mm 9mm 7.9mm}}
+
+/* 嵌入模式：被 iframe 引用时整页等比缩成缩略图，不触发窄屏单栏 */
+html.embed body{overflow:hidden;background:#fff}
+html.embed .sheet{width:794px;max-width:none;min-height:1122px;margin:0;padding:26px 34px 16px;transform-origin:top left}
+html.embed .columns{grid-template-columns:repeat(2,minmax(0,1fr));column-gap:34px;row-gap:0}
+</style>
+</head>
+<body>
+<main class="sheet">
+  <header>
+    <div>
+      <h1>4.2 寸墨水屏温湿度记录仪（30 天 蓝牙款）</h1>
+      <p>两节 7 号电池供电，不用插电或打开手机，就能在屏幕上查看温度和露点历史曲线。</p>
+    </div>
+    <img class="qr" src="assets/qr.png" width="464" height="464" alt="二维码">
+  </header>
+
+  <div class="columns">
+    <div class="col">
+      <figure class="trend">
+        <img src="assets/demo-history-dew-3d.png" width="800" height="600" alt="固件渲染的三天历史曲线，温度 26°C、露点 9°C，有三条按天分隔线">
+        <figcaption>
+          <ul class="features">
+            <li><strong>30 天档历史曲线</strong>（实线 温度 / 虚线 露点，界面示意）</li>
+            <li><strong>日期分割线：</strong>每日、每周凌晨零点；</li>
+            <li><strong>显示范围档位：</strong>
+              <ul>
+                <li>1 / 2 / 4 / 6 / 8 / 12 小时</li>
+                <li>1 / 3 / 7 / 14 / 30 天（共 11 档）</li>
+              </ul>
+            </li>
+          </ul>
+        </figcaption>
+      </figure>
+
+      <section class="photo-section">
+        <h2>样机实拍（3D 打印外壳，非量产外观）</h2>
+        <div class="photos">
+          <figure><img src="assets/temp-humidity-reference.png" alt="设备实拍，屏幕显示三天温度和湿度曲线"><figcaption>温湿度曲线（3 天）</figcaption></figure>
+          <figure><img src="assets/calendar.png" alt="万年历实拍"><figcaption>万年历</figcaption></figure>
+          <figure><img src="assets/elder-calendar.png" alt="大字日历实拍"><figcaption>大字日历</figcaption></figure>
+          <figure><img src="assets/custom-wallpaper.png" alt="自定义壁纸实拍"><figcaption>自定义壁纸</figcaption></figure>
+        </div>
+      </section>
+    </div>
+
+    <div class="col">
+      <section>
+        <h2>1　产品特点</h2>
+        <ul class="features">
+          <li>传感器每分钟采样，历史保存在本机</li>
+          <li>默认显示温度和露点，可切换到相对湿度</li>
+          <li>支持离线农历、公历、节假日、万年历</li>
+          <li>支持3张用户自定义离线壁纸</li>
+          <li>支持设置每周第一天、露点或湿度显示、温度变化立即刷新、日期分割线、记录间隔</li>
+          <li>支持蓝牙导出历史曲线点、设置壁纸、高级设置</li>
+        </ul>
+      </section>
+
+      <section>
+        <h2>2　主要规格</h2>
+        <ul class="features">
+          <li><strong>功耗</strong>
+            <ul>
+              <li>待机电流 7.5µA</li>
+              <li>平均刷屏 6µAh / 次</li>
+              <li>每分钟传感器采样 25nAh / 次</li>
+            </ul>
+          </li>
+          <li><strong>供电</strong>两节 7 号干电池，续航估算 1–3 年</li>
+          <li><strong>传感器</strong>SHT40（Sensirion）
+            <ul>
+              <li>温度 ±0.2 ℃（典型）</li>
+              <li>湿度 ±1.8 %RH（典型，最大 ±3.5 %RH）</li>
+              <li>量程 −40~125 ℃ / 0–100 %RH</li>
+            </ul>
+          </li>
+          <li><strong>历史（约 1 万点存储）</strong>
+            <ul>
+              <li>30 天模式：
+                <ul>
+                  <li>近 24 小时每分钟 1 点</li>
+                  <li>超 24h 数据按 5 分钟抽稀存储</li>
+                </ul>
+              </li>
+              <li>7天模式：每分钟 1 点</li>
+            </ul>
+          </li>
+          <li><strong>安装</strong>背面磁吸（样机方案）</li>
+        </ul>
+      </section>
+
+      <section>
+        <h2>3　寻求合作</h2>
+        <ul class="features">
+          <li><strong>阶段</strong>工程样机已跑通，3D 打印外壳仅作验证、不作交付；仍需长期稳定性与续航实测</li>
+          <li><strong>分工</strong>我们提供现有固件、硬件方案及后续测试迭代支持；希望与具备结构设计、供应链及制造能力的伙伴合作，共同推进产品工程化与量产落地。模具投入、物料备货及库存安排，根据具体合作模式协商确定</li>
+          <li><strong>合作意向</strong>寻求具备产品结构设计与量产能力的合作伙伴，共同完成产品验证与商业化落地。合作方式（技术授权 / ODM / 委托开发）另议</li>
+        </ul>
+      </section>
+    </div>
+  </div>
+
+  <div class="sheet-gap" aria-hidden="true"></div>
+
+  <footer>
+    <span>createskyblue@outlook.com</span>
+    <span>2026.11.21.A</span>
+  </footer>
+</main>
+<script>
+/* 被 iframe 引用（嵌进上位机的说明书卡片）时，把整张 A4 等比缩到容器宽度。
+   独立打开或打印时这段不生效。 */
+(function () {
+  if (window.self === window.top) return;
+  document.documentElement.classList.add('embed');
+  var sheet = document.querySelector('.sheet');
+  function fit() {
+    var w = document.documentElement.clientWidth;
+    if (!w) return;
+    sheet.style.transform = 'scale(' + (w / 794) + ')';
+    // 把缩放后的真实高度告诉外层，卡片据此定高，避免底部被裁
+    try {
+      var h = Math.ceil(sheet.getBoundingClientRect().height);
+      if (h > 0) parent.postMessage({ type: 'manual-size', height: h }, '*');
+    } catch (e) {}
+  }
+  addEventListener('resize', fit);
+  addEventListener('load', fit);
+  if (window.ResizeObserver) new ResizeObserver(fit).observe(document.body);
+  fit();
+})();
+</script>
+</body>
+</html>

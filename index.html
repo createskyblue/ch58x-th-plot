@@ -802,13 +802,6 @@
 <h2>一块墨水屏，记录你的日常</h2>
 <p>这是一台可以自己动手制作的温湿度计，支持历史记录、日历与自定义壁纸。硬件开源，软件免费使用。</p>
 </div>
-<div class="project-intro-action">
-<button class="button-link" type="button" disabled="" aria-describedby="project-intro-hint">阅读项目介绍 <svg aria-hidden="true" class="ui-icon" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="1.7" viewbox="0 0 24 24">
-<path d="M5 12h14m-5-5 5 5-5 5"></path>
-</svg>
-</button>
-<span id="project-intro-hint">项目介绍尚未准备好</span>
-</div>
 </div>
 <h3 class="replication-title">如何复刻</h3>
 <ol class="replication-steps" aria-label="如何复刻">
@@ -818,6 +811,15 @@
 <li><strong>烧录固件</strong><p>下载本页提供的固件，按<a href="https://oshwhub.com/createskyblue/project_itmmifuv" target="_blank" rel="noopener noreferrer">嘉立创开源项目中的烧录步骤</a>操作。</p></li>
 <li><strong>制作外壳</strong><p>到<a href="https://makerworld.com.cn/zh/models/3096359-4-2cun-mo-shui-ping-wen-du-ji-yi-nian-xu-hang-30ti#profileId-3645676" target="_blank" rel="noopener noreferrer">拓竹 3D 打印开源社区</a>下载外壳模型，自行打印，或委托嘉立创打印。</p></li>
 </ol>
+</section>
+<section class="card manual-card" id="manual-card">
+<div class="section-head">
+<h2>产品说明书</h2>
+<a class="badge manual-open" href="manual/index.html" rel="noopener noreferrer" target="_blank">外部打开</a>
+</div>
+<div class="manual-stage">
+<iframe id="manual-frame" loading="lazy" scrolling="no" src="manual/index.html" title="产品说明书（A4 单页）"></iframe>
+</div>
 </section>
 <section class="card photo-card" id="photo-card">
 <div class="section-head">
@@ -2379,5 +2381,18 @@ loadDemoHistory();
 
 
 <script src="./ui-shell.js?v=showcase2" type="module"></script><script src="./image-app.js?v=showcase1" type="module"></script>
+<script>
+/* 产品说明书卡片：按 iframe 里回报的缩放高度定高，整页永远完整可见 */
+(function () {
+  var frame = document.getElementById('manual-frame');
+  if (!frame) return;
+  addEventListener('message', function (e) {
+    if (e.source !== frame.contentWindow) return;
+    var d = e.data;
+    if (!d || d.type !== 'manual-size' || !d.height) return;
+    frame.style.height = d.height + 'px';
+  });
+})();
+</script>
 </body>
 </html>
