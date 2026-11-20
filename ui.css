@@ -1454,6 +1454,12 @@ progress::-moz-progress-bar{
 .about-card .about-email{
   font-size:13px;
   margin-bottom:24px}
+.about-card .about-qq{
+  margin-top:-14px;
+  margin-bottom:24px}
+.about-card .about-qq strong{
+  color:var(--ink);
+  font-weight:650}
 #firmware-download{
   display:inline-flex;
   border:1px solid #dce3ee;
