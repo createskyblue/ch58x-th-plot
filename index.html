@@ -159,6 +159,12 @@
 <svg aria-hidden="true" class="ui-icon" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="1.7" viewbox="0 0 24 24">
 <path d="M7 7l10 10-5 5V2l5 5L7 17"></path>
 </svg>连接我的设备</button>
+<button class="text-button" data-go="about" id="guide-manual">
+<svg aria-hidden="true" class="ui-icon" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="1.7" viewbox="0 0 24 24">
+<rect height="18" rx="3" width="16" x="4" y="3"></rect>
+<path d="M8 7h8M8 11h5M10 17h4"></path>
+</svg>产品说明书
+</button>
 <button class="text-button" data-go="history">先看看示例数据 <svg aria-hidden="true" class="ui-icon" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="1.7" viewbox="0 0 24 24">
 <path d="M5 12h14m-5-5 5 5-5 5"></path>
 </svg>
@@ -2384,6 +2390,16 @@ loadDemoHistory();
 <script>
 /* 产品说明书卡片：按 iframe 里回报的缩放高度定高，整页永远完整可见 */
 (function () {
+  // 概览页的「产品说明书」按钮：切到关于页后直接滚到说明书卡片
+  var jump = document.getElementById('guide-manual');
+  if (jump) jump.addEventListener('click', function () {
+    requestAnimationFrame(function () {
+      requestAnimationFrame(function () {
+        var card = document.getElementById('manual-card');
+        if (card) card.scrollIntoView({ behavior: 'smooth', block: 'start' });
+      });
+    });
+  });
   var frame = document.getElementById('manual-frame');
   if (!frame) return;
   addEventListener('message', function (e) {
