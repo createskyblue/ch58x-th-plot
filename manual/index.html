@@ -198,10 +198,12 @@ html.embed .columns{grid-template-columns:repeat(2,minmax(0,1fr));column-gap:34p
       try { parent.postMessage({ type: 'manual-size', height: h }, '*'); } catch (e) {}
     }
   }
+  addEventListener('message', report);   /* 父级主动索要时立刻回报 */
   addEventListener('load', report);
   addEventListener('resize', report);
   if (window.ResizeObserver) new ResizeObserver(report).observe(sheet);
   report();
+})();
 </script>
 </body>
 </html>

@@ -2413,9 +2413,15 @@ loadDemoHistory();
     if (e.source !== frame.contentWindow) return;
     var d = e.data;
     if (!d || d.type !== 'manual-size' || !d.height) return;
+    if (d.height === sheetH) return;
     sheetH = d.height;
     apply();
   });
+  /* 子页面的首帧上报可能早于这里的监听绑定，主动索要 + 两次兜底 */
+  function ask() {
+    try { frame.contentWindow.postMessage({ type: 'manual-request' }, '*'); } catch (e) {}
+  }
+  ask(); setTimeout(ask, 300); setTimeout(ask, 1200);
   addEventListener('resize', apply);
   /* 页面从隐藏切到可见时宽度才有值，需要重算一次 */
   addEventListener('thplot:tab-changed', function () { requestAnimationFrame(apply); });
