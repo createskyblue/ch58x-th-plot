@@ -2446,7 +2446,7 @@ body[data-page=wallpaper] .wallpaper-intro{display:none}
 /* ===== 产品说明书卡片：A4 缩略预览 + 新窗口入口 ===== */
 .manual-card .section-head{align-items:center;margin-bottom:14px}
 .manual-stage{position:relative;overflow:hidden;border:1px solid var(--line);border-radius:10px;background:#f5f6f8}
-.manual-stage iframe{display:block;width:794px;height:1122px;border:0;background:#fff;transform-origin:top left}
+.manual-stage iframe{display:block;width:794px;height:1122px;border:0;background:#fff}
 .manual-card .manual-open{text-decoration:none;color:#596579;transition:background .18s ease,border-color .18s ease}
 .manual-card .manual-open:hover{background:#eef1f6;border-color:#c7d1e0}
 @media(max-width:720px){.manual-stage{border-radius:8px}}

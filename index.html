@@ -2406,10 +2406,8 @@ loadDemoHistory();
   function apply() {
     var w = stage.clientWidth - 2;          /* 去掉左右各 1px 边框 */
     if (w <= 0) return;
-    var s = w / 794;
     frame.style.height = sheetH + 'px';
-    frame.style.transform = 'scale(' + s + ')';
-    stage.style.height = Math.ceil(sheetH * s) + 'px';
+    frame.style.zoom = (w / 794).toFixed(4); /* zoom 参与布局，stage 高度由浏览器算，不会裁底 */
   }
   addEventListener('message', function (e) {
     if (e.source !== frame.contentWindow) return;
@@ -2419,7 +2417,10 @@ loadDemoHistory();
     apply();
   });
   addEventListener('resize', apply);
+  /* 页面从隐藏切到可见时宽度才有值，需要重算一次 */
+  addEventListener('thplot:tab-changed', function () { requestAnimationFrame(apply); });
   apply();
+  requestAnimationFrame(apply);
 })();
 </script>
 </body>
