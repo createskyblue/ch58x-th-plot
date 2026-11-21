@@ -919,7 +919,7 @@
 <b>蓝牙协议文档</b>
 <span>GATT 通道、帧格式与全部命令载荷</span>
 </a>
-<a class="about-link" href="https://cacherivulet.cn/posts/CH584F_EPD_tempHumPlot" rel="noopener noreferrer" target="_blank">
+<a class="about-link" hidden href="https://cacherivulet.cn/posts/CH584F_EPD_tempHumPlot" rel="noopener noreferrer" target="_blank">
 <b>博客</b>
 <span>最新动态和发布</span>
 </a>
@@ -1345,14 +1345,13 @@ async function verifyActivation() {
 settingsControls();
 let viewStart = 0, viewEnd = 0;
 let drag = null, miniHover = null, panMain = null;
-element('activation-card').hidden = true;
+/* 激活卡片常显：不再随连接状态隐藏，避免用户找不到 */
 
 function connected(enabled) {
     for (const name of deviceButtons) element(name).disabled = !enabled;
     const button = element('connect');
     button.disabled = false;
     button.textContent = enabled ? '断开设备连接' : '连接设备';
-    element('activation-card').hidden = !enabled;
     element('activation-card').open = enabled && !/^[0-9a-fA-F]{64}$/.test(keyText());
     settingsControls();
 }
@@ -2400,14 +2399,27 @@ loadDemoHistory();
       });
     });
   });
+  var stage = document.querySelector('.manual-stage');
   var frame = document.getElementById('manual-frame');
-  if (!frame) return;
+  if (!stage || !frame) return;
+  var sheetH = 1122;
+  function apply() {
+    var w = stage.clientWidth - 2;          /* 去掉左右各 1px 边框 */
+    if (w <= 0) return;
+    var s = w / 794;
+    frame.style.height = sheetH + 'px';
+    frame.style.transform = 'scale(' + s + ')';
+    stage.style.height = Math.ceil(sheetH * s) + 'px';
+  }
   addEventListener('message', function (e) {
     if (e.source !== frame.contentWindow) return;
     var d = e.data;
     if (!d || d.type !== 'manual-size' || !d.height) return;
-    frame.style.height = d.height + 'px';
+    sheetH = d.height;
+    apply();
   });
+  addEventListener('resize', apply);
+  apply();
 })();
 </script>
 </body>

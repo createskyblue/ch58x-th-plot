@@ -78,7 +78,7 @@ footer{display:flex;justify-content:space-between;align-items:baseline;padding-t
 
 /* 嵌入模式：被 iframe 引用时整页等比缩成缩略图，不触发窄屏单栏 */
 html.embed body{overflow:hidden;background:#fff}
-html.embed .sheet{width:794px;max-width:none;min-height:1122px;margin:0;padding:26px 34px 16px;transform-origin:top left}
+html.embed .sheet{width:794px;max-width:none;min-height:1122px;margin:0;padding:26px 34px 16px}
 html.embed .columns{grid-template-columns:repeat(2,minmax(0,1fr));column-gap:34px;row-gap:0}
 </style>
 </head>
@@ -186,27 +186,22 @@ html.embed .columns{grid-template-columns:repeat(2,minmax(0,1fr));column-gap:34p
   </footer>
 </main>
 <script>
-/* 被 iframe 引用（嵌进上位机的说明书卡片）时，把整张 A4 等比缩到容器宽度。
-   独立打开或打印时这段不生效。 */
+/* 被 iframe 引用（嵌进上位机的说明书卡片）时，把未缩放的真实高度上报给外层，
+   由外层统一做等比缩放。独立打开或打印时这段不生效。 */
 (function () {
   if (window.self === window.top) return;
   document.documentElement.classList.add('embed');
   var sheet = document.querySelector('.sheet');
-  function fit() {
-    var w = document.documentElement.clientWidth;
-    if (!w) return;
-    sheet.style.transform = 'scale(' + (w / 794) + ')';
-    // 把缩放后的真实高度告诉外层，卡片据此定高，避免底部被裁
-    try {
-      var h = Math.ceil(sheet.getBoundingClientRect().height);
-      if (h > 0) parent.postMessage({ type: 'manual-size', height: h }, '*');
-    } catch (e) {}
+  function report() {
+    var h = sheet.offsetHeight;          // 未缩放的文档高度
+    if (h > 0) {
+      try { parent.postMessage({ type: 'manual-size', height: h }, '*'); } catch (e) {}
+    }
   }
-  addEventListener('resize', fit);
-  addEventListener('load', fit);
-  if (window.ResizeObserver) new ResizeObserver(fit).observe(document.body);
-  fit();
-})();
+  addEventListener('load', report);
+  addEventListener('resize', report);
+  if (window.ResizeObserver) new ResizeObserver(report).observe(sheet);
+  report();
 </script>
 </body>
 </html>
